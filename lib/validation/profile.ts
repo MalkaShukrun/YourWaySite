@@ -1,0 +1,29 @@
+import { z } from "zod";
+
+// Israeli phone numbers: 050-123-4567, 0501234567, 02-123-4567
+const PHONE_PATTERN = /^0\d{1,2}-?\d{3}-?\d{4}$/;
+
+export const onboardingSchema = z
+  .object({
+    fullName: z.string().trim().min(2, "יש להזין שם מלא"),
+    email: z.email("כתובת דוא״ל לא תקינה"),
+    phone: z.string().trim().regex(PHONE_PATTERN, "מספר טלפון לא תקין (לדוגמה 050-000-0000)"),
+    hasVehicle: z.boolean(),
+    vehicleModel: z.string().trim(),
+    vehicleColor: z.string().trim(),
+    vehicleSeats: z.string().trim(),
+  })
+  .superRefine((values, ctx) => {
+    if (!values.hasVehicle) return;
+    if (!values.vehicleModel) {
+      ctx.addIssue({ code: "custom", path: ["vehicleModel"], message: "יש להזין סוג רכב" });
+    }
+    if (!values.vehicleColor) {
+      ctx.addIssue({ code: "custom", path: ["vehicleColor"], message: "יש להזין צבע" });
+    }
+    if (!/^[1-8]$/.test(values.vehicleSeats)) {
+      ctx.addIssue({ code: "custom", path: ["vehicleSeats"], message: "בין 1 ל־8 מקומות" });
+    }
+  });
+
+export type OnboardingValues = z.infer<typeof onboardingSchema>;
