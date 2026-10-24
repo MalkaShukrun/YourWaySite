@@ -6,7 +6,6 @@ const PHONE_PATTERN = /^0\d{1,2}-?\d{3}-?\d{4}$/;
 export const onboardingSchema = z
   .object({
     fullName: z.string().trim().min(2, "יש להזין שם מלא"),
-    email: z.email("כתובת דוא״ל לא תקינה"),
     phone: z.string().trim().regex(PHONE_PATTERN, "מספר טלפון לא תקין (לדוגמה 050-000-0000)"),
     hasVehicle: z.boolean(),
     vehicleModel: z.string().trim(),

@@ -7,6 +7,15 @@ const PUBLIC_PATHS = ["/login", "/auth"];
 // signed-out visitors to /login. Role checks (admin) happen on the server
 // in lib/auth.ts — this is only an optimistic check.
 export async function updateSession(request: NextRequest) {
+  // Supabase falls back to the Site URL (e.g. "/?code=…") when /auth/callback
+  // isn't in its Redirect URLs list — hand the code to the callback anyway.
+  const { pathname: path, searchParams } = request.nextUrl;
+  if (path !== "/auth/callback" && (searchParams.has("code") || searchParams.has("error_description"))) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/callback";
+    return NextResponse.redirect(url);
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

@@ -8,6 +8,9 @@ export async function GET(request: NextRequest) {
   const { origin, searchParams } = request.nextUrl;
   const code = searchParams.get("code");
 
+  // Supabase or Google refused the login (e.g. provider misconfigured).
+  let reason = searchParams.get("error_description") ?? searchParams.get("error") ?? "missing code";
+
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
@@ -17,8 +20,12 @@ export async function GET(request: NextRequest) {
         const next = needsOnboarding(user) ? "/login" : homePathFor(user);
         return NextResponse.redirect(`${origin}${next}`);
       }
+      reason = "no user after sign-in";
+    } else {
+      reason = error.message;
     }
   }
 
-  return NextResponse.redirect(`${origin}/login?error=auth`);
+  console.error("[auth/callback] Google sign-in failed:", reason);
+  return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(reason)}`);
 }

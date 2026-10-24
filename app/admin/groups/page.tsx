@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/auth";
-import { SignOutButton } from "@/components/auth/SignOutButton";
 
 export const metadata: Metadata = { title: "ניהול קבוצות · בדרך שלך" };
 
@@ -17,14 +16,19 @@ export default function AdminGroupsPage() {
 }
 
 async function AdminWelcome() {
-  const user = await requireAdmin();
+  await requireAdmin();
   return (
-    <div className="welcome">
-      <div>
-        <p>אזור מנהלת מערכת · {user.fullName}</p>
-        <h1>ניהול קבוצות נסיעה</h1>
+    <>
+      <div className="welcome">
+        <div>
+          <p>אזור מנהלת מערכת</p>
+          <h1>ניהול קבוצות נסיעה</h1>
+        </div>
       </div>
-      <SignOutButton />
-    </div>
+      <section className="panel empty-state">
+        <strong>המסך הזה בבנייה</strong>
+        <span>בקרוב יהיה אפשר ליצור, לערוך ולמחוק קבוצות נסיעה.</span>
+      </section>
+    </>
   );
 }

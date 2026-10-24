@@ -8,3 +8,66 @@
 .field-error { color: #A8584E; font-size: 13px; padding-right: 2px; }
 .vehicle-fields { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin-bottom: 18px; }
 .vehicle-fields .form-grid { width: 100%; }
+
+/* The design uses <button> for navigation; the app uses real links. */
+a.nav-item { text-decoration: none; }
+.role-switch a { color: #59665F; padding: 7px 18px; min-width: 132px; border-radius: 8px; font-size: 16px; font-weight: 600; text-align: center; text-decoration: none; transition: .2s ease; }
+.role-switch a.active { color: var(--green-dark); background: var(--lime); font-weight: 800; box-shadow: 0 3px 9px rgba(23,107,69,.14); }
+.activity-tabs a { border-bottom: 2px solid transparent; padding: 0 4px 11px; color: #59665F; font-weight: 600; text-decoration: none; }
+.activity-tabs a.active { color: var(--green-dark); border-bottom-color: var(--green); background: var(--lime); border-radius: 9px 9px 0 0; font-weight: 800; padding-inline: 13px; padding-top: 6px; }
+.user-menu form { margin: 0; }
+@media (max-width: 780px) {
+  .bottom-nav a { color: #59665F; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 15px; text-decoration: none; }
+  .bottom-nav a.active { color: var(--green-dark); font-weight: 800; }
+  .bottom-nav a.active .icon { background: var(--lime); border-radius: 9px; padding: 3px; width: 27px; height: 27px; }
+  .role-switch a { min-width: 0; padding: 7px 12px; }
+}
+
+/* Empty / loading states */
+.empty-state { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 38px 24px; text-align: center; color: #59665F; }
+.empty-state strong { color: var(--ink); font-size: 18px; }
+.empty-state .btn { margin-top: 6px; }
+.search-placeholder { min-height: 200px; }
+.btn.is-disabled { color: #8a958f; cursor: not-allowed; }
+
+/* Payments */
+.paid-pill.unpaid { color: #875D54; background: #F7E8E3; }
+.driver-balances { margin-top: 18px; }
+.balance-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; border-bottom: 1px solid var(--line); }
+.balance-row:last-child { border: 0; }
+.balance-row span { color: var(--ink); font-weight: 800; font-size: 17px; }
+.late-call { margin-top: 18px; }
+
+/* Leaflet map (replaces the design's static map illustration) */
+.route-map { isolation: isolate; }
+.route-map .leaflet-container { font-family: inherit; background: #E8ECEE; }
+.route-map .map-legend { z-index: 500; }
+.leaflet-stop-pin { width: 32px; height: 32px; color: #fff; background: var(--green); border: 3px solid #fff; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 5px 10px rgba(36,75,64,.25); font-size: 15px; }
+.leaflet-stop-pin.drop { background: #527489; }
+.leaflet-stop-pin.selected { outline: 3px solid var(--lime); transform: scale(1.12); }
+.map-empty { height: 160px; display: grid; place-items: center; color: #59665F; background: #F3F5F4; }
+.stop-options-empty { margin: 12px 0; }
+
+/* Driver Hub */
+.today-list { display: flex; flex-direction: column; gap: 20px; }
+.date-picker-btn { position: relative; cursor: pointer; }
+.date-picker-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.date-picker-btn input::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: auto; height: auto; cursor: pointer; }
+.time-control { display: flex; gap: 8px; }
+.time-control input { width: 96px; }
+.passenger-empty { margin: 0; padding: 18px 25px; color: #59665F; }
+.daily-stop > .nav-buttons { flex-direction: row; gap: 5px; }
+.daily-stops-empty { color: #66736C; }
+.today-card .daily-route-preview { margin-bottom: 22px; }
+.confirm-inline { display: inline-flex; align-items: center; gap: 6px; color: #59665F; font-size: 15px; }
+.form-alert { margin: -12px 0 18px; padding: 11px 14px; border-radius: 10px; background: #f9ebe8; color: #a8584e; font-weight: 700; }
+.editor-stops input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; font-weight: 700; color: var(--ink); }
+.editor-stops input[aria-invalid="true"] { color: #a8584e; }
+.editor-stops input::placeholder { font-weight: 500; color: #9aa59f; }
+.btn.is-armed { background: var(--lime); color: var(--green-dark); border-color: #9BC56D; }
+.route-map.is-adding .leaflet-container { cursor: crosshair; }
+.one-time-date { margin-bottom: 15px; }
+.field-hint { display: block; margin-top: 8px; color: #66736C; font-size: 14px; }
+.editor-map .large-map.route-map { height: 560px; }
+@media (max-width: 1100px) { .editor-map .large-map.route-map { height: 390px; } }
+@media (max-width: 780px) { .editor-map .large-map.route-map { height: 320px; } }

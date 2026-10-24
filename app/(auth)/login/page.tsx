@@ -17,13 +17,8 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
     <div className="auth-page">
       <header className="landing-header">
         <Logo />
-        <nav>
-          <span>איך זה עובד</span>
-          <span>לטרמפיסטית</span>
-          <span>לנהגת</span>
-        </nav>
-        <a href="mailto:support@baderech.co.il">
-          צריכה עזרה? <span>support@baderech.co.il</span>
+        <a href="mailto:malkycohen1@gmil.com">
+          צריכה עזרה? <span>malkycohen1@gmil.com</span>
         </a>
       </header>
 
@@ -42,7 +37,7 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
           <div className="preview-details">
             <div>
               <span className="preview-icon pickup"><MapPin {...iconProps} size={19} /></span>
-              <div><small>תחנת איסוף</small><strong>נהר הירדן / רבי עקיבא</strong></div>
+              <div><small>תחנת איסוף</small><strong>שדרות נהר הירדן / ריב״ל</strong></div>
               <b>07:15</b>
             </div>
             <div>
@@ -56,7 +51,7 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
             <span><Phone {...iconProps} size={17} /> 050-765-4321</span>
           </div>
           <div className="preview-footer">
-            <span><strong>₪24</strong> מחיר הנסיעה</span>
+            <span><strong>₪15</strong> מחיר הנסיעה</span>
             <span><strong>3</strong> מקומות פנויים</span>
           </div>
         </div>
@@ -86,7 +81,7 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
       </div>
 
       <footer className="landing-footer">
-        <span>© 2025 בדרך שלך</span>
+        <span>© 2026 DeveLogic</span>
         <strong>נוסעות יחד, מגיעות רחוק.</strong>
       </footer>
 
@@ -102,7 +97,7 @@ async function SessionGate() {
   const user = await getCurrentUser();
   if (!user) return null;
   if (needsOnboarding(user)) {
-    return <OnboardingModal defaultName={user.fullName} defaultEmail={user.email} />;
+    return <OnboardingModal defaultName={user.fullName} />;
   }
   redirect(homePathFor(user));
 }
@@ -110,5 +105,11 @@ async function SessionGate() {
 async function LoginError({ searchParams }: Pick<PageProps<"/login">, "searchParams">) {
   const { error } = await searchParams;
   if (!error) return null;
-  return <p className="auth-error" role="alert">ההתחברות לא הושלמה. נסי שוב.</p>;
+  return (
+    <p className="auth-error" role="alert">
+      ההתחברות לא הושלמה. נסי שוב.
+      <br />
+      <small dir="ltr">{String(error)}</small>
+    </p>
+  );
 }

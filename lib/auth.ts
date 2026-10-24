@@ -1,10 +1,11 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 // Data Access Layer: the only place that reads the session and the profile.
 // Call these from components rendered behind <Suspense> (they read cookies).
 
-export type CurrentUser = {
+type CurrentUser = {
   id: string;
   email: string;
   fullName: string;
@@ -12,7 +13,8 @@ export type CurrentUser = {
   isAdmin: boolean;
 };
 
-export async function getCurrentUser(): Promise<CurrentUser | null> {
+// Wrapped in cache() so the shell and the page share one lookup per request.
+export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   const userId = claimsData?.claims?.sub;
@@ -31,7 +33,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     phone: profile?.phone ?? null,
     isAdmin: profile?.is_admin ?? false,
   };
-}
+});
 
 export function needsOnboarding(user: CurrentUser) {
   return !user.phone;

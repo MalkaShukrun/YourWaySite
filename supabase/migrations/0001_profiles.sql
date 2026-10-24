@@ -14,7 +14,7 @@ create table if not exists public.profiles (
   updated_at     timestamptz not null default now()
 );
 
--- Create a profile automatically when someone signs in with Google for the first time.
+-- Create a profile automatically when someone signs up.
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -77,8 +77,18 @@ create policy "Users update own profile"
   using (id = (select auth.uid()))
   with check (id = (select auth.uid()));
 
+-- Users who signed up before this table existed have no profile row yet;
+-- they may create their own (onboarding does this).
+drop policy if exists "Users create own profile" on public.profiles;
+create policy "Users create own profile"
+  on public.profiles for insert
+  to authenticated
+  with check (id = (select auth.uid()));
+
 -- Users may edit their own details, but never their own admin flag.
-revoke update on public.profiles from authenticated;
+revoke insert, update on public.profiles from authenticated;
+grant insert (id, full_name, email, phone, vehicle_model, vehicle_color, vehicle_seats)
+  on public.profiles to authenticated;
 grant update (full_name, email, phone, vehicle_model, vehicle_color, vehicle_seats)
   on public.profiles to authenticated;
 

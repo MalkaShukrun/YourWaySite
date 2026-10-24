@@ -664,9 +664,6 @@ button { cursor: pointer; }
 .landing-header .logo-name { color: #FFFFFF; }
 .landing-header .logo-tagline { color: #91A79C; }
 .landing-header .logo-mark { color: #08251C; background: var(--lime); box-shadow: 0 8px 22px rgba(215,245,165,.18); }
-.landing-header nav { display: flex; align-items: center; gap: 34px; color: #AABBB3; font-size: 15px; font-weight: 700; }
-.landing-header nav span { transition: color .2s ease; cursor: default; }
-.landing-header nav span:hover { color: var(--lime); }
 .landing-header a { color: #0A2C20; background: var(--lime); border-radius: 9px; padding: 10px 15px; }
 .landing-header a:hover { color: #0A2C20; text-decoration: none; background: #E4FFB9; }
 .auth-brand {
@@ -742,7 +739,6 @@ button { cursor: pointer; }
 .landing-footer strong { color: #AFC2B9; }
 
 @media (max-width: 1100px) {
-  .landing-header nav { display: none; }
   .landing-preview { min-height: 470px; }
   .auth-card h2 { font-size: 52px; }
 }
@@ -775,8 +771,6 @@ button { cursor: pointer; }
 .landing-header .logo-name { color: var(--green-dark); }
 .landing-header .logo-tagline { color: #66736C; }
 .landing-header .logo-mark { color: #FFFFFF; background: var(--green); box-shadow: 0 7px 17px rgba(23,107,69,.14); }
-.landing-header nav { color: #59665F; }
-.landing-header nav span:hover { color: var(--green); }
 .landing-header a { color: #FFFFFF; background: var(--green); }
 .landing-header a:hover { color: #FFFFFF; background: var(--green-dark); }
 .auth-brand {

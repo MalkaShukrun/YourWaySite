@@ -15,20 +15,26 @@ export async function completeProfile(values: OnboardingValues) {
   }
 
   const v = parsed.data;
+  const details = {
+    full_name: v.fullName,
+    email: user.email, // from Google
+    phone: v.phone,
+    vehicle_model: v.hasVehicle ? v.vehicleModel : null,
+    vehicle_color: v.hasVehicle ? v.vehicleColor : null,
+    vehicle_seats: v.hasVehicle ? Number(v.vehicleSeats) : null,
+  };
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("profiles")
-    .update({
-      full_name: v.fullName,
-      email: v.email,
-      phone: v.phone,
-      vehicle_model: v.hasVehicle ? v.vehicleModel : null,
-      vehicle_color: v.hasVehicle ? v.vehicleColor : null,
-      vehicle_seats: v.hasVehicle ? Number(v.vehicleSeats) : null,
-    })
-    .eq("id", user.id);
+  const updated = await supabase.from("profiles").update(details).eq("id", user.id).select("id");
+  // No row yet (account created before the profiles table existed) — create it.
+  const { error } =
+    updated.error || updated.data?.length
+      ? updated
+      : await supabase.from("profiles").insert({ id: user.id, ...details });
 
   if (error) {
+    if (error.code === "PGRST205" || error.code === "42P01") {
+      return { error: "בסיס הנתונים עדיין לא הוגדר — יש להריץ את supabase/setup.sql ב־Supabase." };
+    }
     return { error: "לא הצלחנו לשמור את הפרטים. נסי שוב בעוד רגע." };
   }
 

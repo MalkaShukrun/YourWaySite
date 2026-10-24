@@ -1,0 +1,92 @@
+import { Suspense } from "react";
+import Link from "next/link";
+import { Route } from "lucide-react";
+import { requireUser } from "@/lib/auth";
+import { formatRideDate, formatTime, israelNow } from "@/lib/dates";
+import { formatPrice, getMyBookings, groupLabel, splitByDeparture, type MyBooking } from "@/lib/rides";
+import { CancelBookingButton } from "@/components/passenger/CancelBookingButton";
+import { DriverContact } from "@/components/passenger/DriverContact";
+import { Toast } from "@/components/ui/Toast";
+
+// "My Rides" — upcoming bookings and ride history (SRS §4.3).
+export default function MyRidesPage({ searchParams }: PageProps<"/my-rides">) {
+  return (
+    <main className="page-content">
+      <div className="welcome"><div><h1>הנסיעות שלי</h1></div></div>
+      <Suspense fallback={<section className="panel" aria-busy="true" />}>
+        <MyRides searchParams={searchParams} />
+      </Suspense>
+    </main>
+  );
+}
+
+async function MyRides({ searchParams }: Pick<PageProps<"/my-rides">, "searchParams">) {
+  await requireUser();
+  const [query, bookings] = await Promise.all([searchParams, getMyBookings()]);
+  const tab = query.tab === "history" ? "history" : "upcoming";
+  const now = (await israelNow()).getTime();
+  const { upcoming, history } = splitByDeparture(bookings.filter((b) => b.status === "active"), now);
+  const rows = tab === "history" ? history.reverse() : upcoming;
+
+  return (
+    <>
+      <div className="activity-tabs">
+        <Link href="/my-rides" className={tab === "upcoming" ? "active" : ""}>נסיעות קרובות</Link>
+        <Link href="/my-rides?tab=history" className={tab === "history" ? "active" : ""}>היסטוריה</Link>
+      </div>
+      <section className="panel">
+        <div className="panel-title">
+          <div>
+            <h2>{tab === "history" ? "נסיעות קודמות" : "הנסיעות הקרובות שלי"}</h2>
+            <span>פרטי הנסיעה והקשר עם הנהגת</span>
+          </div>
+          <span className="count-pill">{rows.length} נסיעות</span>
+        </div>
+        {rows.length === 0 ? (
+          <div className="empty-state">
+            <strong>{tab === "history" ? "עוד אין נסיעות קודמות" : "אין לך נסיעות קרובות"}</strong>
+            {tab === "upcoming" && <Link className="btn btn-primary" href="/">מציאת נסיעה</Link>}
+          </div>
+        ) : (
+          rows.map((booking) => <BookingRow key={booking.booking_id} booking={booking} upcoming={tab === "upcoming"} />)
+        )}
+      </section>
+      <Toast message={query.booked === "1" ? "הנסיעה נוספה בהצלחה לנסיעות שלי" : ""} />
+    </>
+  );
+}
+
+function BookingRow({ booking, upcoming }: { booking: MyBooking; upcoming: boolean }) {
+  return (
+    <div className={`activity-row ${booking.ride_cancelled ? "row-cancelled" : ""}`}>
+      <div className="activity-date">
+        <strong>{formatTime(booking.out_time)}</strong>
+        <span>{formatRideDate(booking.ride_date)}</span>
+      </div>
+      <div className="activity-route">
+        <Route className="icon" size={20} strokeWidth={1.8} />
+        <div>
+          <strong>{groupLabel(booking.origin, booking.destination)}</strong>
+          <span>{formatPrice(booking.price)}</span>
+          <div className="registered-stops">
+            <span><i className="pickup-dot"></i>איסוף: {booking.pickup_label}</span>
+            <span><i className="dropoff-dot"></i>הורדה: {booking.dropoff_label}</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        {booking.ride_cancelled && <span className="status-pill danger"><i></i>הנהגת ביטלה את הנסיעה</span>}
+      </div>
+      <div className="row-actions">
+        {upcoming && !booking.ride_cancelled && (
+          <CancelBookingButton
+            bookingId={booking.booking_id}
+            driverName={booking.driver_name}
+            driverPhone={booking.driver_phone}
+          />
+        )}
+        <DriverContact name={booking.driver_name} phone={booking.driver_phone} email={booking.driver_email} />
+      </div>
+    </div>
+  );
+}

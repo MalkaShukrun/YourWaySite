@@ -7,9 +7,10 @@ import { Car, Phone, User } from "lucide-react";
 import { onboardingSchema, type OnboardingValues } from "@/lib/validation/profile";
 import { completeProfile } from "@/app/(auth)/login/actions";
 
-type Props = { defaultName: string; defaultEmail: string };
+type Props = { defaultName: string };
 
-export function OnboardingModal({ defaultName, defaultEmail }: Props) {
+// The email comes from Google and isn't editable here.
+export function OnboardingModal({ defaultName }: Props) {
   const [serverError, setServerError] = useState("");
   const [pending, startTransition] = useTransition();
   const {
@@ -22,7 +23,6 @@ export function OnboardingModal({ defaultName, defaultEmail }: Props) {
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
       fullName: defaultName,
-      email: defaultEmail,
       phone: "",
       hasVehicle: false,
       vehicleModel: "",
@@ -58,11 +58,6 @@ export function OnboardingModal({ defaultName, defaultEmail }: Props) {
             <span>שם מלא</span>
             <div className="input-shell"><input {...register("fullName")} autoComplete="name" /></div>
             {errors.fullName && <small className="field-error">{errors.fullName.message}</small>}
-          </label>
-          <label className="field">
-            <span>כתובת דוא״ל</span>
-            <div className="input-shell"><input {...register("email")} type="email" dir="ltr" autoComplete="email" /></div>
-            {errors.email && <small className="field-error">{errors.email.message}</small>}
           </label>
           <label className="field required">
             <span>מספר טלפון</span>
