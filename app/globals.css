@@ -92,3 +92,14 @@ a.nav-item { text-decoration: none; }
   .legal-card { padding: 22px 18px; }
   .legal-card h1 { font-size: 25px; }
 }
+
+/* Shared dropdown (components/ui/Select.tsx) — long lists scroll; panels clip
+   their content, so let an open list spill out. */
+.panel:has(.dropdown.open) { overflow: visible; }
+.dropdown-options { max-height: 288px; overflow-y: auto; }
+.dropdown.compact .dropdown-trigger { width: auto; min-height: 37px; display: flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: #fff; border-radius: 9px; padding: 0 10px; color: #59665F; }
+.dropdown.compact .dropdown-trigger > small { font-size: 15px; }
+.dropdown.compact .dropdown-trigger > span { color: var(--ink); font-weight: 700; white-space: nowrap; }
+.dropdown.compact.open .dropdown-trigger { border-color: #6e9486; }
+.dropdown.compact .dropdown-options { left: auto; min-width: 190px; }
+@media (max-width: 780px) { .dropdown.compact .dropdown-trigger > small { display: none; } }

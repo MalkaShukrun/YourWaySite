@@ -111,16 +111,16 @@ button { cursor: pointer; }
 .input-shell { min-height: 45px; display: flex; align-items: center; gap: 9px; padding: 0 13px; border: 1px solid #dedfd9; border-radius: 10px; background: white; color: #59665F; transition: .2s; }
 .input-shell:focus-within { border-color: #6e9486; box-shadow: 0 0 0 3px rgba(49,95,81,.08); }
 .input-shell input, .input-shell select { width: 100%; border: 0; outline: 0; color: #35413c; background: transparent; font-size: 16px; appearance: none; min-width: 0; }
-.route-select { position: relative; }
-.route-select-trigger { width: 100%; cursor: pointer; text-align: right; }
-.route-select-trigger > span { flex: 1; color: #35413c; font-size: 16px; }
-.route-select-trigger .icon:last-child { transition: transform .2s ease; }
-.route-select.open .route-select-trigger { border-color: #6e9486; box-shadow: 0 0 0 3px rgba(49,95,81,.08); }
-.route-select.open .route-select-trigger .icon:last-child { transform: rotate(180deg); }
-.route-options { position: absolute; top: calc(100% + 6px); right: 0; left: 0; z-index: 25; padding: 6px; background: #fff; border: 1px solid #d9e1dc; border-radius: 10px; box-shadow: 0 14px 30px rgba(36,75,64,.14); overflow: hidden; }
-.route-options button { width: 100%; min-height: 39px; padding: 0 11px; border: 0; border-radius: 7px; background: transparent; color: #46534d; display: flex; align-items: center; justify-content: space-between; text-align: right; font-size: 16px; }
-.route-options button:hover { background: #F1F8EE; color: var(--green); }
-.route-options button.selected { background: var(--lime); color: var(--green-dark); font-weight: 800; }
+.dropdown { position: relative; }
+.dropdown-trigger { width: 100%; cursor: pointer; text-align: right; }
+.dropdown-trigger > span { flex: 1; color: #35413c; font-size: 16px; }
+.dropdown-chevron { transition: transform .2s ease; }
+.dropdown.open .dropdown-trigger { border-color: #6e9486; box-shadow: 0 0 0 3px rgba(49,95,81,.08); }
+.dropdown.open .dropdown-chevron { transform: rotate(180deg); }
+.dropdown-options { position: absolute; top: calc(100% + 6px); right: 0; left: 0; z-index: 25; padding: 6px; background: #fff; border: 1px solid #d9e1dc; border-radius: 10px; box-shadow: 0 14px 30px rgba(36,75,64,.14); overflow: hidden; }
+.dropdown-options button { width: 100%; min-height: 39px; padding: 0 11px; border: 0; border-radius: 7px; background: transparent; color: #46534d; display: flex; align-items: center; justify-content: space-between; text-align: right; font-size: 16px; }
+.dropdown-options button:hover { background: #F1F8EE; color: var(--green); }
+.dropdown-options button.selected { background: var(--lime); color: var(--green-dark); font-weight: 800; }
 .btn { min-height: 42px; border-radius: 9px; border: 1px solid transparent; padding: 0 17px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 16px; text-decoration: none; white-space: nowrap; transition: .2s ease; }
 .btn-primary { background: var(--green); color: #fff; box-shadow: 0 5px 12px rgba(23,107,69,.18); }
 .btn-primary:hover { background: var(--green-dark); transform: translateY(-1px); }
@@ -265,9 +265,6 @@ button { cursor: pointer; }
 .inline-driver-contact a { color: #53615A; font-size: 15px; text-decoration: none; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
 .inline-driver-contact a:hover { color: var(--green); text-decoration: underline; }
 .inline-driver-contact small { color: #65736C; font-size: 14px; border-top: 1px solid var(--line); padding-top: 4px; margin-top: 2px; direction: rtl; }
-.month-filter { min-height: 37px; display: flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: #fff; border-radius: 9px; padding: 0 10px; color: #59665F; }
-.month-filter > span { font-size: 15px; }
-.month-filter select { border: 0; outline: 0; background: transparent; color: var(--ink); appearance: none; font-size: 16px; font-weight: 700; }
 .routes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
 .route-card { background: white; border: 1px solid var(--line); border-radius: 17px; overflow: hidden; }
 .map-placeholder { height: 170px; background: #E8ECEE; position: relative; overflow: hidden; }
@@ -621,7 +618,6 @@ button { cursor: pointer; }
   .bank-section-head { gap: 10px; }
   .inline-driver-contact { align-items: flex-end; }
   .inline-driver-contact a { white-space: normal; text-align: left; overflow-wrap: anywhere; }
-  .month-filter > span { display: none; }
   .auth-page { grid-template-columns: 1fr; grid-template-rows: 58px auto 48px; grid-template-areas: "header" "form" "footer"; padding: 8px 12px; background: linear-gradient(180deg, #EDF2EF 0%, #F7FAF6 46%); overflow: auto; }
   .landing-header .logo-tagline { display: none; }
   .landing-header a { font-size: 13px; }

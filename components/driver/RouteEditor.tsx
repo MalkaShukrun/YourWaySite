@@ -3,10 +3,11 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useFieldArray, useForm, useWatch } from "react-hook-form";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarDays, ChevronDown, Clock, Plus, Repeat, Route, Users } from "lucide-react";
+import { CalendarDays, Clock, Plus, Repeat, Route, Users } from "lucide-react";
 import { saveRoute } from "@/app/(driver)/actions";
+import { Select } from "@/components/ui/Select";
 import { groupLabel, type RideGroup } from "@/lib/ride-types";
 import { WEEKDAYS, type EditableRoute } from "@/lib/driver-types";
 import { routeSchema, type RouteValues } from "@/lib/validation/route";
@@ -124,16 +125,22 @@ export function RouteEditor({ groups, route, today }: Props) {
         <section className="panel editor-form">
           <div className="editor-section">
             <div className="section-heading"><span>1</span><div><h2>פרטי הנסיעה</h2><p>בחרי קבוצה וסוג נסיעה</p></div></div>
-            <label className="field">
+            <div className="field">
               <span>קבוצת נסיעה</span>
-              <div className="input-shell">
-                <Route {...iconProps} size={20} />
-                <select {...register("groupId")}>
-                  {groups.map((g) => <option key={g.id} value={g.id}>{groupLabel(g.origin, g.destination)}</option>)}
-                </select>
-                <ChevronDown {...iconProps} size={16} />
-              </div>
-            </label>
+              <Controller
+                control={control}
+                name="groupId"
+                render={({ field }) => (
+                  <Select
+                    label="קבוצת נסיעה"
+                    value={field.value}
+                    onChange={field.onChange}
+                    options={groups.map((g) => ({ value: g.id, label: groupLabel(g.origin, g.destination) }))}
+                    icon={<Route {...iconProps} size={20} />}
+                  />
+                )}
+              />
+            </div>
             <div className="kind-switch">
               <button type="button" className={kind === "recurring" ? "active" : ""} onClick={() => setValue("kind", "recurring", { shouldValidate: true })}>
                 <Repeat {...iconProps} size={20} /> נסיעה קבועה
