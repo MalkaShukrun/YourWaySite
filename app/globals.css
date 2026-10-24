@@ -71,3 +71,24 @@ a.nav-item { text-decoration: none; }
 .editor-map .large-map.route-map { height: 560px; }
 @media (max-width: 1100px) { .editor-map .large-map.route-map { height: 390px; } }
 @media (max-width: 780px) { .editor-map .large-map.route-map { height: 320px; } }
+
+/* Privacy policy (public page, linked from the login screen) */
+.auth-card > .privacy-link { max-width: none; margin: 12px 0 0; text-align: center; color: #66736C; font-size: 15px; line-height: 1.4; }
+.privacy-link a { color: var(--green); font-weight: 700; text-decoration: underline; }
+.legal-page { min-height: 100vh; background: #F7FAF6; padding: 10px 18px 48px; }
+.legal-header { max-width: 860px; margin: 0 auto; height: 64px; display: flex; align-items: center; justify-content: space-between; }
+.legal-header .back-link { margin: 0; }
+.legal-card { max-width: 860px; margin: 14px auto 0; background: #FFFFFF; border: 1px solid var(--line); border-top: 4px solid var(--lime); border-radius: 20px; padding: 32px 36px; color: var(--ink); line-height: 1.7; box-shadow: 0 7px 24px rgba(36,52,47,.045); }
+.legal-card h1 { margin: 0; font-size: 30px; font-weight: 800; color: var(--green-dark); }
+.legal-updated { margin: 4px 0 26px; color: #66736C; font-size: 14px; }
+.legal-card section { margin-bottom: 24px; }
+.legal-card h2 { margin: 0 0 8px; font-size: 20px; font-weight: 800; }
+.legal-card p { margin: 0 0 8px; color: #46544D; }
+.legal-card ul { margin: 0 0 8px; padding-right: 22px; color: #46544D; }
+.legal-card li { margin-bottom: 4px; }
+.legal-card a { color: var(--green); font-weight: 700; }
+@media (max-width: 780px) {
+  .legal-page { padding: 8px 12px 32px; }
+  .legal-card { padding: 22px 18px; }
+  .legal-card h1 { font-size: 25px; }
+}

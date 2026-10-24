@@ -39,7 +39,7 @@ button { cursor: pointer; }
 .route-names > div:last-child { text-align: left; }
 .payment-summary > div, .stat-card > div { text-align: center; }
 .driver-contact-links a, .inline-driver-contact a, .passenger-call, .passenger-email { text-align: center; }
-.booking-note, .security-note, .auth-card, .auth-card h1, .auth-card h2, .auth-card > p { text-align: center; }
+.booking-note, .auth-card, .auth-card h1, .auth-card h2, .auth-card > p { text-align: center; }
 .auth-brand, .auth-brand h1, .auth-brand p { text-align: right; }
 .modal-icon { text-align: center; }
 .icon { flex: 0 0 auto; }
@@ -503,7 +503,6 @@ button { cursor: pointer; }
 .google-button { width: 100%; min-height: 56px; border: 0; border-radius: 12px; background: var(--green); color: white; display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 17px; font-weight: 800; box-shadow: 0 10px 22px rgba(23,107,69,.2); }
 .google-button:hover { background: var(--green-dark); transform: translateY(-1px); }
 .google-g { width: 27px; height: 27px; border-radius: 50%; display: grid; place-items: center; font-family: Arial, sans-serif; color: #4285f4; background: white; font-size: 18px; font-weight: 800; }
-.security-note { display: flex; justify-content: center; align-items: center; gap: 6px; color: #59665F; font-size: 14px; margin-top: 17px; }
 .profile-panel { padding: 25px; }
 .profile-head { display: flex; align-items: center; gap: 14px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
 .avatar-large { width: 60px; height: 60px; font-size: 19px; border-radius: 18px; }
@@ -708,9 +707,8 @@ button { cursor: pointer; }
 .preview-driver { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 11px; margin-top: 17px; padding: 15px 0; border-top: 1px solid rgba(215,245,165,.13); }
 .preview-driver > div:nth-child(2) { display: flex; flex-direction: column; }
 .preview-driver > span { display: flex; align-items: center; gap: 6px; color: #C5D3CC; font-size: 14px; direction: ltr; }
-.preview-footer { display: grid; grid-template-columns: 1fr 1fr; margin-top: auto; border: 1px solid rgba(215,245,165,.14); border-radius: 10px; overflow: hidden; }
+.preview-footer { display: grid; grid-template-columns: 1fr; margin-top: auto; border: 1px solid rgba(215,245,165,.14); border-radius: 10px; overflow: hidden; }
 .preview-footer span { min-height: 58px; display: flex; align-items: center; justify-content: center; gap: 7px; color: #91A79C; font-size: 14px; }
-.preview-footer span + span { border-right: 1px solid rgba(215,245,165,.14); }
 .preview-footer strong { color: var(--lime); font-size: 19px; }
 .auth-brand > .auth-road-scene { opacity: .13; width: 88%; height: 45%; z-index: 1; }
 .auth-form { align-items: center; }
@@ -733,8 +731,6 @@ button { cursor: pointer; }
 .auth-role-pills .icon { color: var(--lime); }
 .google-button { color: #0A2C20; background: var(--lime); box-shadow: 0 14px 30px rgba(215,245,165,.13); }
 .google-button:hover { color: #0A2C20; background: #E4FFB9; }
-.security-note { color: #8FA49A; justify-content: flex-start; }
-.security-note .icon { color: var(--lime); }
 .landing-footer { color: #7F968B; border-top: 1px solid rgba(215,245,165,.1); }
 .landing-footer strong { color: #AFC2B9; }
 
@@ -803,7 +799,6 @@ button { cursor: pointer; }
 .preview-driver > span { color: #53615A; }
 .preview-footer { border-color: #DCE6DF; }
 .preview-footer span { color: #66736C; }
-.preview-footer span + span { border-right-color: #DCE6DF; }
 .preview-footer strong { color: var(--green); }
 .auth-brand > .auth-road-scene { opacity: .06; }
 .auth-card {
@@ -821,8 +816,6 @@ button { cursor: pointer; }
 .auth-role-pills .icon { color: var(--green); }
 .google-button { color: #FFFFFF; background: var(--green); box-shadow: 0 12px 26px rgba(23,107,69,.18); }
 .google-button:hover { color: #FFFFFF; background: var(--green-dark); }
-.security-note { color: #66736C; }
-.security-note .icon { color: var(--green); }
 .landing-footer { color: #66736C; border-top-color: rgba(23,107,69,.1); }
 .landing-footer strong { color: var(--green); }
 

@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Car, Check, MapPin, Phone, Search } from "lucide-react";
+import { Car, MapPin, Phone, Search } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { AuthRoadIllustration } from "@/components/auth/AuthRoadIllustration";
 import { GoogleButton } from "@/components/auth/GoogleButton";
@@ -52,7 +53,6 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
           </div>
           <div className="preview-footer">
             <span><strong>₪15</strong> מחיר הנסיעה</span>
-            <span><strong>3</strong> מקומות פנויים</span>
           </div>
         </div>
         <AuthRoadIllustration />
@@ -74,9 +74,9 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
           <Suspense fallback={null}>
             <LoginError searchParams={searchParams} />
           </Suspense>
-          <div className="security-note">
-            <Check {...iconProps} size={17} /> ההצטרפות קצרה והפרטים שלך נשמרים בצורה מאובטחת
-          </div>
+          <p className="privacy-link">
+            בהתחברות את מסכימה ל<Link href="/privacy">מדיניות הפרטיות</Link>
+          </p>
         </div>
       </div>
 

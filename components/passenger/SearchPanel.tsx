@@ -46,7 +46,7 @@ export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; i
     <section className="search-card">
       <div className="search-heading">
         <div>
-          <span className="eyebrow">לאן נוסעות היום?</span>
+          <span className="eyebrow">לאן נוסעת היום?</span>
           <h2>מצאי את הנסיעה שמתאימה לך</h2>
         </div>
         <div className="search-art" aria-hidden="true">

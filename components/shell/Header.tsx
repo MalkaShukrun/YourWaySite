@@ -24,7 +24,6 @@ export function Header({ userSlot }: { userSlot: ReactNode }) {
 }
 
 export function UserMenu({ name, initials }: { name: string; initials: string }) {
-  const mode = modeFor(usePathname());
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -43,7 +42,6 @@ export function UserMenu({ name, initials }: { name: string; initials: string })
         <div className="avatar avatar-sand">{initials}</div>
         <div>
           <strong>{name}</strong>
-          <span>{mode === "driver" ? "נהגת" : "טרמפיסטית"}</span>
         </div>
       </button>
       {open && (
