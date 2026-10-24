@@ -7,8 +7,10 @@ import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarDays, Clock, Plus, Repeat, Route, Users } from "lucide-react";
 import { saveRoute } from "@/app/(driver)/actions";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { Select } from "@/components/ui/Select";
 import { groupLabel, type RideGroup } from "@/lib/ride-types";
+import { groupArea } from "@/lib/places";
 import { WEEKDAYS, type EditableRoute } from "@/lib/driver-types";
 import { routeSchema, type RouteValues } from "@/lib/validation/route";
 
@@ -41,7 +43,6 @@ export function RouteEditor({ groups, route, today }: Props) {
       weekdays: route?.weekdays ?? [0, 2, 4],
       rideDate: route?.ride_date ?? "",
       outTime: route ? route.out_time.slice(0, 5) : "07:15",
-      returnTime: route?.return_time ? route.return_time.slice(0, 5) : "",
       seats: String(route?.seats ?? 4),
       price: String(route?.price ?? ""),
       stops: route?.stops.map((s) => ({ id: s.id, kind: s.kind, label: s.label, lat: s.lat, lng: s.lng })) ?? [],
@@ -49,6 +50,9 @@ export function RouteEditor({ groups, route, today }: Props) {
   });
   const { fields, append, remove, update } = useFieldArray({ control, name: "stops", keyName: "key" });
   const kind = useWatch({ control, name: "kind" });
+  const groupId = useWatch({ control, name: "groupId" });
+  const group = groups.find((g) => g.id === groupId);
+  const area = group ? groupArea(group.origin, group.destination) : null;
   const weekdays = useWatch({ control, name: "weekdays" });
   const stops = useWatch({ control, name: "stops" });
 
@@ -101,7 +105,6 @@ export function RouteEditor({ groups, route, today }: Props) {
     errors.weekdays?.message ??
     errors.rideDate?.message ??
     errors.outTime?.message ??
-    errors.returnTime?.message ??
     errors.seats?.message ??
     errors.price?.message ??
     errors.stops?.message ??
@@ -124,9 +127,9 @@ export function RouteEditor({ groups, route, today }: Props) {
       <div className="editor-layout">
         <section className="panel editor-form">
           <div className="editor-section">
-            <div className="section-heading"><span>1</span><div><h2>פרטי הנסיעה</h2><p>בחרי קבוצה וסוג נסיעה</p></div></div>
+            <div className="section-heading"><span>1</span><div><h2>פרטי הנסיעה</h2><p>בחרי מסלול וסוג נסיעה</p></div></div>
             <div className="field">
-              <span>קבוצת נסיעה</span>
+              <span>מסלול נסיעה</span>
               <Controller
                 control={control}
                 name="groupId"
@@ -162,22 +165,21 @@ export function RouteEditor({ groups, route, today }: Props) {
                 ))}
               </div>
             ) : (
-              <label className="field one-time-date">
+              <div className="field one-time-date">
                 <span>תאריך הנסיעה</span>
-                <div className="input-shell">
-                  <CalendarDays {...iconProps} size={20} />
-                  <input type="date" min={today} {...register("rideDate")} />
-                </div>
-              </label>
+                <Controller
+                  control={control}
+                  name="rideDate"
+                  render={({ field }) => (
+                    <DatePicker label="תאריך הנסיעה" value={field.value} onChange={field.onChange} today={today} min={today} />
+                  )}
+                />
+              </div>
             )}
             <div className="form-grid compact">
               <label className="field">
                 <span>שעת יציאה</span>
                 <div className="input-shell"><Clock {...iconProps} size={20} /><input type="time" {...register("outTime")} /></div>
-              </label>
-              <label className="field">
-                <span>שעת חזרה משוערת</span>
-                <div className="input-shell"><Clock {...iconProps} size={20} /><input type="time" {...register("returnTime")} /></div>
               </label>
               <label className="field">
                 <span>מקומות פנויים</span>
@@ -188,7 +190,6 @@ export function RouteEditor({ groups, route, today }: Props) {
                 <div className="input-shell price-input"><span>₪</span><input inputMode="decimal" {...register("price")} placeholder="0" /></div>
               </label>
             </div>
-            <small className="field-hint">שעת חזרה ריקה = חזרה גמישה</small>
           </div>
 
           <div className="editor-section">
@@ -204,6 +205,7 @@ export function RouteEditor({ groups, route, today }: Props) {
           </div>
           <RouteEditorMap
             stops={stops}
+            area={area}
             adding={adding}
             onAdd={(lat, lng) => {
               if (!adding) return;

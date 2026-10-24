@@ -18,7 +18,6 @@ export const routeSchema = z
     weekdays: z.array(z.number().int().min(0).max(6)),
     rideDate: z.string(),
     outTime: z.string().regex(TIME, "שעה לא תקינה"),
-    returnTime: z.string().refine((v) => v === "" || TIME.test(v), "שעה לא תקינה"),
     seats: z.string().regex(/^[1-8]$/, "בין 1 ל־8 מקומות"),
     price: z.string().regex(/^\d{1,4}(\.\d{1,2})?$/, "מחיר לא תקין"),
     stops: z.array(routeStopSchema),

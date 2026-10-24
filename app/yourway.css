@@ -105,7 +105,7 @@ button { cursor: pointer; }
 .search-art { width: 100px; height: 42px; color: var(--green); display: grid; place-items: center; position: relative; }
 .search-art:after { content: ""; position: absolute; width: 105px; height: 40px; border-bottom: 2px dashed #b3b5a9; border-radius: 50%; right: -5px; bottom: 13px; transform: rotate(-7deg); }
 .search-art .icon { position: relative; z-index: 2; background: #fff; }
-.filters { display: grid; grid-template-columns: 1.5fr 1.05fr .85fr .9fr auto; gap: 12px; align-items: end; }
+.filters { display: grid; grid-template-columns: 1.2fr 1.35fr .85fr .9fr auto; gap: 12px; align-items: end; }
 .field { display: flex; flex-direction: column; gap: 7px; }
 .field > span { font-size: 15px; color: #6e766f; font-weight: 600; padding-right: 2px; }
 .input-shell { min-height: 45px; display: flex; align-items: center; gap: 9px; padding: 0 13px; border: 1px solid #dedfd9; border-radius: 10px; background: white; color: #59665F; transition: .2s; }

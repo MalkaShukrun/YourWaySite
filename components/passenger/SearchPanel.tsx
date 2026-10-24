@@ -2,7 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Car, Clock, MapPin, Repeat, Search } from "lucide-react";
+import { Car, Clock, MapPin, Repeat, Search } from "lucide-react";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { Select } from "@/components/ui/Select";
 import type { RideGroup, RideKind, TimeWindow } from "@/lib/ride-types";
 import { TIME_WINDOWS, groupLabel } from "@/lib/ride-types";
@@ -58,13 +59,10 @@ export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; i
           <span>מסלול</span>
           <Select label="מסלול" value={groupId} onChange={setGroupId} options={groupOptions} icon={<MapPin {...iconProps} size={20} />} />
         </div>
-        <label className="field">
+        <div className="field">
           <span>תאריך</span>
-          <div className="input-shell">
-            <CalendarDays {...iconProps} size={20} />
-            <input type="date" value={date} min={today} onChange={(e) => setDate(e.target.value)} aria-label="תאריך" />
-          </div>
-        </label>
+          <DatePicker label="תאריך" value={date} onChange={setDate} today={today} min={today} placeholder="כל השבוע" clearable />
+        </div>
         <div className="field">
           <span>שעת יציאה</span>
           <Select label="שעת יציאה" value={time} onChange={setTime} options={TIME_OPTIONS} icon={<Clock {...iconProps} size={20} />} />

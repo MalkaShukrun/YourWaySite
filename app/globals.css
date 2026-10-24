@@ -50,9 +50,6 @@ a.nav-item { text-decoration: none; }
 
 /* Driver Hub */
 .today-list { display: flex; flex-direction: column; gap: 20px; }
-.date-picker-btn { position: relative; cursor: pointer; }
-.date-picker-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.date-picker-btn input::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: auto; height: auto; cursor: pointer; }
 .time-control { display: flex; gap: 8px; }
 .time-control input { width: 96px; }
 .passenger-empty { margin: 0; padding: 18px 25px; color: #59665F; }
@@ -101,5 +98,30 @@ a.nav-item { text-decoration: none; }
 .dropdown.compact .dropdown-trigger > small { font-size: 15px; }
 .dropdown.compact .dropdown-trigger > span { color: var(--ink); font-weight: 700; white-space: nowrap; }
 .dropdown.compact.open .dropdown-trigger { border-color: #6e9486; }
-.dropdown.compact .dropdown-options { left: auto; min-width: 190px; }
+/* The month list is exactly as wide as its button. */
+.dropdown.compact { display: inline-block; }
+.dropdown.compact .dropdown-options { left: 0; right: 0; min-width: 0; }
 @media (max-width: 780px) { .dropdown.compact .dropdown-trigger > small { display: none; } }
+
+/* Date picker (components/ui/DatePicker.tsx) — same shell as the dropdown */
+.dropdown-trigger > span.placeholder { color: #8A968F; }
+.dropdown-options.calendar { max-height: none; overflow: visible; padding: 10px; }
+.date-picker:has(.date-picker-button) .dropdown-options.calendar { left: auto; width: 300px; }
+.calendar-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.calendar-head strong { color: var(--ink); font-size: 16px; font-weight: 800; }
+.calendar-head button { width: 34px; height: 34px; border: 0; border-radius: 9px; background: transparent; color: var(--green); display: grid; place-items: center; cursor: pointer; }
+.calendar-head button:hover:not(:disabled) { background: #F1F8EE; }
+.calendar-head button:disabled { color: #C5CEC9; cursor: default; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.calendar-weekday { height: 30px; display: grid; place-items: center; color: #8A968F; font-size: 13px; font-weight: 700; }
+.dropdown-options .calendar-grid button { width: 100%; min-height: 0; height: 34px; min-width: 0; padding: 0; justify-content: center; border-radius: 9px; color: var(--ink); font-size: 15px; font-weight: 600; }
+.dropdown-options .calendar-grid button.outside { color: #A9B3AE; }
+.dropdown-options .calendar-grid button.today { box-shadow: inset 0 0 0 1.5px var(--green); }
+.dropdown-options .calendar-grid button.selected { background: var(--lime); color: var(--green-dark); font-weight: 800; box-shadow: none; }
+.dropdown-options .calendar-grid button:disabled { color: #CDD5D1; background: transparent; cursor: default; }
+.calendar-foot { display: flex; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.dropdown-options .calendar-foot button { width: auto; min-height: 32px; padding: 0 12px; border-radius: 8px; background: #F1F8EE; color: var(--green); font-size: 14px; font-weight: 700; justify-content: center; }
+.dropdown-options .calendar-foot button:hover:not(:disabled) { background: var(--lime); color: var(--green-dark); }
+.dropdown-options .calendar-foot button.muted { margin-right: auto; background: transparent; color: #66736C; }
+.dropdown-options .calendar-foot button:disabled { opacity: .45; cursor: default; }
+.date-picker-button { width: auto; }

@@ -81,7 +81,6 @@ async function RideDetails({ params, searchParams }: PageProps<"/ride/[id]">) {
             <div className="detail-route-line"><i></i><Car {...iconProps} size={20} /><i></i></div>
             <div>
               <span>יעד</span><h1>{ride.destination}</h1>
-              <small>{ride.return_time ? `חזרה ${formatTime(ride.return_time)}` : "חזרה גמישה"}</small>
             </div>
           </div>
           <div className="detail-meta">

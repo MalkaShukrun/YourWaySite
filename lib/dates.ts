@@ -49,8 +49,9 @@ export function formatMonth(month: string) {
   return format(parseISO(`${month}-01`), "LLLL yyyy", { locale: he });
 }
 
-// The current month and the five before it, newest first: ["2025-06", "2025-05", …]
-export function recentMonths(today: string, count = 6) {
+// The current month and the `past` months before it, newest first — never a
+// future month: ["2025-06", "2025-05", …]
+export function recentMonths(today: string, past = 3) {
   const first = parseISO(`${today.slice(0, 7)}-01`);
-  return Array.from({ length: count }, (_, i) => format(addMonths(first, -i), "yyyy-MM"));
+  return Array.from({ length: past + 1 }, (_, i) => format(addMonths(first, -i), "yyyy-MM"));
 }

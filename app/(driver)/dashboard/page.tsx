@@ -41,7 +41,7 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
           <h1>{date === today ? "הנסיעות שלך להיום" : `הנסיעות שלך ל${formatRideDate(date)}`}</h1>
         </div>
         <div className="dashboard-actions">
-          <DashboardDatePicker value={date} label={formatRideDate(date)} />
+          <DashboardDatePicker value={date} label={formatRideDate(date)} today={today} />
           <Link className="btn btn-primary" href="/routes/new"><Plus {...iconProps} size={20} /> נסיעה חדשה</Link>
         </div>
       </div>
@@ -57,7 +57,6 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
         <section className="panel empty-state">
           <strong>אין לך נסיעות בתאריך הזה</strong>
           <span>הגדירי מסלול קבוע או נסיעה חד־פעמית כדי שטרמפיסטיות יוכלו להירשם.</span>
-          <Link className="btn btn-primary" href="/routes/new"><Plus {...iconProps} size={18} /> נסיעה חדשה</Link>
         </section>
       ) : (
         <div className="today-list">

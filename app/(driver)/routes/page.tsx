@@ -66,7 +66,6 @@ function RouteCard({ route }: { route: DriverRoute }) {
         <h2>{groupLabel(route.origin, route.destination)}</h2>
         <p>
           <Clock {...iconProps} size={17} /> יציאה ב־{formatTime(route.out_time)}
-          {" · "}חזרה {route.return_time ? formatTime(route.return_time) : "גמישה"}
         </p>
         <p><Users {...iconProps} size={17} /> {route.seats} מקומות · {formatPrice(route.price)} לטרמפיסטית</p>
         <div className="route-actions">

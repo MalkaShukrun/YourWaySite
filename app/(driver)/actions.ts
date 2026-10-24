@@ -36,7 +36,6 @@ export async function saveRoute(values: RouteValues, routeId: string | null) {
       weekdays: v.weekdays,
       ride_date: v.rideDate,
       out_time: v.outTime,
-      return_time: v.returnTime,
       seats: v.seats,
       price: v.price,
     },

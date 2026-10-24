@@ -31,7 +31,7 @@ export function TodayCard({ ride, date }: { ride: DriverRide & { passengers: Dri
           <div>
             <span>{ride.kind === "recurring" ? "מסלול קבוע" : "נסיעה חד־פעמית"} · יציאה {formatTime(ride.out_time)}</span>
             <h2>{groupLabel(ride.origin, ride.destination)}</h2>
-            <p>{ride.seats} מקומות · חזרה {ride.return_time ? formatTime(ride.return_time) : "גמישה"}</p>
+            <p>{ride.seats} מקומות</p>
           </div>
         </div>
         <div className="today-status-actions">

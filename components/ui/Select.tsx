@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Check, ChevronDown } from "lucide-react";
+import { usePopover } from "./usePopover";
 
 export type SelectOption = { value: string; label: string };
 
@@ -18,25 +19,8 @@ type Props = {
 // The design's dropdown: a field-style trigger and a floating list with the
 // selected option highlighted in lime. Used instead of the native <select>.
 export function Select({ value, options, onChange, label, icon, prefix, compact = false }: Props) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const { open, setOpen, ref } = usePopover();
   const selected = options.find((o) => o.value === value) ?? options[0];
-
-  useEffect(() => {
-    if (!open) return;
-    const close = (event: MouseEvent) => {
-      if (!ref.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("mousedown", close);
-    document.addEventListener("keydown", escape);
-    return () => {
-      document.removeEventListener("mousedown", close);
-      document.removeEventListener("keydown", escape);
-    };
-  }, [open]);
 
   return (
     <div className={`dropdown ${compact ? "compact" : ""} ${open ? "open" : ""}`} ref={ref}>
