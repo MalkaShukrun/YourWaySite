@@ -16,10 +16,14 @@ export const driverNav: NavItem[] = [
 export const profileNav: NavItem = { href: "/profile", label: "הפרופיל שלי", icon: User };
 export const adminNav: NavItem = { href: "/admin/groups", label: "ניהול קבוצות", icon: Settings };
 
-type Mode = "passenger" | "driver";
+export type Mode = "passenger" | "driver";
 
-export function modeFor(pathname: string): Mode {
-  return pathname.startsWith("/dashboard") || pathname.startsWith("/routes") ? "driver" : "passenger";
+// The mode a page belongs to, or null for pages shared by both modes
+// (profile, admin) — those keep whichever mode the user was in.
+export function routeMode(pathname: string): Mode | null {
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/routes")) return "driver";
+  if (pathname.startsWith("/profile") || pathname.startsWith("/admin")) return null;
+  return "passenger";
 }
 
 export function isActive(pathname: string, href: string) {

@@ -35,7 +35,6 @@ async function Routes({ searchParams }: Pick<PageProps<"/routes">, "searchParams
         <section className="panel empty-state">
           <strong>עדיין לא הגדרת מסלולים</strong>
           <span>הגדירי מסלול קבוע או נסיעה חד־פעמית, עם תחנות איסוף והורדה על המפה.</span>
-          <Link className="btn btn-primary" href="/routes/new"><Plus {...iconProps} size={18} /> הוספת מסלול</Link>
         </section>
       ) : (
         <div className="routes-grid">

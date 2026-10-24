@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/brand/Logo";
-import { adminNav, driverNav, isActive, modeFor, passengerNav, profileNav, type NavItem } from "./nav";
+import { adminNav, driverNav, isActive, passengerNav, profileNav, type NavItem } from "./nav";
+import { useMode } from "./useMode";
 
 function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   const Icon = item.icon;
@@ -19,7 +20,7 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
 // `adminSlot` is filled by the server (with <AdminNavLink />) only for admins.
 export function Sidebar({ adminSlot }: { adminSlot: ReactNode }) {
   const pathname = usePathname();
-  const mode = modeFor(pathname);
+  const mode = useMode();
   const nav = mode === "driver" ? driverNav : passengerNav;
 
   return (

@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { Route } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { formatRideDate, formatTime, israelToday, recentMonths } from "@/lib/dates";
-import { formatPrice, getMyBookings, groupLabel, type MyBooking } from "@/lib/rides";
+import { formatPrice, getMyBookings, getMyDriversBank, groupLabel, type MyBooking } from "@/lib/rides";
 import { DriverContact } from "@/components/passenger/DriverContact";
 import { MonthFilter } from "@/components/passenger/MonthFilter";
 import { PaidToggle } from "@/components/passenger/PaidToggle";
@@ -27,7 +27,7 @@ function isCharged(b: MyBooking) {
 
 async function Payments({ searchParams }: Pick<PageProps<"/payments">, "searchParams">) {
   await requireUser();
-  const [query, bookings] = await Promise.all([searchParams, getMyBookings()]);
+  const [query, bookings, banks] = await Promise.all([searchParams, getMyBookings(), getMyDriversBank()]);
   const months = recentMonths(await israelToday());
   const month = typeof query.month === "string" && months.includes(query.month) ? query.month : months[0];
 
@@ -75,7 +75,7 @@ async function Payments({ searchParams }: Pick<PageProps<"/payments">, "searchPa
               </div>
               <PaidToggle bookingId={b.booking_id} isPaid={b.is_paid} price={formatPrice(b.price)} />
               <div className="row-actions">
-                <DriverContact name={b.driver_name} phone={b.driver_phone} email={b.driver_email} />
+                <DriverContact name={b.driver_name} phone={b.driver_phone} email={b.driver_email} bank={banks.get(b.driver_id)} />
               </div>
             </div>
           ))

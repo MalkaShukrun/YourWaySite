@@ -125,3 +125,27 @@ a.nav-item { text-decoration: none; }
 .dropdown-options .calendar-foot button.muted { margin-right: auto; background: transparent; color: #66736C; }
 .dropdown-options .calendar-foot button:disabled { opacity: .45; cursor: default; }
 .date-picker-button { width: auto; }
+
+/* Admin — ride groups (the design's .admin-stats / .group-row) */
+.group-row.is-hidden strong { color: #8A968F; }
+.group-row .row-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.group-row > .confirm-inline { flex-wrap: wrap; }
+.group-dialog-fields { padding: 20px 0 16px; }
+@media (max-width: 780px) { .group-row > .confirm-inline { grid-column: 2; } }
+
+/* Profile — states the static design doesn't show */
+.input-shell.is-readonly { background: #F4F7F5; }
+.input-shell.is-readonly input { color: #59665F; }
+.profile-panel .form-grid .field-hint { margin-top: 2px; }
+.profile-vehicle { margin-top: 4px; }
+.profile-vehicle .btn { flex: 0 0 auto; }
+.profile-subgrid { padding: 14px 0 0; }
+/* Onboarding asks only for name and phone (the email comes from Google), so
+   each field gets the full row. */
+.onboarding-card > .form-grid { grid-template-columns: 1fr; }
+/* Only the phone (last of the personal fields) spans the row; the vehicle and
+   bank grids stay in even columns. */
+.profile-panel .form-grid.compact .field:last-child { grid-column: auto; }
+.profile-panel .profile-subgrid { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 780px) { .profile-panel .profile-subgrid { grid-template-columns: 1fr; } }
+.bank-section-head h3 { display: flex; align-items: center; gap: 8px; }

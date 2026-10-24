@@ -1,16 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { LogOut } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { signOut } from "@/app/(auth)/login/actions";
-import { modeFor } from "./nav";
+import { useMode } from "./useMode";
 
 // Top bar: role switch (SRS §7.1) + the signed-in user's menu.
 export function Header({ userSlot }: { userSlot: ReactNode }) {
-  const mode = modeFor(usePathname());
+  const mode = useMode();
   return (
     <header className="topbar">
       <div className="mobile-logo"><Logo /></div>

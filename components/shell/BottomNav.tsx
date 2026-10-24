@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarDays, Check, Home, Route, Search, Settings, User } from "lucide-react";
-import { isActive, modeFor } from "./nav";
+import { isActive } from "./nav";
+import { useMode } from "./useMode";
 
 const passengerItems = [
   { href: "/", label: "חיפוש", icon: Search },
@@ -22,7 +23,7 @@ const driverItems = [
 // Mobile-only tab bar (hidden on desktop by the design CSS).
 export function BottomNav({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
-  const items = modeFor(pathname) === "driver"
+  const items = useMode() === "driver"
     ? driverItems.filter((item) => isAdmin || item.href !== "/admin/groups")
     : passengerItems;
 
