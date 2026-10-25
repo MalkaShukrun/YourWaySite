@@ -6,6 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Car, Phone, User } from "lucide-react";
 import { onboardingSchema, type OnboardingValues } from "@/lib/validation/profile";
 import { completeProfile } from "@/app/(auth)/login/actions";
+import { iconProps } from "@/components/ui/icon";
+import { FieldError } from "@/components/ui/FieldError";
 
 type Props = { defaultName: string };
 
@@ -49,7 +51,7 @@ export function OnboardingModal({ defaultName }: Props) {
         aria-labelledby="onboarding-title"
         noValidate
       >
-        <span className="modal-icon"><User className="icon" size={20} strokeWidth={1.8} /></span>
+        <span className="modal-icon"><User {...iconProps} size={20} /></span>
         <h2 id="onboarding-title">עוד רגע ואת בדרך</h2>
         <p>השלימי כמה פרטים כדי שנוכל לחבר אותך לנסיעות המתאימות.</p>
 
@@ -57,15 +59,15 @@ export function OnboardingModal({ defaultName }: Props) {
           <label className="field">
             <span>שם מלא</span>
             <div className="input-shell"><input {...register("fullName")} autoComplete="name" /></div>
-            {errors.fullName && <small className="field-error">{errors.fullName.message}</small>}
+            <FieldError message={errors.fullName?.message} />
           </label>
           <label className="field required">
             <span>מספר טלפון</span>
             <div className="input-shell">
-              <Phone className="icon" size={20} strokeWidth={1.8} />
+              <Phone {...iconProps} size={20} />
               <input {...register("phone")} type="tel" inputMode="tel" placeholder="050-000-0000" autoComplete="tel" />
             </div>
-            {errors.phone && <small className="field-error">{errors.phone.message}</small>}
+            <FieldError message={errors.phone?.message} />
           </label>
         </div>
 
@@ -75,17 +77,17 @@ export function OnboardingModal({ defaultName }: Props) {
               <label className="field">
                 <span>סוג רכב</span>
                 <div className="input-shell"><input {...register("vehicleModel")} placeholder="לדוגמה: יונדאי איוניק" /></div>
-                {errors.vehicleModel && <small className="field-error">{errors.vehicleModel.message}</small>}
+                <FieldError message={errors.vehicleModel?.message} />
               </label>
               <label className="field">
                 <span>צבע</span>
                 <div className="input-shell"><input {...register("vehicleColor")} placeholder="לדוגמה: לבן" /></div>
-                {errors.vehicleColor && <small className="field-error">{errors.vehicleColor.message}</small>}
+                <FieldError message={errors.vehicleColor?.message} />
               </label>
               <label className="field">
                 <span>מספר מקומות</span>
                 <div className="input-shell"><input {...register("vehicleSeats")} inputMode="numeric" /></div>
-                {errors.vehicleSeats && <small className="field-error">{errors.vehicleSeats.message}</small>}
+                <FieldError message={errors.vehicleSeats?.message} />
               </label>
             </div>
             <button type="button" className="btn btn-ghost" onClick={() => setValue("hasVehicle", false)}>
@@ -94,7 +96,7 @@ export function OnboardingModal({ defaultName }: Props) {
           </div>
         ) : (
           <div className="optional-car">
-            <Car className="icon" size={20} strokeWidth={1.8} />
+            <Car {...iconProps} size={20} />
             <div>
               <strong>רוצה גם להציע נסיעות?</strong>
               <span>ניתן להוסיף פרטי רכב עכשיו או בהמשך בפרופיל.</span>

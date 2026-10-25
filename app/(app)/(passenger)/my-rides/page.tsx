@@ -10,6 +10,7 @@ import { formatPrice, groupLabel } from "@/lib/format";
 import { CancelBookingButton } from "@/components/passenger/CancelBookingButton";
 import { DriverContact } from "@/components/passenger/DriverContact";
 import { Toast } from "@/components/ui/Toast";
+import { iconProps } from "@/components/ui/icon";
 
 // "My Rides" — upcoming bookings and ride history (SRS §4.3).
 export default function MyRidesPage({ searchParams }: PageProps<"/my-rides">) {
@@ -67,7 +68,7 @@ function BookingRow({ booking, upcoming }: { booking: MyBooking; upcoming: boole
         <span>{formatRideDate(booking.ride_date)}</span>
       </div>
       <div className="activity-route">
-        <Route className="icon" size={20} strokeWidth={1.8} />
+        <Route {...iconProps} size={20} />
         <div>
           <strong>{groupLabel(booking.origin, booking.destination)}</strong>
           <span>{formatPrice(booking.price)}</span>

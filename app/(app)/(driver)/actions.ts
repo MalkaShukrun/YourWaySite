@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
+import { firstIssue, messageForCode } from "@/lib/action-errors";
+import { TIME_PATTERN } from "@/lib/validation/patterns";
 import { routeSchema, type RouteValues } from "@/lib/validation/route";
 
 const ERRORS: Record<string, string> = {
@@ -12,10 +14,7 @@ const ERRORS: Record<string, string> = {
   ROUTE_NOT_FOUND: "המסלול לא נמצא.",
 };
 
-function messageFor(error: { message: string }) {
-  const code = Object.keys(ERRORS).find((key) => error.message.includes(key));
-  return code ? ERRORS[code] : "משהו השתבש. נסי שוב בעוד רגע.";
-}
+const messageFor = (error: { message: string }) => messageForCode(error, ERRORS);
 
 const rideRef = z.object({ routeId: z.uuid(), date: z.iso.date() });
 
@@ -23,7 +22,7 @@ const rideRef = z.object({ routeId: z.uuid(), date: z.iso.date() });
 export async function saveRoute(values: RouteValues, routeId: string | null) {
   await requireUser();
   const parsed = routeSchema.safeParse(values);
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "חלק מהפרטים אינם תקינים." };
+  if (!parsed.success) return { error: firstIssue(parsed.error) };
   if (routeId !== null && !z.uuid().safeParse(routeId).success) return { error: ERRORS.ROUTE_NOT_FOUND };
 
   const v = parsed.data;
@@ -66,7 +65,7 @@ export async function archiveRoute(routeId: string) {
 // Real-time departure update for one date (SRS §5.2).
 export async function updateRideTime(routeId: string, date: string, time: string) {
   await requireUser();
-  if (!rideRef.safeParse({ routeId, date }).success || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
+  if (!rideRef.safeParse({ routeId, date }).success || !TIME_PATTERN.test(time)) {
     return { error: "שעה לא תקינה" };
   }
 

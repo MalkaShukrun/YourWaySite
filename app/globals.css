@@ -70,7 +70,6 @@ a.nav-item { text-decoration: none; }
 .btn.is-armed { background: var(--lime); color: var(--green-dark); border-color: #9BC56D; }
 .route-map.is-adding .leaflet-container { cursor: crosshair; }
 .one-time-date { margin-bottom: 15px; }
-.field-hint { display: block; margin-top: 8px; color: #66736C; font-size: 14px; }
 .editor-map .large-map.route-map { height: 560px; }
 @media (max-width: 1100px) { .editor-map .large-map.route-map { height: 390px; } }
 @media (max-width: 780px) { .editor-map .large-map.route-map { height: 320px; } }
@@ -142,7 +141,6 @@ a.nav-item { text-decoration: none; }
 /* Profile — states the static design doesn't show */
 .input-shell.is-readonly { background: #F4F7F5; }
 .input-shell.is-readonly input { color: #59665F; }
-.profile-panel .form-grid .field-hint { margin-top: 2px; }
 .profile-vehicle { margin-top: 4px; }
 .profile-vehicle .btn { flex: 0 0 auto; }
 .profile-subgrid { padding: 14px 0 0; }

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Clock, Phone } from "lucide-react";
 import { cancelBooking } from "@/app/(app)/(passenger)/actions";
 import { Toast } from "@/components/ui/Toast";
+import { iconProps } from "@/components/ui/icon";
 
 type Props = { bookingId: string; driverName: string; driverPhone: string | null };
 
@@ -32,7 +33,7 @@ export function CancelBookingButton({ bookingId, driverName, driverPhone }: Prop
         <div className="modal-backdrop" onClick={() => setLate(false)}>
           <div className="modal-card small-modal" role="alertdialog" aria-labelledby="late-title" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setLate(false)} aria-label="סגירה">×</button>
-            <span className="modal-icon"><Clock className="icon" size={20} strokeWidth={1.8} /></span>
+            <span className="modal-icon"><Clock {...iconProps} size={20} /></span>
             <h2 id="late-title">הביטול נקלט — ביטול מאוחר</h2>
             <p>
               הביטול בוצע פחות משעתיים לפני היציאה. מומלץ לעדכן את {driverName} בטלפון.
@@ -40,7 +41,7 @@ export function CancelBookingButton({ bookingId, driverName, driverPhone }: Prop
             </p>
             {driverPhone && (
               <a className="btn btn-primary full-button late-call" href={`tel:${driverPhone}`}>
-                <Phone className="icon" size={18} strokeWidth={1.8} /> חיוג אל {driverName}
+                <Phone {...iconProps} size={18} /> חיוג אל {driverName}
               </a>
             )}
           </div>

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createSupabaseMock } from "@/test/supabase-mock";
-import { getMyBookings, getMyDriversBank, getRide, getRideGroups, searchRides } from "./rides";
+import { getMyBookings, getMyDriversBankAccounts, getRide, getRideGroups, searchRides } from "./rides";
 
 const sb = createSupabaseMock();
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => sb.client }));
@@ -85,19 +85,19 @@ describe("getRide", () => {
   });
 });
 
-describe("getMyDriversBank", () => {
+describe("getMyDriversBankAccounts", () => {
   it("formats one line per driver", async () => {
     sb.onRpc("my_drivers_bank", {
       data: [{ driver_id: "d1", bank_account_name: "רחל כהן", bank_name: "בנק הפועלים", bank_branch: "538", bank_account: "4821" }],
     });
-    const banks = await getMyDriversBank();
+    const banks = await getMyDriversBankAccounts();
     expect(banks.get("d1")).toEqual({ holder: "רחל כהן", details: "בנק הפועלים · סניף 538 · חשבון 4821" });
     expect(banks.size).toBe(1);
   });
 
   it("is empty before the migration has run", async () => {
     sb.onRpc("my_drivers_bank", { data: null, error: { message: "function does not exist" } });
-    expect((await getMyDriversBank()).size).toBe(0);
+    expect((await getMyDriversBankAccounts()).size).toBe(0);
   });
 });
 

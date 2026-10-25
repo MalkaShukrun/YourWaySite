@@ -9,8 +9,8 @@ const PUBLIC_PATHS = ["/login", "/auth", "/privacy"];
 export async function updateSession(request: NextRequest) {
   // Supabase falls back to the Site URL (e.g. "/?code=…") when /auth/callback
   // isn't in its Redirect URLs list — hand the code to the callback anyway.
-  const { pathname: path, searchParams } = request.nextUrl;
-  if (path !== "/auth/callback" && (searchParams.has("code") || searchParams.has("error_description"))) {
+  const { pathname, searchParams } = request.nextUrl;
+  if (pathname !== "/auth/callback" && (searchParams.has("code") || searchParams.has("error_description"))) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/callback";
     return NextResponse.redirect(url);
@@ -41,8 +41,7 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const isSignedIn = Boolean(data?.claims);
 
-  const { pathname } = request.nextUrl;
-  const isPublic = PUBLIC_PATHS.some((path) => pathname.startsWith(path));
+  const isPublic = PUBLIC_PATHS.some((publicPath) => pathname.startsWith(publicPath));
 
   if (!isSignedIn && !isPublic) {
     const url = request.nextUrl.clone();

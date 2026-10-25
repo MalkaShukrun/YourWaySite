@@ -1,6 +1,5 @@
 import { z } from "zod";
-
-const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+import { ISO_DATE_PATTERN, TIME_PATTERN } from "@/lib/validation/patterns";
 
 const routeStopSchema = z.object({
   id: z.string(),
@@ -18,7 +17,7 @@ export const routeSchema = z
     kind: z.enum(["recurring", "one_time"]),
     weekdays: z.array(z.number().int().min(0).max(6)),
     rideDate: z.string(),
-    outTime: z.string().regex(TIME, "שעה לא תקינה"),
+    outTime: z.string().regex(TIME_PATTERN, "שעה לא תקינה"),
     seats: z.string().regex(/^[1-8]$/, "בין 1 ל־8 מקומות"),
     price: z.string().regex(/^\d{1,4}(\.\d{1,2})?$/, "מחיר לא תקין"),
     stops: z.array(routeStopSchema),
@@ -27,7 +26,7 @@ export const routeSchema = z
     if (v.kind === "recurring" && v.weekdays.length === 0) {
       ctx.addIssue({ code: "custom", path: ["weekdays"], message: "יש לבחור לפחות יום אחד" });
     }
-    if (v.kind === "one_time" && !/^\d{4}-\d{2}-\d{2}$/.test(v.rideDate)) {
+    if (v.kind === "one_time" && !ISO_DATE_PATTERN.test(v.rideDate)) {
       ctx.addIssue({ code: "custom", path: ["rideDate"], message: "יש לבחור תאריך" });
     }
     if (!v.stops.some((s) => s.kind === "pickup")) {

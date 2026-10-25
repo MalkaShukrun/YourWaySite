@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { SUPPORT_EMAIL } from "@/lib/support";
+import { iconProps } from "@/components/ui/icon";
 
 export const metadata: Metadata = { title: "מדיניות פרטיות · בדרך שלך" };
 
@@ -13,7 +14,7 @@ export default function PrivacyPolicyPage() {
       <header className="legal-header">
         <Logo />
         <Link className="back-link" href="/login">
-          <ArrowLeft className="icon" size={17} strokeWidth={1.8} /> חזרה להתחברות
+          <ArrowLeft {...iconProps} size={17} /> חזרה להתחברות
         </Link>
       </header>
 

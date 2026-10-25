@@ -2,16 +2,16 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
-import { routeMode, type Mode } from "./nav";
+import { modeForPath, type Mode } from "./nav";
 
 // Passenger / driver mode for the shell (SRS §7.1). Mode pages set it; shared
 // pages (profile, admin) show the last mode used, remembered in this browser.
-const KEY = "yourway-mode";
+const STORAGE_KEY = "yourway-mode";
 const listeners = new Set<() => void>();
 
 function readStored(): Mode {
   try {
-    return localStorage.getItem(KEY) === "driver" ? "driver" : "passenger";
+    return localStorage.getItem(STORAGE_KEY) === "driver" ? "driver" : "passenger";
   } catch {
     return "passenger";
   }
@@ -19,8 +19,8 @@ function readStored(): Mode {
 
 function store(mode: Mode) {
   try {
-    if (localStorage.getItem(KEY) === mode) return;
-    localStorage.setItem(KEY, mode);
+    if (localStorage.getItem(STORAGE_KEY) === mode) return;
+    localStorage.setItem(STORAGE_KEY, mode);
   } catch {
     return;
   }
@@ -37,7 +37,7 @@ function subscribe(notify: () => void) {
 }
 
 export function useMode(): Mode {
-  const fromRoute = routeMode(usePathname());
+  const fromRoute = modeForPath(usePathname());
   const stored = useSyncExternalStore(subscribe, readStored, () => "passenger" as Mode);
 
   useEffect(() => {

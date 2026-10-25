@@ -2,14 +2,15 @@ import { Map as MapIcon, Navigation, Phone, Route } from "lucide-react";
 import { formatTime } from "@/lib/dates";
 import type { Stop } from "@/lib/ride-types";
 import type { DriverPassenger, DriverRide } from "@/lib/driver-types";
-import { avatarColorFor, groupLabel, initialsOf } from "@/lib/format";
-import { googleMapsUrl, wazeUrl } from "@/lib/nav-links";
+import { avatarColorFor, groupLabel, initialsOf, routeKindLabel } from "@/lib/format";
+import { googleMapsUrl, wazeUrl } from "@/lib/directions";
 import { CancelForDateButton, TimeUpdateForm } from "@/components/driver/RideDayControls";
-import { LazyRouteMap } from "@/components/map/LazyRouteMap";
+import { LazyRouteMap } from "@/components/map/LazyMaps";
+import { iconProps } from "@/components/ui/icon";
 
-const iconProps = { className: "icon", strokeWidth: 1.8 } as const;
-
-export function TodayCard({ ride, date }: { ride: DriverRide & { passengers: DriverPassenger[]; stops: Stop[] }; date: string }) {
+// One ride on the driver's dashboard for the chosen date: its passengers, a
+// time change or cancellation for that date, and the stops to navigate to.
+export function DriverRideCard({ ride, date }: { ride: DriverRide & { passengers: DriverPassenger[]; stops: Stop[] }; date: string }) {
   const percent = ride.seats ? Math.min(100, Math.round((ride.booked / ride.seats) * 100)) : 0;
   const bookedStopIds = ride.passengers.flatMap((p) => [p.pickup_stop_id, p.dropoff_stop_id]);
   const byPickup = [...ride.passengers].sort((a, b) => a.pickup_position - b.pickup_position);
@@ -21,7 +22,7 @@ export function TodayCard({ ride, date }: { ride: DriverRide & { passengers: Dri
         <div className="today-route">
           <div className="route-badge"><Route {...iconProps} size={20} /></div>
           <div>
-            <span>{ride.kind === "recurring" ? "מסלול קבוע" : "נסיעה חד־פעמית"} · יציאה {formatTime(ride.out_time)}</span>
+            <span>{routeKindLabel(ride.kind)} · יציאה {formatTime(ride.out_time)}</span>
             <h2>{groupLabel(ride.origin, ride.destination)}</h2>
             <p>{ride.seats} מקומות</p>
           </div>

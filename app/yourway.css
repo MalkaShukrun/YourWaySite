@@ -31,10 +31,10 @@ button { cursor: pointer; }
 .activity-date, .passenger-name, .driver, .today-route, .activity-route, .route-card-body { text-align: right; }
 .time-control input, .price-input input { text-align: center; }
 .logo-wrap, .sidebar-help, .header-user, .welcome, .search-heading, .trip-card, .today-card, .panel, .route-card, .profile-panel, .bank-section, .vehicle-section, .modal-card { text-align: right; }
-.avatar, .logo-mark, .help-icon, .notification, .stat-icon, .route-badge, .passenger-number, .seat-icon, .map-pin, .stop-pin, .map-zoom button { text-align: center; }
-.side-nav, .nav-item, .field > span, .driver-contact-card, .notification-item, .group-row { text-align: right; }
+.avatar, .logo-mark, .help-icon, .stat-icon, .route-badge, .passenger-number, .seat-icon, .map-pin { text-align: center; }
+.side-nav, .nav-item, .field > span, .driver-contact-card, .group-row { text-align: right; }
 .role-switch, .activity-tabs, .day-picker, .kind-switch { text-align: center; }
-.trip-type, .status-pill, .count-pill, .paid-pill, .nav-badge { justify-content: center; text-align: center; }
+.trip-type, .status-pill, .count-pill, .paid-pill { justify-content: center; text-align: center; }
 .route-names > div:first-child { text-align: right; }
 .route-names > div:last-child { text-align: left; }
 .payment-summary > div, .stat-card > div { text-align: center; }
@@ -57,7 +57,6 @@ button { cursor: pointer; }
 .nav-item { width: 100%; border: 0; background: transparent; display: flex; align-items: center; gap: 13px; color: #68766f; padding: 12px 13px; border-radius: 11px; margin-bottom: 5px; font-size: 18px; text-align: right; transition: .2s ease; }
 .nav-item:hover { background: #EEF3F6; color: var(--green); }
 .nav-item.active { background: var(--lime); color: var(--green-dark); font-weight: 800; box-shadow: inset 0 0 0 1px rgba(42,74,96,.08); }
-.nav-badge { margin-right: auto; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 8px; display: grid; place-items: center; font-size: 15px; color: #fff; background: var(--green); }
 .nav-divider { height: 1px; background: var(--line); margin: 21px 8px; }
 .sidebar-help { background: #F3F1F8; border: 1px solid #E6E1EF; border-radius: 14px; padding: 13px; display: flex; align-items: center; gap: 10px; color: #665B7A; }
 .help-icon { width: 29px; height: 29px; border-radius: 50%; display: grid; place-items: center; background: #E2DCEE; font-weight: 800; }
@@ -74,9 +73,6 @@ button { cursor: pointer; }
 .role-switch button { border: 0; background: transparent; color: #59665F; padding: 7px 18px; min-width: 132px; border-radius: 8px; font-size: 16px; font-weight: 600; transition: .2s ease; text-align: center; }
 .role-switch button.active { color: var(--green-dark); background: var(--lime); font-weight: 800; box-shadow: 0 3px 9px rgba(42,74,96,.14); }
 .header-actions { display: flex; align-items: center; gap: 22px; }
-.notification { width: 38px; height: 38px; border: 0; color: #5d6c65; background: transparent; border-radius: 50%; display: grid; place-items: center; position: relative; }
-.notification:hover { background: var(--green-soft); }
-.notification span { position: absolute; top: 7px; right: 8px; width: 7px; height: 7px; background: #db715f; border: 2px solid white; border-radius: 50%; }
 .user-menu-wrap { position: relative; }
 .header-user { display: flex; align-items: center; gap: 10px; border: 0; background: transparent; color: var(--ink); padding: 4px; border-radius: 11px; text-align: right; }
 .header-user:hover { background: #F3F5F4; }
@@ -97,7 +93,6 @@ button { cursor: pointer; }
 .welcome { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 27px; }
 .welcome p { color: #59665F; font-size: 17px; margin: 0 0 3px; }
 .welcome h1 { color: var(--ink); font-size: 29px; line-height: 1.2; margin: 0; font-weight: 800; letter-spacing: -.5px; }
-.date-pill { display: inline-flex; align-items: center; gap: 8px; color: #68776f; font-size: 16px; padding: 8px 12px; background: #fff; border: 1px solid var(--line); border-radius: 9px; }
 .search-card { background: #FFFFFF; border: 1px solid var(--line); border-top: 4px solid var(--lime); border-radius: 20px; padding: 22px 28px 28px; overflow: visible; position: relative; box-shadow: 0 7px 24px rgba(36,52,47,.045); }
 .search-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
 .search-heading .eyebrow { color: #59665F; font-size: 15px; font-weight: 600; }
@@ -164,7 +159,6 @@ button { cursor: pointer; }
 .seats strong { font-size: 16px; color: #43504a; }
 .seats span { font-size: 14px; color: #66736C; }
 .trip-footer .btn { padding: 0 11px; min-height: 37px; font-size: 16px; }
-.load-more { margin: 25px auto 0; border: 0; background: transparent; color: var(--green); display: flex; align-items: center; gap: 7px; font-size: 16px; font-weight: 700; }
 
 .dashboard-actions { display: flex; gap: 10px; }
 .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
@@ -204,17 +198,12 @@ button { cursor: pointer; }
 .passengers-head span { color: #66736C; font-size: 15px; }
 .capacity { display: block; width: 110px; height: 5px; background: #e9eeeb; border-radius: 10px; overflow: hidden; }
 .capacity i { display: block; height: 100%; background: #77a390; border-radius: inherit; }
-.capacity-three-quarters { width: 75%; }
 .passenger-list { border-top: 1px solid var(--line); }
 .passenger-row { min-height: 72px; display: grid; grid-template-columns: 25px 40px 1fr auto; align-items: center; gap: 11px; padding: 10px 25px; border-bottom: 1px solid #edf0ee; }
 .passenger-number { width: 23px; height: 23px; border-radius: 50%; background: #f3f5f4; color: #59665F; display: grid; place-items: center; font-size: 15px; }
 .passenger-name { display: flex; flex-direction: column; }
 .passenger-name strong { font-size: 16px; }
 .passenger-name span { font-size: 15px; color: #66736C; direction: ltr; text-align: right; }
-.stop-detail { display: flex; align-items: center; gap: 9px; color: #718e81; }
-.stop-detail div { display: flex; flex-direction: column; }
-.stop-detail span { color: #66736C; font-size: 14px; }
-.stop-detail strong { color: #59665f; font-size: 16px; font-weight: 600; }
 .row-actions { display: flex; gap: 7px; }
 .passenger-call { direction: ltr; font-size: 16px; padding-inline: 11px; }
 .passenger-email { direction: ltr; font-size: 15px; padding-inline: 11px; text-transform: lowercase; }
@@ -238,7 +227,6 @@ button { cursor: pointer; }
 .daily-stop .btn { width: 34px; min-height: 34px; }
 .daily-stop.destination > span { background: var(--lime); color: var(--green-dark); }
 .daily-stop.dropoff-stop > span { background: #C2703D; }
-.today-footer { padding: 15px 25px; display: flex; align-items: center; justify-content: space-between; }
 
 .activity-tabs { display: flex; border-bottom: 1px solid var(--line); gap: 28px; margin-bottom: 18px; }
 .activity-tabs button { border: 0; border-bottom: 2px solid transparent; background: transparent; padding: 0 4px 11px; color: #59665F; font-weight: 600; }
@@ -308,26 +296,11 @@ button { cursor: pointer; }
 .detail-meta span { flex: 1; display: flex; align-items: center; gap: 7px; color: #68766f; font-size: 16px; }
 .map-panel { overflow: hidden; }
 .large-map { height: 330px; background: #E8ECEE; position: relative; overflow: hidden; }
-.map-grid { position: absolute; inset: 0; opacity: .48; background-image: linear-gradient(32deg, transparent 48%, #fff 49%, #fff 53%, transparent 54%), linear-gradient(112deg, transparent 43%, #d7e1dc 44%, #d7e1dc 47%, transparent 48%); background-size: 110px 90px, 140px 120px; }
-.map-route-path { position: absolute; width: 65%; height: 160px; border: 5px solid var(--green); border-color: var(--green) transparent transparent var(--green); border-radius: 50%; top: 100px; right: 15%; transform: rotate(-8deg); opacity: .78; }
-.map-label { position: absolute; z-index: 2; background: rgba(255,255,255,.88); color: #5b6862; border-radius: 6px; padding: 4px 7px; font-size: 15px; box-shadow: 0 2px 5px rgba(38,62,54,.08); }
-.label-a { right: 13%; bottom: 19%; }
-.label-b { left: 10%; top: 15%; }
-.stop-pin { position: absolute; width: 32px; height: 32px; z-index: 3; color: white; background: var(--green); border: 3px solid white; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 5px 10px rgba(30,55,71,.28); }
-.stop-pin b { font-size: 16px; }
-.stop-one { right: 23%; bottom: 24%; }
-.stop-two { right: 48%; top: 43%; }
-.stop-three { left: 19%; top: 22%; }
-.drop-pin { background: #C2703D; }
-.drop-one { left: 12%; top: 42%; }
-.drop-two { left: 31%; top: 15%; }
 .map-legend { position: absolute; right: 14px; bottom: 14px; z-index: 4; display: flex; gap: 12px; background: rgba(255,255,255,.92); padding: 7px 10px; border-radius: 8px; box-shadow: 0 3px 10px rgba(38,62,54,.1); }
 .map-legend span { display: flex; align-items: center; gap: 5px; color: #59665F; font-size: 14px; }
 .map-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 .pickup-dot { background: var(--green); }
 .dropoff-dot { background: #C2703D; }
-.map-zoom { position: absolute; left: 14px; bottom: 14px; z-index: 4; display: flex; flex-direction: column; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(38,62,54,.14); }
-.map-zoom button { width: 32px; height: 30px; border: 0; border-bottom: 1px solid var(--line); background: white; color: var(--green); font-size: 18px; }
 .detail-side { position: sticky; top: 96px; display: flex; flex-direction: column; gap: 14px; }
 .detail-side .detail-summary-top { align-items: stretch; flex-direction: column; gap: 11px; }
 .detail-side .vehicle-chip { justify-content: flex-start; }
@@ -440,20 +413,6 @@ button { cursor: pointer; }
 .optional-car span { color: #59665F; font-size: 14px; }
 .required > span:after { content: " *"; color: #bd6357; }
 
-.drawer-backdrop { position: fixed; inset: 0; z-index: 55; background: rgba(25,41,35,.28); }
-.notification-drawer { position: absolute; top: 0; bottom: 0; left: 0; width: min(390px, 92vw); background: white; padding: 24px; box-shadow: 10px 0 35px rgba(20,42,34,.18); animation: drawer-in .25s ease; }
-@keyframes drawer-in { from { transform: translateX(-100%); } }
-.drawer-head { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 19px; border-bottom: 1px solid var(--line); }
-.drawer-head h2 { margin: 0; font-size: 22px; }
-.drawer-head span { color: #59665F; font-size: 16px; }
-.drawer-head button { width: 34px; height: 34px; border: 0; border-radius: 50%; background: #f2f5f3; color: #64726b; font-size: 19px; }
-.notification-list { margin-bottom: 20px; }
-.notification-item { display: flex; gap: 11px; padding: 17px 0; border-bottom: 1px solid var(--line); }
-.notification-item > span { width: 37px; height: 37px; flex: 0 0 auto; border-radius: 11px; display: grid; place-items: center; background: var(--green-soft); color: var(--green); }
-.notification-item > div { display: flex; flex-direction: column; }
-.notification-item strong { font-size: 15px; }
-.notification-item p { color: #75817b; font-size: 16px; margin: 2px 0; }
-.notification-item small { color: #66736C; font-size: 14px; }
 
 .auth-page { min-height: 100vh; display: grid; grid-template-columns: 1.12fr .88fr; grid-template-rows: 64px minmax(0, 1fr) 42px; grid-template-areas: "header header" "brand form" "footer footer"; gap: 14px 18px; padding: 10px 18px; background: #F7FAF6; overflow: auto; direction: ltr; }
 .landing-header { grid-area: header; direction: rtl; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; }
@@ -465,13 +424,9 @@ button { cursor: pointer; }
 .auth-brand { grid-area: brand; direction: rtl; min-height: 0; background: linear-gradient(145deg, #E6F9C5 0%, #D7F5A5 64%, #C8E995 100%); border: 1px solid #C4E391; border-radius: 28px; padding: 38px clamp(35px, 7vw, 92px); display: flex; flex-direction: column; justify-content: flex-start; position: relative; overflow: hidden; }
 .auth-brand:before { content: ""; position: absolute; width: 470px; height: 470px; border: 1px solid rgba(42,74,96,.14); border-radius: 50%; left: -200px; bottom: -170px; box-shadow: 0 0 0 55px rgba(42,74,96,.035), 0 0 0 110px rgba(42,74,96,.025); }
 .auth-brand > .logo-wrap { position: relative; z-index: 2; }
-.auth-brand-copy { position: relative; z-index: 3; max-width: 88%; margin-top: clamp(38px, 6vh, 68px); }
 .auth-brand .eyebrow { color: var(--green); font-size: 15px; font-weight: 800; }
 .auth-brand h1 { font-size: clamp(45px, 5.2vw, 72px); line-height: 1.02; color: var(--green-dark); margin: 13px 0 22px; letter-spacing: -2px; }
 .auth-brand p { color: #4F6158; max-width: 520px; font-size: 19px; line-height: 1.65; }
-.auth-benefits { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 24px; }
-.auth-benefits span { min-height: 36px; display: inline-flex; align-items: center; gap: 7px; color: var(--green-dark); background: rgba(255,255,255,.58); border: 1px solid rgba(255,255,255,.72); border-radius: 18px; padding: 0 11px; font-size: 15px; font-weight: 700; }
-.auth-benefits .icon { color: var(--green); }
 .auth-road-scene { position: absolute; left: clamp(25px, 4vw, 65px); bottom: 30px; width: 72%; height: 34%; z-index: 2; border-radius: 28px; background: rgba(255,255,255,.42); border: 1px solid rgba(255,255,255,.64); overflow: hidden; box-shadow: inset 0 1px 0 rgba(255,255,255,.5); }
 .scene-circle { position: absolute; border-radius: 50%; border: 1px solid rgba(42,74,96,.14); }
 .circle-one { width: 170px; height: 170px; left: -70px; top: -65px; box-shadow: 0 0 0 35px rgba(42,74,96,.025); }
@@ -514,9 +469,6 @@ button { cursor: pointer; }
 .vehicle-section { background: #f6f8f7; border-radius: 14px; padding: 18px; display: flex; align-items: center; justify-content: space-between; }
 .vehicle-section > div:first-child h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 18px; }
 .vehicle-section > div:first-child span { color: #59665F; font-size: 15px; }
-.vehicle-data { display: flex; gap: 35px; }
-.vehicle-data > span { display: flex; flex-direction: column; font-size: 16px; font-weight: 600; }
-.vehicle-data small { color: #66736C; font-size: 14px; font-weight: 400; }
 .profile-save { display: flex; justify-content: flex-end; padding-top: 20px; }
 .bottom-nav { display: none; }
 .mobile-support { display: none; }
@@ -536,7 +488,6 @@ button { cursor: pointer; }
   .editor-layout { grid-template-columns: 1fr; }
   .editor-map { position: static; }
   .editor-map .large-map { height: 390px; }
-  .auth-brand-copy { max-width: 92%; margin-top: 38px; }
   .auth-brand h1 { font-size: 48px; }
   .auth-road-scene { width: 76%; height: 30%; }
 }
@@ -555,7 +506,6 @@ button { cursor: pointer; }
   .page-content { padding: 25px 16px 35px; }
   .welcome { align-items: flex-start; gap: 16px; }
   .welcome h1 { font-size: 25px; }
-  .date-pill { display: none; }
   .search-card { padding: 21px 17px; border-radius: 17px; }
   .search-art { display: none; }
   .filters { grid-template-columns: 1fr; }
@@ -580,7 +530,6 @@ button { cursor: pointer; }
   .time-control { width: 100%; }
   .time-control .btn { flex: 1; }
   .passenger-row { grid-template-columns: 25px 39px 1fr auto; padding: 11px 14px; }
-  .stop-detail { grid-column: 2 / 4; padding-right: 2px; }
   .row-actions { grid-column: 4; grid-row: 1 / 3; }
   .passenger-call { width: 39px; padding: 0; }
   .passenger-call span { display: none; }
@@ -588,8 +537,6 @@ button { cursor: pointer; }
   .today-header { padding: 18px; }
   .today-status-actions { align-items: flex-end; flex-direction: column; gap: 4px; }
   .today-status-actions .btn-ghost { min-height: 28px; padding: 0; font-size: 14px; }
-  .today-footer { padding: 14px 18px; }
-  .today-footer .btn-ghost { font-size: 16px; }
   .daily-route-preview { margin: 14px; grid-template-columns: 1fr; }
   .daily-map .large-map { height: 230px; }
   .routes-grid { grid-template-columns: 1fr; }
@@ -600,7 +547,6 @@ button { cursor: pointer; }
   .form-grid { grid-template-columns: 1fr; }
   .onboarding-card .form-grid .field:last-child, .profile-panel .form-grid .field:last-child { grid-column: auto; }
   .vehicle-section { align-items: flex-start; flex-direction: column; gap: 18px; }
-  .vehicle-data { width: 100%; justify-content: space-between; gap: 10px; }
   .detail-route { grid-template-columns: 1fr .7fr 1fr; gap: 8px; }
   .detail-route h1 { font-size: 19px; }
   .detail-meta { flex-direction: column; }

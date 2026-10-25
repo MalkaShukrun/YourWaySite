@@ -7,9 +7,8 @@ import { formatRideDate, formatTime, isIsoDate } from "@/lib/dates";
 import { getRide } from "@/lib/rides";
 import { avatarColorFor, initialsOf, kindLabel, seatsText } from "@/lib/format";
 import { BookingForm } from "@/components/passenger/BookingForm";
-
-const iconProps = { className: "icon", strokeWidth: 1.8 } as const;
-const UUID = /^[0-9a-f-]{36}$/i;
+import { iconProps } from "@/components/ui/icon";
+import { isUuid } from "@/lib/validation/patterns";
 
 // Ride details & booking (SRS §4.2).
 export default function RidePage({ params, searchParams }: PageProps<"/ride/[id]">) {
@@ -19,17 +18,17 @@ export default function RidePage({ params, searchParams }: PageProps<"/ride/[id]
         <ArrowLeft {...iconProps} size={17} /> חזרה לכל הנסיעות
       </Link>
       <Suspense fallback={<div className="detail-layout" aria-busy="true" />}>
-        <RideDetails params={params} searchParams={searchParams} />
+        <RideDetailsView params={params} searchParams={searchParams} />
       </Suspense>
     </main>
   );
 }
 
-async function RideDetails({ params, searchParams }: PageProps<"/ride/[id]">) {
+async function RideDetailsView({ params, searchParams }: PageProps<"/ride/[id]">) {
   await requireUser();
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const date = query.date;
-  if (!UUID.test(id) || !isIsoDate(date)) notFound();
+  if (!isUuid(id) || !isIsoDate(date)) notFound();
 
   const result = await getRide(id, date);
   if (!result) notFound();

@@ -3,8 +3,9 @@
 import type { ReactNode } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { usePopover } from "./usePopover";
+import { iconProps } from "@/components/ui/icon";
 
-export type SelectOption = { value: string; label: string };
+type SelectOption = { value: string; label: string };
 
 type Props = {
   value: string;
@@ -54,7 +55,7 @@ export function Select({ value, options, onChange, label, icon, prefix, compact 
                 }}
               >
                 <span>{option.label}</span>
-                {isSelected && <Check className="icon" size={16} strokeWidth={1.8} />}
+                {isSelected && <Check {...iconProps} size={16} />}
               </button>
             );
           })}

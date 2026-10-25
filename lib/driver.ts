@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getRouteStops } from "@/lib/rides";
 import type { Stop } from "@/lib/ride-types";
 import type { DriverPassenger, DriverRide, DriverRoute, EditableRoute } from "@/lib/driver-types";
 
@@ -61,7 +62,7 @@ export async function getMyRoutes(driverId: string): Promise<DriverRoute[]> {
 
 export async function getRouteForEdit(driverId: string, routeId: string): Promise<EditableRoute | null> {
   const supabase = await createClient();
-  const [{ data: route }, { data: stops }] = await Promise.all([
+  const [{ data: route }, stops] = await Promise.all([
     supabase
       .from("routes")
       .select(ROUTE_COLUMNS)
@@ -69,13 +70,8 @@ export async function getRouteForEdit(driverId: string, routeId: string): Promis
       .eq("driver_id", driverId)
       .eq("is_active", true)
       .maybeSingle(),
-    supabase
-      .from("stops")
-      .select("id, kind, label, lat, lng")
-      .eq("route_id", routeId)
-      .eq("is_active", true)
-      .order("position"),
+    getRouteStops(routeId),
   ]);
   if (!route) return null;
-  return { ...flatten(route as unknown as RouteRow), stops: (stops ?? []) as Stop[] };
+  return { ...flatten(route as unknown as RouteRow), stops };
 }

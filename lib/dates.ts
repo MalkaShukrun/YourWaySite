@@ -2,9 +2,10 @@ import { addMonths, format, getHours, parseISO } from "date-fns";
 import { he } from "date-fns/locale";
 import { TZDate } from "@date-fns/tz";
 import { io } from "next/cache";
+import { WEEKDAY_LETTERS } from "@/lib/format";
+import { ISO_DATE_PATTERN } from "@/lib/validation/patterns";
 
 const TIME_ZONE = "Asia/Jerusalem";
-const WEEKDAY_LETTERS = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"];
 
 // The current moment in Israel (the server may run in UTC). Awaiting io()
 // first keeps the clock out of Next's prerendered shell — call these from
@@ -41,7 +42,7 @@ export function formatTime(time: string | null) {
 }
 
 export function isIsoDate(value: unknown): value is string {
-  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(parseISO(value).getTime());
+  return typeof value === "string" && ISO_DATE_PATTERN.test(value) && !Number.isNaN(parseISO(value).getTime());
 }
 
 // "2025-06" → "יוני 2025"

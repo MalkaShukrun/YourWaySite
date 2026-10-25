@@ -1,4 +1,5 @@
 import { Car, MapPin } from "lucide-react";
+import { iconProps } from "@/components/ui/icon";
 
 export function AuthRoadIllustration({ mobile = false }: { mobile?: boolean }) {
   return (
@@ -6,10 +7,10 @@ export function AuthRoadIllustration({ mobile = false }: { mobile?: boolean }) {
       <span className="scene-circle circle-one"></span>
       <span className="scene-circle circle-two"></span>
       <div className="scene-road"><i></i><i></i><i></i><i></i></div>
-      <span className="scene-pin pin-start"><MapPin className="icon" size={22} strokeWidth={1.8} /></span>
-      <span className="scene-pin pin-end"><MapPin className="icon" size={22} strokeWidth={1.8} /></span>
+      <span className="scene-pin pin-start"><MapPin {...iconProps} size={22} /></span>
+      <span className="scene-pin pin-end"><MapPin {...iconProps} size={22} /></span>
       <div className="scene-car">
-        <Car className="icon" size={48} strokeWidth={1.8} />
+        <Car {...iconProps} size={48} />
         <span></span>
       </div>
     </div>

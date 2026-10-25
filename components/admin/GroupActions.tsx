@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { deleteGroup, setGroupActive } from "@/app/(app)/admin/actions";
 import { GroupDialog } from "@/components/admin/GroupDialog";
+import { ConfirmInline } from "@/components/ui/ConfirmInline";
 import { Toast } from "@/components/ui/Toast";
 
 type Props = { group: { id: string; origin: string; destination: string }; active: boolean; routeCount: number };
@@ -24,13 +25,14 @@ export function GroupActions({ group, active, routeCount }: Props) {
 
   if (confirming) {
     return (
-      <span className="confirm-inline">
-        <span>למחוק את הקבוצה?</span>
-        <button className="btn btn-ghost" disabled={pending} onClick={() => run(() => deleteGroup(group.id))}>
-          {pending ? "מוחק..." : "כן, למחוק"}
-        </button>
-        <button className="btn btn-secondary" onClick={() => setConfirming(false)}>ביטול</button>
-      </span>
+      <ConfirmInline
+        question="למחוק את הקבוצה?"
+        confirmLabel="כן, למחוק"
+        pendingLabel="מוחק..."
+        pending={pending}
+        onConfirm={() => run(() => deleteGroup(group.id))}
+        onCancel={() => setConfirming(false)}
+      />
     );
   }
 

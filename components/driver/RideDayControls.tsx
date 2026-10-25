@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Clock } from "lucide-react";
 import { setRideCancelled, updateRideTime } from "@/app/(app)/(driver)/actions";
 import { Toast } from "@/components/ui/Toast";
+import { iconProps } from "@/components/ui/icon";
 
 type RideRef = { routeId: string; date: string };
 
@@ -22,7 +23,7 @@ export function TimeUpdateForm({ routeId, date, time, disabled }: RideRef & { ti
   return (
     <div className="time-update">
       <div>
-        <Clock className="icon" size={20} strokeWidth={1.8} />
+        <Clock {...iconProps} size={20} />
         <div>
           <strong>שעת יציאה מעודכנת</strong>
           <span>שינוי השעה חל על התאריך הזה בלבד</span>

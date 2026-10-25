@@ -15,9 +15,9 @@ import {
 import { he } from "date-fns/locale";
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { usePopover } from "./usePopover";
+import { iconProps } from "@/components/ui/icon";
 
 const WEEKDAY_LETTERS = ["א", "ב", "ג", "ד", "ה", "ו", "ש"];
-const iconProps = { className: "icon", strokeWidth: 1.8 } as const;
 
 type Props = {
   value: string; // "YYYY-MM-DD", or "" for no date

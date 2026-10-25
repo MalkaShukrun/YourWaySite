@@ -3,9 +3,10 @@
 import { useOptimistic, useTransition } from "react";
 import { Check } from "lucide-react";
 import { setBookingPaid } from "@/app/(app)/(passenger)/actions";
+import { iconProps } from "@/components/ui/icon";
 
 // Personal "Paid / Unpaid" toggle — only the passenger sees it (SRS §4.3).
-export function PaidToggle({ bookingId, isPaid, price }: { bookingId: string; isPaid: boolean; price: string }) {
+export function PaidToggle({ bookingId, isPaid, priceLabel }: { bookingId: string; isPaid: boolean; priceLabel: string }) {
   const [, startTransition] = useTransition();
   const [paid, setPaid] = useOptimistic(isPaid);
 
@@ -22,7 +23,7 @@ export function PaidToggle({ bookingId, isPaid, price }: { bookingId: string; is
       aria-pressed={paid}
       title="לחצי כדי לשנות את סטטוס התשלום"
     >
-      {paid && <Check className="icon" size={15} strokeWidth={1.8} />} {price} · {paid ? "שולם" : "לא שולם"}
+      {paid && <Check {...iconProps} size={15} />} {priceLabel} · {paid ? "שולם" : "לא שולם"}
     </button>
   );
 }

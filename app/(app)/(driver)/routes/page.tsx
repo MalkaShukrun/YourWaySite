@@ -3,13 +3,12 @@ import Link from "next/link";
 import { Clock, MapPin, Plus, Users } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { formatRideDate, formatTime } from "@/lib/dates";
-import { formatPrice, groupLabel, weekdaysLabel } from "@/lib/format";
+import { formatPrice, groupLabel, routeKindLabel, weekdaysLabel } from "@/lib/format";
 import { getMyRoutes } from "@/lib/driver";
 import type { DriverRoute } from "@/lib/driver-types";
 import { ArchiveRouteButton } from "@/components/driver/ArchiveRouteButton";
 import { Toast } from "@/components/ui/Toast";
-
-const iconProps = { className: "icon", strokeWidth: 1.8 } as const;
+import { iconProps } from "@/components/ui/icon";
 
 // Route management (SRS §5.1).
 export default function DriverRoutesPage({ searchParams }: PageProps<"/routes">) {
@@ -59,7 +58,7 @@ function RouteCard({ route }: { route: DriverRoute }) {
       <div className="route-card-body">
         <div className="trip-top">
           <span className={`trip-type ${route.kind === "one_time" ? "special" : ""}`}>
-            {route.kind === "recurring" ? "מסלול קבוע" : "נסיעה חד־פעמית"}
+            {routeKindLabel(route.kind)}
           </span>
           <span>{route.kind === "recurring" ? weekdaysLabel(route.weekdays) : route.ride_date && formatRideDate(route.ride_date)}</span>
         </div>

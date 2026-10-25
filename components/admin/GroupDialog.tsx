@@ -7,8 +7,8 @@ import { MapPin, Plus, Route } from "lucide-react";
 import { createGroup, updateGroup } from "@/app/(app)/admin/actions";
 import { groupSchema, type GroupValues } from "@/lib/validation/group";
 import { Toast } from "@/components/ui/Toast";
-
-const iconProps = { className: "icon", strokeWidth: 1.8 } as const;
+import { iconProps } from "@/components/ui/icon";
+import { FieldError } from "@/components/ui/FieldError";
 
 type Props = { group?: { id: string; origin: string; destination: string } };
 
@@ -66,12 +66,12 @@ export function GroupDialog({ group }: Props) {
               <label className="field">
                 <span>נקודת מוצא</span>
                 <div className="input-shell"><MapPin {...iconProps} size={20} /><input {...register("origin")} placeholder="לדוגמה: בית שמש" autoFocus /></div>
-                {errors.origin && <small className="field-error">{errors.origin.message}</small>}
+                <FieldError message={errors.origin?.message} />
               </label>
               <label className="field">
                 <span>יעד</span>
                 <div className="input-shell"><MapPin {...iconProps} size={20} /><input {...register("destination")} placeholder="לדוגמה: ירושלים" /></div>
-                {errors.destination && <small className="field-error">{errors.destination.message}</small>}
+                <FieldError message={errors.destination?.message} />
               </label>
             </div>
             {serverError && <p className="form-alert" role="alert">{serverError}</p>}

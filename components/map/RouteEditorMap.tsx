@@ -3,12 +3,13 @@
 import "leaflet/dist/leaflet.css";
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
-import { MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, Marker, Tooltip, useMap, useMapEvents } from "react-leaflet";
 import { MapPin } from "lucide-react";
 import type { Area } from "@/lib/places";
+import { iconProps } from "@/components/ui/icon";
+import { isPlaced, MapLegend, MapTiles, RoutePath, stopPinIcon } from "./mapParts";
 
 type EditorStop = { kind: "pickup" | "dropoff"; label: string; lat: number | null; lng: number | null };
-type PlacedStop = EditorStop & { lat: number; lng: number };
 
 type Props = {
   stops: EditorStop[];
@@ -20,8 +21,6 @@ type Props = {
 
 // Beit Shemesh ↔ Jerusalem, the area the starter ride groups cover.
 const DEFAULT_CENTER: [number, number] = [31.76, 35.09];
-
-const isPlaced = (s: EditorStop): s is PlacedStop => s.lat !== null && s.lng !== null;
 
 // Optional map for the route's stops (SRS §5.1): click to place the chosen
 // stop, drag a pin to move it. Stops without a location just aren't drawn.
@@ -42,26 +41,16 @@ export default function RouteEditorMap({ stops, area, placing, onPlace, onMove }
         maxBoundsViscosity={1}
         style={{ height: "100%", width: "100%" }}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        <MapTiles />
         <LimitToArea area={area} />
         <ClickToAdd enabled={placing !== null} area={area} onAdd={onPlace} />
-        {ordered.length > 1 && (
-          <Polyline positions={ordered.map((s) => [s.lat, s.lng])} pathOptions={{ color: "#2A4A60", weight: 5, opacity: 0.85 }} />
-        )}
+        <RoutePath positions={ordered.map((s) => [s.lat, s.lng])} />
         {stops.map((stop, index) => !isPlaced(stop) ? null : (
           <Marker
             key={index}
             position={[stop.lat, stop.lng]}
             draggable
-            icon={L.divIcon({
-              className: "",
-              html: `<span class="leaflet-stop-pin ${stop.kind === "dropoff" ? "drop" : ""}"><b>${numberOf(index)}</b></span>`,
-              iconSize: [32, 32],
-              iconAnchor: [16, 16],
-            })}
+            icon={stopPinIcon(stop.kind, numberOf(index))}
             eventHandlers={{
               dragend: (e) => {
                 const { lat, lng } = (e.target as L.Marker).getLatLng();
@@ -75,14 +64,11 @@ export default function RouteEditorMap({ stops, area, placing, onPlace, onMove }
       </MapContainer>
       {placing && (
         <div className="map-hint" dir="rtl">
-          <MapPin className="icon" size={17} strokeWidth={1.8} />
+          <MapPin {...iconProps} size={17} />
           לחצי על המפה במקום {placing === "pickup" ? "תחנת האיסוף" : "תחנת ההורדה"}
         </div>
       )}
-      <div className="map-legend" dir="rtl">
-        <span><i className="pickup-dot"></i>איסוף</span>
-        <span><i className="dropoff-dot"></i>הורדה</span>
-      </div>
+      <MapLegend />
     </div>
   );
 }

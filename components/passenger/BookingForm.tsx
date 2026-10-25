@@ -6,7 +6,8 @@ import { Check } from "lucide-react";
 import { bookRide } from "@/app/(app)/(passenger)/actions";
 import type { Stop } from "@/lib/ride-types";
 import { formatPrice } from "@/lib/format";
-import { LazyRouteMap } from "@/components/map/LazyRouteMap";
+import { LazyRouteMap } from "@/components/map/LazyMaps";
+import { iconProps } from "@/components/ui/icon";
 
 type Props = {
   routeId: string;
@@ -107,7 +108,7 @@ function StopOptions({
         >
           <span className="radio-dot"></span>
           <div><strong>{stop.label}</strong><small>{hint} {index + 1}</small></div>
-          {selected === stop.id && <Check className="icon" size={17} strokeWidth={1.8} />}
+          {selected === stop.id && <Check {...iconProps} size={17} />}
         </button>
       ))}
     </div>

@@ -5,14 +5,15 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { SUPPORT_EMAIL } from "@/lib/support";
-import { adminNav, driverNav, isActive, passengerNav, profileNav, type NavItem } from "./nav";
+import { iconProps } from "@/components/ui/icon";
+import { adminNavItem, driverNavItems, isNavItemActive, passengerNavItems, profileNavItem, type NavItem } from "./nav";
 import { useMode } from "./useMode";
 
 function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   const Icon = item.icon;
   return (
-    <Link href={item.href} className={`nav-item ${isActive(pathname, item.href) ? "active" : ""}`}>
-      <Icon className="icon" size={20} strokeWidth={1.8} />
+    <Link href={item.href} className={`nav-item ${isNavItemActive(pathname, item.href) ? "active" : ""}`}>
+      <Icon {...iconProps} size={20} />
       <span>{item.label}</span>
     </Link>
   );
@@ -22,18 +23,18 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
 export function Sidebar({ adminSlot }: { adminSlot: ReactNode }) {
   const pathname = usePathname();
   const mode = useMode();
-  const nav = mode === "driver" ? driverNav : passengerNav;
+  const items = mode === "driver" ? driverNavItems : passengerNavItems;
 
   return (
     <aside className="sidebar">
       <Logo />
       <nav className="side-nav" aria-label="ניווט ראשי">
         <p className="nav-label">{mode === "driver" ? "אזור נהגת" : "אזור טרמפיסטית"}</p>
-        {nav.map((item) => (
+        {items.map((item) => (
           <NavLink key={item.href} item={item} pathname={pathname} />
         ))}
         <div className="nav-divider"></div>
-        <NavLink item={profileNav} pathname={pathname} />
+        <NavLink item={profileNavItem} pathname={pathname} />
         {adminSlot}
       </nav>
       <div className="sidebar-help">
@@ -49,5 +50,5 @@ export function Sidebar({ adminSlot }: { adminSlot: ReactNode }) {
 }
 
 export function AdminNavLink() {
-  return <NavLink item={adminNav} pathname={usePathname()} />;
+  return <NavLink item={adminNavItem} pathname={usePathname()} />;
 }

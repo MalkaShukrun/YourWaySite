@@ -31,7 +31,7 @@ export type RideDetails = RideSummary & {
 // lat/lng are null when the driver didn't mark the stop on the map.
 export type Stop = { id: string; kind: "pickup" | "dropoff"; label: string; lat: number | null; lng: number | null };
 
-export type BookingStatus = "active" | "cancelled" | "late_cancelled";
+type BookingStatus = "active" | "cancelled" | "late_cancelled";
 
 export type MyBooking = {
   booking_id: string;

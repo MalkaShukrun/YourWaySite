@@ -4,11 +4,11 @@ import { Car, Clock, MapPin, Plus, Users } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { formatRideDate, formatTime, greetingFor, isIsoDate, israelHour, israelToday } from "@/lib/dates";
 import { getDriverDay } from "@/lib/driver";
+import { firstNameOf } from "@/lib/format";
 import { DashboardDatePicker } from "@/components/driver/DashboardDatePicker";
-import { TodayCard } from "@/components/driver/TodayCard";
+import { DriverRideCard } from "@/components/driver/DriverRideCard";
 import { StatCard } from "@/components/ui/StatCard";
-
-const iconProps = { className: "icon", strokeWidth: 1.8 } as const;
+import { iconProps } from "@/components/ui/icon";
 
 // Driver daily dashboard (SRS §5.2).
 export default function DriverDashboardPage({ searchParams }: PageProps<"/dashboard">) {
@@ -38,11 +38,11 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
     <>
       <div className="welcome dashboard-welcome">
         <div>
-          <p>{greetingFor(hour)}, {user.fullName.split(/\s+/)[0]}</p>
+          <p>{greetingFor(hour)}, {firstNameOf(user.fullName)}</p>
           <h1>{date === today ? "הנסיעות שלך להיום" : `הנסיעות שלך ל${formatRideDate(date)}`}</h1>
         </div>
         <div className="dashboard-actions">
-          <DashboardDatePicker value={date} label={formatRideDate(date)} today={today} />
+          <DashboardDatePicker value={date} display={formatRideDate(date)} today={today} />
           <Link className="btn btn-primary" href="/routes/new"><Plus {...iconProps} size={20} /> נסיעה חדשה</Link>
         </div>
       </div>
@@ -62,7 +62,7 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
       ) : (
         <div className="today-list">
           {rides.map((ride) => (
-            <TodayCard key={ride.route_id} ride={ride} date={date} />
+            <DriverRideCard key={ride.route_id} ride={ride} date={date} />
           ))}
         </div>
       )}

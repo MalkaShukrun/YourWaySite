@@ -7,9 +7,9 @@ import { DatePicker } from "@/components/ui/DatePicker";
 import { Select } from "@/components/ui/Select";
 import { TIME_WINDOWS, type RideGroup, type RideKind, type TimeWindow } from "@/lib/ride-types";
 import { groupLabel } from "@/lib/format";
+import { iconProps } from "@/components/ui/icon";
 
 type Filters = { groupId?: string; date?: string; kind?: RideKind; time?: TimeWindow };
-const iconProps = { className: "icon", strokeWidth: 1.8 } as const;
 
 const TIME_OPTIONS = [
   { value: "", label: "הכל" },

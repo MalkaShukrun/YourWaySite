@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { ProfileValues } from "@/lib/validation/profile";
+import type { OnboardingValues, ProfileValues } from "@/lib/validation/profile";
 
 // Data Access Layer for the profile screen (SRS §1.3). RLS limits the row
 // to its owner.
@@ -24,5 +24,14 @@ export async function getProfileValues(userId: string, fallbackName: string): Pr
     bankName: p?.bank_name ?? "",
     bankBranch: p?.bank_branch ?? "",
     bankAccount: p?.bank_account ?? "",
+  };
+}
+
+// The profile's vehicle columns; all null once the user removes the car.
+export function vehicleColumns(v: Pick<OnboardingValues, "hasVehicle" | "vehicleModel" | "vehicleColor" | "vehicleSeats">) {
+  return {
+    vehicle_model: v.hasVehicle ? v.vehicleModel : null,
+    vehicle_color: v.hasVehicle ? v.vehicleColor : null,
+    vehicle_seats: v.hasVehicle ? Number(v.vehicleSeats) : null,
   };
 }

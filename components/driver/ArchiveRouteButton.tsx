@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { archiveRoute } from "@/app/(app)/(driver)/actions";
+import { ConfirmInline } from "@/components/ui/ConfirmInline";
 import { Toast } from "@/components/ui/Toast";
 
 // Asks once, then stops offering the route.
@@ -14,22 +15,21 @@ export function ArchiveRouteButton({ routeId }: { routeId: string }) {
     return <button className="btn btn-ghost" onClick={() => setConfirming(true)}>הסרת המסלול</button>;
   }
   return (
-    <span className="confirm-inline">
-      <span>להסיר את המסלול?</span>
-      <button
-        className="btn btn-ghost"
-        disabled={pending}
-        onClick={() =>
+    <>
+      <ConfirmInline
+        question="להסיר את המסלול?"
+        confirmLabel="כן, להסיר"
+        pendingLabel="מסיר..."
+        pending={pending}
+        onConfirm={() =>
           startTransition(async () => {
             const result = await archiveRoute(routeId);
             if (result.error) setError(result.error);
           })
         }
-      >
-        {pending ? "מסיר..." : "כן, להסיר"}
-      </button>
-      <button className="btn btn-secondary" onClick={() => setConfirming(false)}>ביטול</button>
+        onCancel={() => setConfirming(false)}
+      />
       <Toast message={error} />
-    </span>
+    </>
   );
 }

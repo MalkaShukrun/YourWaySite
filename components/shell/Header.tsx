@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { LogOut } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { signOut } from "@/app/(auth)/login/actions";
+import { usePopover } from "@/components/ui/usePopover";
 import { useMode } from "./useMode";
+import { iconProps } from "@/components/ui/icon";
 
 // Top bar: role switch (SRS §7.1) + the signed-in user's menu.
 export function Header({ userSlot }: { userSlot: ReactNode }) {
@@ -23,17 +25,7 @@ export function Header({ userSlot }: { userSlot: ReactNode }) {
 }
 
 export function UserMenu({ name, initials }: { name: string; initials: string }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const close = (event: MouseEvent) => {
-      if (!ref.current?.contains(event.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, [open]);
+  const { open, setOpen, ref } = usePopover();
 
   return (
     <div className="user-menu-wrap" ref={ref}>
@@ -47,7 +39,7 @@ export function UserMenu({ name, initials }: { name: string; initials: string })
         <div className="user-menu">
           <form action={signOut}>
             <button type="submit" className="logout-item">
-              <LogOut className="icon" size={16} strokeWidth={1.8} /> התנתקות
+              <LogOut {...iconProps} size={16} /> התנתקות
             </button>
           </form>
         </div>

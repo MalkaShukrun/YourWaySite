@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser, homePathFor } from "@/lib/auth";
+import { vehicleColumns } from "@/lib/profile";
 import { onboardingSchema, type OnboardingValues } from "@/lib/validation/profile";
 
 export async function completeProfile(values: OnboardingValues) {
@@ -19,9 +20,7 @@ export async function completeProfile(values: OnboardingValues) {
     full_name: v.fullName,
     email: user.email, // from Google
     phone: v.phone,
-    vehicle_model: v.hasVehicle ? v.vehicleModel : null,
-    vehicle_color: v.hasVehicle ? v.vehicleColor : null,
-    vehicle_seats: v.hasVehicle ? Number(v.vehicleSeats) : null,
+    ...vehicleColumns(v),
   };
   const supabase = await createClient();
   const updated = await supabase.from("profiles").update(details).eq("id", user.id).select("id");

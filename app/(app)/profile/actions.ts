@@ -3,6 +3,8 @@
 import { refresh } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
+import { firstIssue } from "@/lib/action-errors";
+import { vehicleColumns } from "@/lib/profile";
 import { profileSchema, type ProfileValues } from "@/lib/validation/profile";
 
 // Save the profile screen (SRS §1.3). The email comes from Google and isn't
@@ -10,7 +12,7 @@ import { profileSchema, type ProfileValues } from "@/lib/validation/profile";
 export async function saveProfile(values: ProfileValues) {
   const user = await requireUser();
   const parsed = profileSchema.safeParse(values);
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "חלק מהפרטים אינם תקינים." };
+  if (!parsed.success) return { error: firstIssue(parsed.error) };
 
   const v = parsed.data;
   const hasBank = Boolean(v.bankAccount);
@@ -20,9 +22,7 @@ export async function saveProfile(values: ProfileValues) {
     .update({
       full_name: v.fullName,
       phone: v.phone,
-      vehicle_model: v.hasVehicle ? v.vehicleModel : null,
-      vehicle_color: v.hasVehicle ? v.vehicleColor : null,
-      vehicle_seats: v.hasVehicle ? Number(v.vehicleSeats) : null,
+      ...vehicleColumns(v),
       bank_account_name: hasBank ? v.bankAccountName : null,
       bank_name: hasBank ? v.bankName : null,
       bank_branch: hasBank ? v.bankBranch : null,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { isActive, routeMode } from "./nav";
+import { isNavItemActive, modeForPath } from "./nav";
 
-describe("routeMode", () => {
+describe("modeForPath", () => {
   it.each([
     ["/dashboard", "driver"],
     ["/routes", "driver"],
@@ -13,24 +13,24 @@ describe("routeMode", () => {
     ["/profile", null],
     ["/admin/groups", null],
   ])("%s → %s", (path, mode) => {
-    expect(routeMode(path)).toBe(mode);
+    expect(modeForPath(path)).toBe(mode);
   });
 });
 
-describe("isActive", () => {
+describe("isNavItemActive", () => {
   it("marks home active on / and on ride pages", () => {
-    expect(isActive("/", "/")).toBe(true);
-    expect(isActive("/ride/abc", "/")).toBe(true);
-    expect(isActive("/my-rides", "/")).toBe(false);
+    expect(isNavItemActive("/", "/")).toBe(true);
+    expect(isNavItemActive("/ride/abc", "/")).toBe(true);
+    expect(isNavItemActive("/my-rides", "/")).toBe(false);
   });
 
   it("matches a section and its sub-pages", () => {
-    expect(isActive("/routes", "/routes")).toBe(true);
-    expect(isActive("/routes/new", "/routes")).toBe(true);
+    expect(isNavItemActive("/routes", "/routes")).toBe(true);
+    expect(isNavItemActive("/routes/new", "/routes")).toBe(true);
   });
 
   it("doesn't match a different section sharing a prefix", () => {
-    expect(isActive("/routes-archive", "/routes")).toBe(false);
-    expect(isActive("/payments", "/profile")).toBe(false);
+    expect(isNavItemActive("/routes-archive", "/routes")).toBe(false);
+    expect(isNavItemActive("/payments", "/profile")).toBe(false);
   });
 });

@@ -2,25 +2,19 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarDays, Clock, MapPin, Plus, Repeat, Route, Users } from "lucide-react";
 import { saveRoute } from "@/app/(app)/(driver)/actions";
+import { LazyRouteEditorMap } from "@/components/map/LazyMaps";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Select } from "@/components/ui/Select";
+import { iconProps } from "@/components/ui/icon";
 import type { RideGroup } from "@/lib/ride-types";
 import type { EditableRoute } from "@/lib/driver-types";
-import { groupLabel, WEEKDAYS } from "@/lib/format";
+import { groupLabel, RIDE_WEEKDAYS } from "@/lib/format";
 import { groupArea } from "@/lib/places";
 import { routeSchema, type RouteValues } from "@/lib/validation/route";
-
-const RouteEditorMap = dynamic(() => import("@/components/map/RouteEditorMap"), {
-  ssr: false,
-  loading: () => <div className="large-map" aria-busy="true" />,
-});
-
-const iconProps = { className: "icon", strokeWidth: 1.8 } as const;
 
 type Props = { groups: RideGroup[]; route: EditableRoute | null; today: string };
 
@@ -73,7 +67,7 @@ export function RouteEditor({ groups, route, today }: Props) {
       if (result?.error) setServerError(result.error);
     });
 
-  const stopGroup = (stopKind: "pickup" | "dropoff") => (
+  const renderStopList = (stopKind: "pickup" | "dropoff") => (
     <div className={`editor-stop-group ${stopKind === "dropoff" ? "dropoff-editor-group" : ""}`}>
       <div className={`stop-group-label ${stopKind}-label`}><i></i>{stopKind === "pickup" ? "תחנות איסוף" : "תחנות הורדה"}</div>
       <div className={`editor-stops ${stopKind === "dropoff" ? "dropoff-editor-stops" : ""}`}>
@@ -176,7 +170,7 @@ export function RouteEditor({ groups, route, today }: Props) {
             <div className="section-heading"><span>2</span><div><h2>ימים ושעות</h2><p>מתי את יוצאת וחוזרת?</p></div></div>
             {kind === "recurring" ? (
               <div className="day-picker" role="group" aria-label="ימים בשבוע">
-                {WEEKDAYS.map((day, index) => (
+                {RIDE_WEEKDAYS.map((day, index) => (
                   <button type="button" key={day} className={weekdays.includes(index) ? "active" : ""} aria-pressed={weekdays.includes(index)} onClick={() => toggleDay(index)}>
                     {day}
                   </button>
@@ -212,8 +206,8 @@ export function RouteEditor({ groups, route, today }: Props) {
 
           <div className="editor-section">
             <div className="section-heading"><span>3</span><div><h2>תחנות איסוף והורדה</h2><p>הגדירי בנפרד היכן ניתן לעלות והיכן ניתן לרדת</p></div></div>
-            {stopGroup("pickup")}
-            {stopGroup("dropoff")}
+            {renderStopList("pickup")}
+            {renderStopList("dropoff")}
           </div>
 
           <div className="editor-footer">
@@ -238,7 +232,7 @@ export function RouteEditor({ groups, route, today }: Props) {
               </ol>
             </div>
           </div>
-          <RouteEditorMap
+          <LazyRouteEditorMap
             stops={stops}
             area={area}
             placing={placing === null ? null : stops[placing]?.kind ?? null}

@@ -4,6 +4,7 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { messageForCode } from "@/lib/action-errors";
 
 const ERRORS: Record<string, string> = {
   RIDE_FULL: "הנסיעה התמלאה — אין יותר מקומות פנויים.",
@@ -15,10 +16,7 @@ const ERRORS: Record<string, string> = {
   RIDE_DEPARTED: "הנסיעה כבר יצאה ולא ניתן לבטל אותה.",
 };
 
-function messageFor(error: { message: string }) {
-  const code = Object.keys(ERRORS).find((key) => error.message.includes(key));
-  return code ? ERRORS[code] : "משהו השתבש. נסי שוב בעוד רגע.";
-}
+const messageFor = (error: { message: string }) => messageForCode(error, ERRORS);
 
 const bookingSchema = z.object({
   routeId: z.uuid(),

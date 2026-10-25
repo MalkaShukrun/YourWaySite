@@ -2,12 +2,13 @@ import { Suspense } from "react";
 import { Route } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { formatRideDate, formatTime, israelNow, israelToday, recentMonths } from "@/lib/dates";
-import { getMyBookings, getMyDriversBank } from "@/lib/rides";
+import { getMyBookings, getMyDriversBankAccounts } from "@/lib/rides";
 import { isCharged } from "@/lib/bookings";
 import { formatPrice, groupLabel } from "@/lib/format";
 import { DriverContact } from "@/components/passenger/DriverContact";
 import { MonthFilter } from "@/components/passenger/MonthFilter";
 import { PaidToggle } from "@/components/passenger/PaidToggle";
+import { iconProps } from "@/components/ui/icon";
 
 // Personal payment journal (SRS §4.3). Payment isn't processed in the app —
 // the passenger marks each ride as paid herself.
@@ -24,7 +25,7 @@ export default function PaymentsPage({ searchParams }: PageProps<"/payments">) {
 
 async function Payments({ searchParams }: Pick<PageProps<"/payments">, "searchParams">) {
   await requireUser();
-  const [query, bookings, banks] = await Promise.all([searchParams, getMyBookings(), getMyDriversBank()]);
+  const [query, bookings, banks] = await Promise.all([searchParams, getMyBookings(), getMyDriversBankAccounts()]);
   const months = recentMonths(await israelToday());
   const month = typeof query.month === "string" && months.includes(query.month) ? query.month : months[0];
 
@@ -65,13 +66,13 @@ async function Payments({ searchParams }: Pick<PageProps<"/payments">, "searchPa
                 <span>שעה {formatTime(b.out_time)}</span>
               </div>
               <div className="activity-route">
-                <Route className="icon" size={20} strokeWidth={1.8} />
+                <Route {...iconProps} size={20} />
                 <div>
                   <strong>{groupLabel(b.origin, b.destination)}</strong>
                   {b.status === "late_cancelled" && <small>בוטלה באיחור · נשמרה ביומן</small>}
                 </div>
               </div>
-              <PaidToggle bookingId={b.booking_id} isPaid={b.is_paid} price={formatPrice(b.price)} />
+              <PaidToggle bookingId={b.booking_id} isPaid={b.is_paid} priceLabel={formatPrice(b.price)} />
               <div className="row-actions">
                 <DriverContact name={b.driver_name} phone={b.driver_phone} email={b.driver_email} bank={banks.get(b.driver_id) ?? null} />
               </div>

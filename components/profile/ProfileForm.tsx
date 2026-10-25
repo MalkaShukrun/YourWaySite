@@ -7,8 +7,8 @@ import { Car, Landmark, Mail, Phone, User } from "lucide-react";
 import { saveProfile } from "@/app/(app)/profile/actions";
 import { profileSchema, type ProfileValues } from "@/lib/validation/profile";
 import { Toast } from "@/components/ui/Toast";
-
-const iconProps = { className: "icon", strokeWidth: 1.8 } as const;
+import { iconProps } from "@/components/ui/icon";
+import { FieldError } from "@/components/ui/FieldError";
 
 type Props = { initials: string; email: string; defaults: ProfileValues };
 
@@ -34,8 +34,6 @@ export function ProfileForm({ initials, email, defaults }: Props) {
       setSaved((n) => n + 1);
     });
 
-  const error = (message?: string) => message && <small className="field-error">{message}</small>;
-
   return (
     <form className="panel profile-panel" onSubmit={handleSubmit(onSubmit)} noValidate>
       <div className="profile-head">
@@ -50,7 +48,7 @@ export function ProfileForm({ initials, email, defaults }: Props) {
         <label className="field">
           <span>שם מלא</span>
           <div className="input-shell"><User {...iconProps} size={20} /><input {...register("fullName")} autoComplete="name" /></div>
-          {error(errors.fullName?.message)}
+          <FieldError message={errors.fullName?.message} />
         </label>
         <label className="field">
           <span>כתובת דוא״ל</span>
@@ -59,7 +57,7 @@ export function ProfileForm({ initials, email, defaults }: Props) {
         <label className="field">
           <span>מספר טלפון</span>
           <div className="input-shell"><Phone {...iconProps} size={20} /><input {...register("phone")} type="tel" inputMode="tel" placeholder="050-000-0000" autoComplete="tel" /></div>
-          {error(errors.phone?.message)}
+          <FieldError message={errors.phone?.message} />
         </label>
       </div>
 
@@ -79,17 +77,17 @@ export function ProfileForm({ initials, email, defaults }: Props) {
           <label className="field">
             <span>סוג רכב</span>
             <div className="input-shell"><input {...register("vehicleModel")} placeholder="לדוגמה: יונדאי איוניק" /></div>
-            {error(errors.vehicleModel?.message)}
+            <FieldError message={errors.vehicleModel?.message} />
           </label>
           <label className="field">
             <span>צבע</span>
             <div className="input-shell"><input {...register("vehicleColor")} placeholder="לדוגמה: לבן" /></div>
-            {error(errors.vehicleColor?.message)}
+            <FieldError message={errors.vehicleColor?.message} />
           </label>
           <label className="field">
             <span>מספר מקומות</span>
             <div className="input-shell"><input {...register("vehicleSeats")} inputMode="numeric" /></div>
-            {error(errors.vehicleSeats?.message)}
+            <FieldError message={errors.vehicleSeats?.message} />
           </label>
         </div>
       )}
@@ -105,22 +103,22 @@ export function ProfileForm({ initials, email, defaults }: Props) {
           <label className="field">
             <span>שם בעלת החשבון</span>
             <div className="input-shell"><input {...register("bankAccountName")} /></div>
-            {error(errors.bankAccountName?.message)}
+            <FieldError message={errors.bankAccountName?.message} />
           </label>
           <label className="field">
             <span>שם הבנק</span>
             <div className="input-shell"><input {...register("bankName")} placeholder="לדוגמה: בנק הפועלים" /></div>
-            {error(errors.bankName?.message)}
+            <FieldError message={errors.bankName?.message} />
           </label>
           <label className="field">
             <span>מספר סניף</span>
             <div className="input-shell"><input {...register("bankBranch")} inputMode="numeric" dir="ltr" /></div>
-            {error(errors.bankBranch?.message)}
+            <FieldError message={errors.bankBranch?.message} />
           </label>
           <label className="field">
             <span>מספר חשבון</span>
             <div className="input-shell"><input {...register("bankAccount")} inputMode="numeric" dir="ltr" /></div>
-            {error(errors.bankAccount?.message)}
+            <FieldError message={errors.bankAccount?.message} />
           </label>
         </div>
       </div>

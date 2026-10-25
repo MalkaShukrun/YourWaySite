@@ -9,10 +9,9 @@ import { GoogleButton } from "@/components/auth/GoogleButton";
 import { OnboardingModal } from "@/components/auth/OnboardingModal";
 import { getCurrentUser, homePathFor, needsOnboarding } from "@/lib/auth";
 import { SUPPORT_EMAIL } from "@/lib/support";
+import { iconProps } from "@/components/ui/icon";
 
 export const metadata: Metadata = { title: "התחברות · בדרך שלך" };
-
-const iconProps = { className: "icon", strokeWidth: 1.8 } as const;
 
 export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (

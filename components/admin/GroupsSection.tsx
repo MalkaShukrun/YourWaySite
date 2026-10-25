@@ -3,8 +3,7 @@ import { getAdminGroups } from "@/lib/admin";
 import { groupLabel } from "@/lib/format";
 import { StatCard } from "@/components/ui/StatCard";
 import { GroupActions } from "@/components/admin/GroupActions";
-
-const iconProps = { className: "icon", strokeWidth: 1.8 } as const;
+import { iconProps } from "@/components/ui/icon";
 
 // Ride group management (SRS §8) — stats and the group list from the design.
 // Render only for admins (the caller checks with requireAdmin).
@@ -30,13 +29,13 @@ export async function GroupsSection() {
           <div className="empty-state"><strong>עדיין אין קבוצות</strong><span>צרי את הקבוצה הראשונה — מוצא ויעד.</span></div>
         ) : (
           groups.map((group) => {
-            const active = group.routes.filter((r) => r.is_active).length;
+            const activeRouteCount = group.routes.filter((r) => r.is_active).length;
             return (
               <div key={group.id} className={`group-row ${group.is_active ? "" : "is-hidden"}`}>
                 <span className="route-badge"><Route {...iconProps} size={20} /></span>
                 <div>
                   <strong>{groupLabel(group.origin, group.destination)}</strong>
-                  <span>{active === 0 ? "אין מסלולים פעילים" : active === 1 ? "מסלול פעיל אחד" : `${active} מסלולים פעילים`}</span>
+                  <span>{activeRouteCount === 0 ? "אין מסלולים פעילים" : activeRouteCount === 1 ? "מסלול פעיל אחד" : `${activeRouteCount} מסלולים פעילים`}</span>
                 </div>
                 <span className={`status-pill ${group.is_active ? "" : "danger"}`}><i></i>{group.is_active ? "פעילה" : "מוסתרת"}</span>
                 <GroupActions

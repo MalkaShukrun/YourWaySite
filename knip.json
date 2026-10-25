@@ -1,0 +1,19 @@
+
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "next": true,
+  "entry": [
+    "next.config.{js,mjs,cjs,ts}",
+    "eslint.config.{js,mjs,cjs}",
+    "playwright.config.{js,mjs,cjs,ts}",
+    "e2e/**/*.{js,mjs,cjs,ts}"
+  ],
+  "project": [
+    "**/*.{js,jsx,mjs,cjs,ts,tsx,css}",
+    "!node_modules",
+    "!.next",
+    "!coverage",
+    "!playwright-report",
+    "!test-results"
+  ]
+}

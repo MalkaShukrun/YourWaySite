@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
+import { iconProps } from "@/components/ui/icon";
 
 // Small confirmation message from the design (bottom corner, auto-hides).
 // Pass a new `id` to show the same text again.
@@ -17,7 +18,7 @@ export function Toast({ message, id }: { message: string; id?: number }) {
   if (!message || hidden === (id ?? 0)) return null;
   return (
     <div className="toast" role="status">
-      <span><Check className="icon" size={18} strokeWidth={1.8} /></span>
+      <span><Check {...iconProps} size={18} /></span>
       {message}
     </div>
   );
