@@ -24,13 +24,13 @@ export type DriverPassenger = {
   passenger_email: string;
   pickup_stop_id: string;
   pickup_label: string;
-  pickup_lat: number;
-  pickup_lng: number;
+  pickup_lat: number | null;
+  pickup_lng: number | null;
   pickup_position: number;
   dropoff_stop_id: string;
   dropoff_label: string;
-  dropoff_lat: number;
-  dropoff_lng: number;
+  dropoff_lat: number | null;
+  dropoff_lng: number | null;
   dropoff_position: number;
 };
 
@@ -56,10 +56,16 @@ export function weekdaysLabel(days: number[]) {
   return days.map((d) => WEEKDAYS[d] ?? "ש׳").join(" · ");
 }
 
-// Turn-by-turn navigation links for a stop (SRS §5.2).
-export function wazeUrl(lat: number, lng: number) {
-  return `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
+// Turn-by-turn navigation links for a stop (SRS §5.2): to its pin, or a
+// search by name for a stop that isn't marked on the map.
+type Place = { lat: number; lng: number } | string;
+
+export function wazeUrl(place: Place) {
+  return typeof place === "string"
+    ? `https://waze.com/ul?q=${encodeURIComponent(place)}&navigate=yes`
+    : `https://waze.com/ul?ll=${place.lat},${place.lng}&navigate=yes`;
 }
-export function googleMapsUrl(lat: number, lng: number) {
-  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+export function googleMapsUrl(place: Place) {
+  const destination = typeof place === "string" ? encodeURIComponent(place) : `${place.lat},${place.lng}`;
+  return `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
 }

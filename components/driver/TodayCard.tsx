@@ -95,17 +95,19 @@ export function TodayCard({ ride, date }: { ride: DriverRide & { passengers: Dri
   );
 }
 
-// A stop with direct navigation in Waze / Google Maps (SRS §5.2).
-function DailyStop({ n, label, who, lat, lng, dropoff = false }: { n: number; label: string; who: string; lat: number; lng: number; dropoff?: boolean }) {
+// A stop with direct navigation in Waze / Google Maps (SRS §5.2) — to its pin,
+// or by name when the driver didn't mark it on the map.
+function DailyStop({ n, label, who, lat, lng, dropoff = false }: { n: number; label: string; who: string; lat: number | null; lng: number | null; dropoff?: boolean }) {
+  const place = lat !== null && lng !== null ? { lat, lng } : label;
   return (
     <div className={`daily-stop ${dropoff ? "dropoff-stop" : ""}`}>
       <span>{n}</span>
       <div><strong>{label}</strong><small>{who}</small></div>
       <div className="nav-buttons">
-        <a className="btn btn-icon" href={wazeUrl(lat, lng)} target="_blank" rel="noreferrer" aria-label={`ניווט ב־Waze אל ${label}`} title="Waze">
+        <a className="btn btn-icon" href={wazeUrl(place)} target="_blank" rel="noreferrer" aria-label={`ניווט ב־Waze אל ${label}`} title="Waze">
           <Navigation {...iconProps} size={18} />
         </a>
-        <a className="btn btn-icon" href={googleMapsUrl(lat, lng)} target="_blank" rel="noreferrer" aria-label={`ניווט ב־Google Maps אל ${label}`} title="Google Maps">
+        <a className="btn btn-icon" href={googleMapsUrl(place)} target="_blank" rel="noreferrer" aria-label={`ניווט ב־Google Maps אל ${label}`} title="Google Maps">
           <MapIcon {...iconProps} size={18} />
         </a>
       </div>

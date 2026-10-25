@@ -2,10 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
+import { SUPPORT_EMAIL } from "@/lib/support";
 
 export const metadata: Metadata = { title: "מדיניות פרטיות · בדרך שלך" };
-
-const CONTACT_EMAIL = "malkycohen1@gmail.com";
 
 // Public page (no sign-in needed) — linked from the login screen.
 export default function PrivacyPolicyPage() {
@@ -101,7 +100,7 @@ export default function PrivacyPolicyPage() {
           <h2>8. יצירת קשר</h2>
           <p>
             לכל שאלה או בקשה בנוגע למדיניות הפרטיות או למידע האישי שלך:{" "}
-            <a href={`mailto:${CONTACT_EMAIL}`} dir="ltr">{CONTACT_EMAIL}</a>
+            <a href={`mailto:${SUPPORT_EMAIL}`} dir="ltr">{SUPPORT_EMAIL}</a>
           </p>
         </section>
       </main>

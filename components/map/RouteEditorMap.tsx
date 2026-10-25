@@ -7,31 +7,36 @@ import { MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap, useMapEvent
 import { MapPin } from "lucide-react";
 import type { Area } from "@/lib/places";
 
-type EditorStop = { kind: "pickup" | "dropoff"; label: string; lat: number; lng: number };
+type EditorStop = { kind: "pickup" | "dropoff"; label: string; lat: number | null; lng: number | null };
+type PlacedStop = EditorStop & { lat: number; lng: number };
 
 type Props = {
   stops: EditorStop[];
   area: Area | null; // the group's two places; the map can't leave it
-  adding: "pickup" | "dropoff" | null;
-  onAdd: (lat: number, lng: number) => void;
+  placing: "pickup" | "dropoff" | null; // a stop waiting for a click on the map
+  onPlace: (lat: number, lng: number) => void;
   onMove: (index: number, lat: number, lng: number) => void;
 };
 
 // Beit Shemesh ↔ Jerusalem, the area the starter ride groups cover.
 const DEFAULT_CENTER: [number, number] = [31.76, 35.09];
 
-// Route & stops setup on the map (SRS §5.1): click to drop a pin, drag to move it.
-export default function RouteEditorMap({ stops, area, adding, onAdd, onMove }: Props) {
-  // Fit to the existing stops once, when the editor opens.
-  const [initialBounds] = useState(() =>
-    stops.length ? L.latLngBounds(stops.map((s) => [s.lat, s.lng] as [number, number])).pad(0.2) : null,
-  );
+const isPlaced = (s: EditorStop): s is PlacedStop => s.lat !== null && s.lng !== null;
+
+// Optional map for the route's stops (SRS §5.1): click to place the chosen
+// stop, drag a pin to move it. Stops without a location just aren't drawn.
+export default function RouteEditorMap({ stops, area, placing, onPlace, onMove }: Props) {
+  // Fit to the stops already on the map once, when the editor opens.
+  const [initialBounds] = useState(() => {
+    const placed = stops.filter(isPlaced);
+    return placed.length ? L.latLngBounds(placed.map((s) => [s.lat, s.lng] as [number, number])).pad(0.2) : null;
+  });
   const startBounds = initialBounds ?? (area ? L.latLngBounds(area) : null);
-  const ordered = [...stops.filter((s) => s.kind === "pickup"), ...stops.filter((s) => s.kind === "dropoff")];
+  const ordered = [...stops.filter((s) => s.kind === "pickup"), ...stops.filter((s) => s.kind === "dropoff")].filter(isPlaced);
   const numberOf = (index: number) => stops.slice(0, index + 1).filter((s) => s.kind === stops[index].kind).length;
 
   return (
-    <div className={`large-map route-map ${adding ? "is-adding" : ""}`} dir="ltr">
+    <div className={`large-map route-map ${placing ? "is-adding" : ""}`} dir="ltr">
       <MapContainer
         {...(startBounds ? { bounds: startBounds } : { center: DEFAULT_CENTER, zoom: 11 })}
         maxBoundsViscosity={1}
@@ -42,11 +47,11 @@ export default function RouteEditorMap({ stops, area, adding, onAdd, onMove }: P
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <LimitToArea area={area} />
-        <ClickToAdd enabled={adding !== null} area={area} onAdd={onAdd} />
+        <ClickToAdd enabled={placing !== null} area={area} onAdd={onPlace} />
         {ordered.length > 1 && (
-          <Polyline positions={ordered.map((s) => [s.lat, s.lng])} pathOptions={{ color: "#176B45", weight: 5, opacity: 0.85 }} />
+          <Polyline positions={ordered.map((s) => [s.lat, s.lng])} pathOptions={{ color: "#2A4A60", weight: 5, opacity: 0.85 }} />
         )}
-        {stops.map((stop, index) => (
+        {stops.map((stop, index) => !isPlaced(stop) ? null : (
           <Marker
             key={index}
             position={[stop.lat, stop.lng]}
@@ -68,10 +73,10 @@ export default function RouteEditorMap({ stops, area, adding, onAdd, onMove }: P
           </Marker>
         ))}
       </MapContainer>
-      {adding && (
+      {placing && (
         <div className="map-hint" dir="rtl">
           <MapPin className="icon" size={17} strokeWidth={1.8} />
-          לחצי על המפה להוספת {adding === "pickup" ? "תחנת איסוף" : "תחנת הורדה"}
+          לחצי על המפה במקום {placing === "pickup" ? "תחנת האיסוף" : "תחנת ההורדה"}
         </div>
       )}
       <div className="map-legend" dir="rtl">

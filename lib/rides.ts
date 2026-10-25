@@ -52,14 +52,21 @@ export async function getRide(routeId: string, date: string) {
   return { ride, stops: (stops ?? []) as Stop[] };
 }
 
-// Payment accounts of the drivers the passenger rode with, by driver id, as
-// one display line ("בנק הפועלים · סניף 538 · חשבון 4821"). Empty until
-// migration 0004 has run.
-export async function getMyDriversBank(): Promise<Map<string, string>> {
+export type DriverBank = { holder: string; details: string };
+
+// Payment accounts of the drivers the passenger rode with, by driver id:
+// the account holder and one line ("בנק הפועלים · סניף 538 · חשבון 4821").
+// Empty until migration 0004 has run.
+export async function getMyDriversBank(): Promise<Map<string, DriverBank>> {
   const supabase = await createClient();
   const { data } = await supabase.rpc("my_drivers_bank");
-  const rows = (data ?? []) as { driver_id: string; bank_name: string; bank_branch: string; bank_account: string }[];
-  return new Map(rows.map((r) => [r.driver_id, `${r.bank_name} · סניף ${r.bank_branch} · חשבון ${r.bank_account}`]));
+  const rows = (data ?? []) as { driver_id: string; bank_account_name: string; bank_name: string; bank_branch: string; bank_account: string }[];
+  return new Map(
+    rows.map((r) => [
+      r.driver_id,
+      { holder: r.bank_account_name, details: `${r.bank_name} · סניף ${r.bank_branch} · חשבון ${r.bank_account}` },
+    ]),
+  );
 }
 
 export async function getMyBookings(): Promise<MyBooking[]> {

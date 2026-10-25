@@ -4,6 +4,7 @@ import { initialsOf } from "@/lib/rides";
 import { AdminNavLink, Sidebar } from "./Sidebar";
 import { Header, UserMenu } from "./Header";
 import { BottomNav } from "./BottomNav";
+import { SUPPORT_EMAIL } from "@/lib/support";
 
 // The signed-in layout from the design: sidebar, top bar, mobile tab bar.
 // Menus read the URL and the user, so they stream in behind <Suspense>;
@@ -35,8 +36,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <Suspense fallback={null}>
         <BottomNavForUser />
       </Suspense>
-      <a className="mobile-support" href="mailto:support@baderech.co.il">
-        צריכה עזרה? <span>support@baderech.co.il</span>
+      <a className="mobile-support" href={`mailto:${SUPPORT_EMAIL}`}>
+        צריכה עזרה? <span>{SUPPORT_EMAIL}</span>
       </a>
     </div>
   );

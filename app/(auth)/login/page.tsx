@@ -2,12 +2,13 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Car, MapPin, Phone, Search } from "lucide-react";
+import { Car, Check, Clock, MapPin, Search, Users } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { AuthRoadIllustration } from "@/components/auth/AuthRoadIllustration";
 import { GoogleButton } from "@/components/auth/GoogleButton";
 import { OnboardingModal } from "@/components/auth/OnboardingModal";
 import { getCurrentUser, homePathFor, needsOnboarding } from "@/lib/auth";
+import { SUPPORT_EMAIL } from "@/lib/support";
 
 export const metadata: Metadata = { title: "התחברות · בדרך שלך" };
 
@@ -18,45 +19,37 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
     <div className="auth-page">
       <header className="landing-header">
         <Logo />
-        <a href="mailto:malkycohen1@gmil.com">
-          צריכה עזרה? <span>malkycohen1@gmil.com</span>
+        <a href={`mailto:${SUPPORT_EMAIL}`}>
+          צריכה עזרה? <span>{SUPPORT_EMAIL}</span>
         </a>
       </header>
 
-      <div className="auth-brand">
-        <div className="landing-preview">
-          <div className="preview-head">
-            <div>
-              <span>הנסיעה הקרובה שלך</span>
-              <h2>בית שמש ← ירושלים</h2>
-            </div>
-            <span className="preview-status"><i></i>מקום שמור</span>
+      <section className="auth-brand" aria-label="על בדרך שלך">
+        <div className="brand-copy">
+          <span className="brand-eyebrow">טרמפים בקהילה, בין נשים</span>
+          <h1>נוסעות יחד,<br /><em>מגיעות רחוק.</em></h1>
+          <p>נהגות מפרסמות את הנסיעות שלהן, טרמפיסטיות נרשמות בלחיצה — והכול מתואם במקום אחד.</p>
+        </div>
+
+        <div className="brand-ticket" aria-hidden="true">
+          <div className="ticket-route">
+            <div><small>יציאה</small><strong>בית שמש</strong></div>
+            <span className="ticket-line"><i></i><Car {...iconProps} size={22} /><i></i></span>
+            <div><small>יעד</small><strong>ירושלים</strong></div>
           </div>
-          <div className="preview-route-line">
-            <span></span><i></i><Car {...iconProps} size={25} /><i></i><span></span>
-          </div>
-          <div className="preview-details">
-            <div>
-              <span className="preview-icon pickup"><MapPin {...iconProps} size={19} /></span>
-              <div><small>תחנת איסוף</small><strong>שדרות נהר הירדן / ריב״ל</strong></div>
-              <b>07:15</b>
-            </div>
-            <div>
-              <span className="preview-icon dropoff"><MapPin {...iconProps} size={19} /></span>
-              <div><small>תחנת הורדה</small><strong>בנייני האומה, ירושלים</strong></div>
-            </div>
-          </div>
-          <div className="preview-driver">
-            <div className="avatar avatar-lavender">רכ</div>
-            <div><small>הנהגת שלך</small><strong>רחל כהן</strong></div>
-            <span><Phone {...iconProps} size={17} /> 050-765-4321</span>
-          </div>
-          <div className="preview-footer">
-            <span><strong>₪15</strong> מחיר הנסיעה</span>
+          <div className="ticket-meta">
+            <span><Clock {...iconProps} size={17} /> 07:15</span>
+            <span><Users {...iconProps} size={17} /> 2 מקומות פנויים</span>
+            <b>₪15</b>
           </div>
         </div>
-        <AuthRoadIllustration />
-      </div>
+
+        <ol className="brand-steps">
+          <li><span><Search {...iconProps} size={19} /></span><div><strong>מוצאות נסיעה</strong><small>לפי מסלול, יום ושעה</small></div></li>
+          <li><span><MapPin {...iconProps} size={19} /></span><div><strong>בוחרות תחנה</strong><small>איסוף והורדה מהמפה של הנהגת</small></div></li>
+          <li><span><Check {...iconProps} size={19} /></span><div><strong>נרשמות בלחיצה</strong><small>ומשלמות ישירות לנהגת</small></div></li>
+        </ol>
+      </section>
 
       <div className="auth-form">
         <div className="auth-card">

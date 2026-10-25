@@ -6,8 +6,9 @@ const routeStopSchema = z.object({
   id: z.string(),
   kind: z.enum(["pickup", "dropoff"]),
   label: z.string().trim().min(2, "יש לתת שם לתחנה"),
-  lat: z.number().min(-90).max(90),
-  lng: z.number().min(-180).max(180),
+  // Marking the stop on the map is optional.
+  lat: z.number().min(-90).max(90).nullable(),
+  lng: z.number().min(-180).max(180).nullable(),
 });
 
 // Route & recurring ride setup (SRS §5.1).

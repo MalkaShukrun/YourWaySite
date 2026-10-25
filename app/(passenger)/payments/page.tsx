@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import { Route } from "lucide-react";
 import { requireUser } from "@/lib/auth";
-import { formatRideDate, formatTime, israelToday, recentMonths } from "@/lib/dates";
-import { formatPrice, getMyBookings, getMyDriversBank, groupLabel, type MyBooking } from "@/lib/rides";
+import { formatRideDate, formatTime, israelNow, israelToday, recentMonths } from "@/lib/dates";
+import { formatPrice, getMyBookings, getMyDriversBank, groupLabel, isCharged } from "@/lib/rides";
 import { DriverContact } from "@/components/passenger/DriverContact";
 import { MonthFilter } from "@/components/passenger/MonthFilter";
 import { PaidToggle } from "@/components/passenger/PaidToggle";
@@ -20,18 +20,14 @@ export default function PaymentsPage({ searchParams }: PageProps<"/payments">) {
   );
 }
 
-// Charged rides: still booked (and not cancelled by the driver), or cancelled late.
-function isCharged(b: MyBooking) {
-  return (b.status === "active" && !b.ride_cancelled) || b.status === "late_cancelled";
-}
-
 async function Payments({ searchParams }: Pick<PageProps<"/payments">, "searchParams">) {
   await requireUser();
   const [query, bookings, banks] = await Promise.all([searchParams, getMyBookings(), getMyDriversBank()]);
   const months = recentMonths(await israelToday());
   const month = typeof query.month === "string" && months.includes(query.month) ? query.month : months[0];
 
-  const charged = bookings.filter(isCharged);
+  const now = (await israelNow()).getTime();
+  const charged = bookings.filter((b) => isCharged(b, now));
   const rows = charged.filter((b) => b.ride_date.startsWith(month));
   const total = rows.reduce((sum, b) => sum + Number(b.price), 0);
   const paid = rows.filter((b) => b.is_paid).reduce((sum, b) => sum + Number(b.price), 0);
@@ -49,7 +45,7 @@ async function Payments({ searchParams }: Pick<PageProps<"/payments">, "searchPa
     <>
       <section className="panel">
         <div className="panel-title">
-          <div><h2>סיכום תשלומים אישי</h2><span>הסימון הוא אישי ואינו נשלח לנהגת</span></div>
+          <div><h2>סיכום תשלומים אישי</h2><span>נסיעה נכנסת לכאן אחרי שעת היציאה · הסימון אישי ואינו נשלח לנהגת</span></div>
           <MonthFilter months={months} value={month} />
         </div>
         <div className="payment-summary">
@@ -75,7 +71,7 @@ async function Payments({ searchParams }: Pick<PageProps<"/payments">, "searchPa
               </div>
               <PaidToggle bookingId={b.booking_id} isPaid={b.is_paid} price={formatPrice(b.price)} />
               <div className="row-actions">
-                <DriverContact name={b.driver_name} phone={b.driver_phone} email={b.driver_email} bank={banks.get(b.driver_id)} />
+                <DriverContact name={b.driver_name} phone={b.driver_phone} email={b.driver_email} bank={banks.get(b.driver_id) ?? null} />
               </div>
             </div>
           ))

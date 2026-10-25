@@ -26,7 +26,7 @@ export function ArchiveRouteButton({ routeId }: { routeId: string }) {
           })
         }
       >
-        {pending ? "מסירה…" : "כן, להסיר"}
+        {pending ? "מסיר..." : "כן, להסיר"}
       </button>
       <button className="btn btn-secondary" onClick={() => setConfirming(false)}>ביטול</button>
       <Toast message={error} />

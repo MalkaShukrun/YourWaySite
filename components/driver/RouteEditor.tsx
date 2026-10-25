@@ -5,7 +5,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarDays, Clock, Plus, Repeat, Route, Users } from "lucide-react";
+import { CalendarDays, Clock, MapPin, Plus, Repeat, Route, Users } from "lucide-react";
 import { saveRoute } from "@/app/(driver)/actions";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Select } from "@/components/ui/Select";
@@ -23,9 +23,11 @@ const iconProps = { className: "icon", strokeWidth: 1.8 } as const;
 
 type Props = { groups: RideGroup[]; route: EditableRoute | null; today: string };
 
-// Add / edit a route: details, days & times, and stops on the map (SRS §5.1).
+// Add / edit a route: details, days & times, and stops — marking them on the
+// map is optional (SRS §5.1).
 export function RouteEditor({ groups, route, today }: Props) {
-  const [adding, setAdding] = useState<"pickup" | "dropoff" | null>(null);
+  // The stop (by index) waiting for a click on the map.
+  const [placing, setPlacing] = useState<number | null>(null);
   const [serverError, setServerError] = useState("");
   const [pending, startTransition] = useTransition();
 
@@ -84,18 +86,40 @@ export function RouteEditor({ groups, route, today }: Props) {
                 autoFocus={!field.label}
                 aria-invalid={Boolean(errors.stops?.[index]?.label)}
               />
-              <button type="button" onClick={() => remove(index)} aria-label="מחיקת התחנה">×</button>
+              <button
+                type="button"
+                className={`stop-place ${stops[index]?.lat != null ? "is-placed" : ""} ${placing === index ? "is-armed" : ""}`}
+                onClick={() => setPlacing(placing === index ? null : index)}
+                aria-pressed={placing === index}
+                aria-label={stops[index]?.lat != null ? "שינוי המיקום על המפה" : "סימון על המפה"}
+                title={stops[index]?.lat != null ? "מסומנת על המפה — לחצי לשינוי" : "סימון על המפה (לא חובה)"}
+              >
+                <MapPin {...iconProps} size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPlacing(null);
+                  remove(index);
+                }}
+                aria-label="מחיקת התחנה"
+              >
+                ×
+              </button>
             </div>
           ),
         )}
       </div>
       <button
         type="button"
-        className={`btn btn-secondary ${adding === stopKind ? "is-armed" : ""}`}
-        onClick={() => setAdding(adding === stopKind ? null : stopKind)}
+        className="btn btn-secondary"
+        onClick={() => {
+          setPlacing(null);
+          append({ id: "", kind: stopKind, label: "", lat: null, lng: null });
+        }}
       >
         <Plus {...iconProps} size={18} />
-        {adding === stopKind ? "לחצי על המפה…" : stopKind === "pickup" ? "הוספת תחנת איסוף" : "הוספת תחנת הורדה"}
+        {stopKind === "pickup" ? "הוספת תחנת איסוף" : "הוספת תחנת הורדה"}
       </button>
     </div>
   );
@@ -115,14 +139,7 @@ export function RouteEditor({ groups, route, today }: Props) {
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
       <div className="welcome">
         <div><p>הגדרת נסיעה</p><h1>{route ? "עריכת מסלול" : "מסלול חדש"}</h1></div>
-        <div className="dashboard-actions">
-          <Link className="btn btn-secondary" href="/routes">ביטול</Link>
-          <button type="submit" className="btn btn-primary" disabled={pending}>
-            {pending ? "שומרת…" : "שמירת המסלול"}
-          </button>
-        </div>
       </div>
-      {(firstError || serverError) && <p className="form-alert" role="alert">{serverError || firstError}</p>}
 
       <div className="editor-layout">
         <section className="panel editor-form">
@@ -197,20 +214,37 @@ export function RouteEditor({ groups, route, today }: Props) {
             {stopGroup("pickup")}
             {stopGroup("dropoff")}
           </div>
+
+          <div className="editor-footer">
+            {(firstError || serverError) && <p className="form-alert" role="alert">{serverError || firstError}</p>}
+            <div className="editor-actions">
+              <Link className="btn btn-secondary" href="/routes">ביטול</Link>
+              <button type="submit" className="btn btn-primary" disabled={pending}>
+                {pending ? "שומרת…" : "שמירת המסלול"}
+              </button>
+            </div>
+          </div>
         </section>
 
         <section className="panel editor-map">
           <div className="panel-title">
-            <div><h2>סימון המסלול על המפה</h2><span>לחצי על “הוספת תחנה” ואז על המפה · גררי תחנה לשינוי המיקום</span></div>
+            <div>
+              <h2>סימון המסלול על המפה <small className="optional-tag">לא חובה</small></h2>
+              <ol className="map-steps">
+                <li><span>1</span>הוסיפי תחנות ברשימה</li>
+                <li><span>2</span>לחצי על <MapPin {...iconProps} size={14} /> ליד תחנה ואז על המפה</li>
+                <li><span>3</span>גררי תחנה לשינוי המיקום</li>
+              </ol>
+            </div>
           </div>
           <RouteEditorMap
             stops={stops}
             area={area}
-            adding={adding}
-            onAdd={(lat, lng) => {
-              if (!adding) return;
-              append({ id: "", kind: adding, label: "", lat, lng });
-              setAdding(null);
+            placing={placing === null ? null : stops[placing]?.kind ?? null}
+            onPlace={(lat, lng) => {
+              if (placing === null) return;
+              update(placing, { ...stops[placing], lat, lng });
+              setPlacing(null);
             }}
             onMove={(index, lat, lng) => update(index, { ...stops[index], lat, lng })}
           />

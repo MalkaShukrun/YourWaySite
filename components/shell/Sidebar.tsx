@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/brand/Logo";
+import { SUPPORT_EMAIL } from "@/lib/support";
 import { adminNav, driverNav, isActive, passengerNav, profileNav, type NavItem } from "./nav";
 import { useMode } from "./useMode";
 
@@ -40,7 +41,7 @@ export function Sidebar({ adminSlot }: { adminSlot: ReactNode }) {
         <div>
           <strong>צריכה עזרה?</strong>
           <span>אנחנו כאן בשבילך</span>
-          <a href="mailto:support@baderech.co.il">support@baderech.co.il</a>
+          <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
         </div>
       </div>
     </aside>

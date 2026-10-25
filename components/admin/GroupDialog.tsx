@@ -76,7 +76,7 @@ export function GroupDialog({ group }: Props) {
             </div>
             {serverError && <p className="form-alert" role="alert">{serverError}</p>}
             <button type="submit" className="btn btn-primary full-button" disabled={pending}>
-              {pending ? "שומרת…" : editing ? "שמירת השינויים" : "יצירת הקבוצה"}
+              {pending ? "שומר..." : editing ? "שמירת השינויים" : "יצירת הקבוצה"}
             </button>
           </form>
         </div>

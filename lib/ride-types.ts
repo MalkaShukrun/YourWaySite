@@ -28,7 +28,8 @@ export type RideDetails = RideSummary & {
   my_booking_id: string | null;
 };
 
-export type Stop = { id: string; kind: "pickup" | "dropoff"; label: string; lat: number; lng: number };
+// lat/lng are null when the driver didn't mark the stop on the map.
+export type Stop = { id: string; kind: "pickup" | "dropoff"; label: string; lat: number | null; lng: number | null };
 
 export type BookingStatus = "active" | "cancelled" | "late_cancelled";
 
@@ -66,6 +67,13 @@ export function splitByDeparture(bookings: MyBooking[], now: number) {
     upcoming: bookings.filter((b) => Date.parse(b.departure_at) > now),
     history: bookings.filter((b) => Date.parse(b.departure_at) <= now),
   };
+}
+
+// A booking counts toward payment once the ride has departed: still booked
+// (and not cancelled by the driver), or cancelled late.
+export function isCharged(b: MyBooking, now: number) {
+  const booked = (b.status === "active" && !b.ride_cancelled) || b.status === "late_cancelled";
+  return booked && Date.parse(b.departure_at) <= now;
 }
 
 // Display helpers shared by the passenger screens.
