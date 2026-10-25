@@ -5,7 +5,8 @@ import { requireUser } from "@/lib/auth";
 import { formatRideDate, formatTime, greetingFor, isIsoDate, israelHour, israelToday } from "@/lib/dates";
 import { getDriverDay } from "@/lib/driver";
 import { DashboardDatePicker } from "@/components/driver/DashboardDatePicker";
-import { StatCard, TodayCard } from "@/components/driver/TodayCard";
+import { TodayCard } from "@/components/driver/TodayCard";
+import { StatCard } from "@/components/ui/StatCard";
 
 const iconProps = { className: "icon", strokeWidth: 1.8 } as const;
 

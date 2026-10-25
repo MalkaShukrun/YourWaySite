@@ -1,4 +1,4 @@
-// Driver Hub types and helpers — safe to import from Client Components.
+// Driver Hub types — safe to import from Client Components.
 import type { RideKind, Stop } from "@/lib/ride-types";
 
 export type DriverRide = {
@@ -49,23 +49,3 @@ export type DriverRoute = {
 };
 
 export type EditableRoute = DriverRoute & { stops: Stop[] };
-
-export const WEEKDAYS = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳"]; // Sunday … Friday
-
-export function weekdaysLabel(days: number[]) {
-  return days.map((d) => WEEKDAYS[d] ?? "ש׳").join(" · ");
-}
-
-// Turn-by-turn navigation links for a stop (SRS §5.2): to its pin, or a
-// search by name for a stop that isn't marked on the map.
-type Place = { lat: number; lng: number } | string;
-
-export function wazeUrl(place: Place) {
-  return typeof place === "string"
-    ? `https://waze.com/ul?q=${encodeURIComponent(place)}&navigate=yes`
-    : `https://waze.com/ul?ll=${place.lat},${place.lng}&navigate=yes`;
-}
-export function googleMapsUrl(place: Place) {
-  const destination = typeof place === "string" ? encodeURIComponent(place) : `${place.lat},${place.lng}`;
-  return `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
-}

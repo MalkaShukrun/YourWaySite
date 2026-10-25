@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Clock } from "lucide-react";
-import { setRideCancelled, updateRideTime } from "@/app/(driver)/actions";
+import { setRideCancelled, updateRideTime } from "@/app/(app)/(driver)/actions";
 import { Toast } from "@/components/ui/Toast";
 
 type RideRef = { routeId: string; date: string };
@@ -31,7 +31,7 @@ export function TimeUpdateForm({ routeId, date, time, disabled }: RideRef & { ti
       <div className="time-control">
         <input type="time" value={value} onChange={(e) => setValue(e.target.value)} aria-label="שעת יציאה" disabled={disabled} />
         <button className="btn btn-secondary" onClick={save} disabled={disabled || pending || value === time}>
-          {pending ? "מעדכנת…" : "עדכון שעה"}
+          {pending ? "מעדכן..." : "עדכון שעה"}
         </button>
       </div>
       <Toast message={toast.message} id={toast.id} />

@@ -1,4 +1,4 @@
-// Ride types and display helpers — safe to import from Client Components.
+// Ride types — safe to import from Client Components.
 
 export type RideKind = "recurring" | "one_time";
 
@@ -60,47 +60,3 @@ export const TIME_WINDOWS = {
   later: { label: "אחרי 09:00", from: "09:00", to: null },
 } as const;
 export type TimeWindow = keyof typeof TIME_WINDOWS;
-
-// Upcoming = departure still ahead of `now`; history = already departed.
-export function splitByDeparture(bookings: MyBooking[], now: number) {
-  return {
-    upcoming: bookings.filter((b) => Date.parse(b.departure_at) > now),
-    history: bookings.filter((b) => Date.parse(b.departure_at) <= now),
-  };
-}
-
-// A booking counts toward payment once the ride has departed: still booked
-// (and not cancelled by the driver), or cancelled late.
-export function isCharged(b: MyBooking, now: number) {
-  const booked = (b.status === "active" && !b.ride_cancelled) || b.status === "late_cancelled";
-  return booked && Date.parse(b.departure_at) <= now;
-}
-
-// Display helpers shared by the passenger screens.
-export function groupLabel(origin: string, destination: string) {
-  return `${origin} ← ${destination}`;
-}
-
-export function initialsOf(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0])
-    .join("");
-}
-
-const AVATAR_COLORS = ["coral", "lavender", "mint", "sand"] as const;
-export function avatarColorFor(id: string) {
-  let hash = 0;
-  for (const char of id) hash = (hash * 31 + char.charCodeAt(0)) | 0;
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-}
-
-export function kindLabel(kind: RideKind) {
-  return kind === "recurring" ? "קבועה" : "חד־פעמית";
-}
-
-export function formatPrice(price: number) {
-  return `₪${Number(price).toLocaleString("he-IL", { maximumFractionDigits: 2 })}`;
-}

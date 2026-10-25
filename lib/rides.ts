@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { TIME_WINDOWS, type MyBooking, type RideDetails, type RideGroup, type RideKind, type RideSummary, type Stop, type TimeWindow } from "@/lib/ride-types";
 
-export * from "@/lib/ride-types";
-
 // Data Access Layer for rides. All reads go through Postgres functions
 // (supabase/migrations/0002_rides.sql) that check auth.uid() themselves.
 

@@ -6,12 +6,13 @@ import dynamic from "next/dynamic";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarDays, Clock, MapPin, Plus, Repeat, Route, Users } from "lucide-react";
-import { saveRoute } from "@/app/(driver)/actions";
+import { saveRoute } from "@/app/(app)/(driver)/actions";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Select } from "@/components/ui/Select";
-import { groupLabel, type RideGroup } from "@/lib/ride-types";
+import type { RideGroup } from "@/lib/ride-types";
+import type { EditableRoute } from "@/lib/driver-types";
+import { groupLabel, WEEKDAYS } from "@/lib/format";
 import { groupArea } from "@/lib/places";
-import { WEEKDAYS, type EditableRoute } from "@/lib/driver-types";
 import { routeSchema, type RouteValues } from "@/lib/validation/route";
 
 const RouteEditorMap = dynamic(() => import("@/components/map/RouteEditorMap"), {

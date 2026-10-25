@@ -1,21 +1,13 @@
-import type { ReactNode } from "react";
 import { Map as MapIcon, Navigation, Phone, Route } from "lucide-react";
 import { formatTime } from "@/lib/dates";
-import { avatarColorFor, groupLabel, initialsOf, type Stop } from "@/lib/ride-types";
-import { googleMapsUrl, wazeUrl, type DriverPassenger, type DriverRide } from "@/lib/driver-types";
+import type { Stop } from "@/lib/ride-types";
+import type { DriverPassenger, DriverRide } from "@/lib/driver-types";
+import { avatarColorFor, groupLabel, initialsOf } from "@/lib/format";
+import { googleMapsUrl, wazeUrl } from "@/lib/nav-links";
 import { CancelForDateButton, TimeUpdateForm } from "@/components/driver/RideDayControls";
 import { LazyRouteMap } from "@/components/map/LazyRouteMap";
 
 const iconProps = { className: "icon", strokeWidth: 1.8 } as const;
-
-export function StatCard({ icon, value, label, tone }: { icon: ReactNode; value: string | number; label: string; tone: string }) {
-  return (
-    <div className="stat-card">
-      <span className={`stat-icon ${tone}`}>{icon}</span>
-      <div><strong>{value}</strong><span>{label}</span></div>
-    </div>
-  );
-}
 
 export function TodayCard({ ride, date }: { ride: DriverRide & { passengers: DriverPassenger[]; stops: Stop[] }; date: string }) {
   const percent = ride.seats ? Math.min(100, Math.round((ride.booked / ride.seats) * 100)) : 0;

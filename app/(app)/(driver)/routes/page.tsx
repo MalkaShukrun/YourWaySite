@@ -3,8 +3,9 @@ import Link from "next/link";
 import { Clock, MapPin, Plus, Users } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { formatRideDate, formatTime } from "@/lib/dates";
-import { formatPrice, groupLabel } from "@/lib/rides";
-import { getMyRoutes, weekdaysLabel, type DriverRoute } from "@/lib/driver";
+import { formatPrice, groupLabel, weekdaysLabel } from "@/lib/format";
+import { getMyRoutes } from "@/lib/driver";
+import type { DriverRoute } from "@/lib/driver-types";
 import { ArchiveRouteButton } from "@/components/driver/ArchiveRouteButton";
 import { Toast } from "@/components/ui/Toast";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { deleteGroup, setGroupActive } from "@/app/admin/actions";
+import { deleteGroup, setGroupActive } from "@/app/(app)/admin/actions";
 import { GroupDialog } from "@/components/admin/GroupDialog";
 import { Toast } from "@/components/ui/Toast";
 
@@ -27,7 +27,7 @@ export function GroupActions({ group, active, routeCount }: Props) {
       <span className="confirm-inline">
         <span>למחוק את הקבוצה?</span>
         <button className="btn btn-ghost" disabled={pending} onClick={() => run(() => deleteGroup(group.id))}>
-          {pending ? "מוחקת…" : "כן, למחוק"}
+          {pending ? "מוחק..." : "כן, למחוק"}
         </button>
         <button className="btn btn-secondary" onClick={() => setConfirming(false)}>ביטול</button>
       </span>

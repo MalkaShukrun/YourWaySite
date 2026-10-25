@@ -1,6 +1,6 @@
 "use client";
 
-export default function PassengerError({ reset }: { error: Error; reset: () => void }) {
+export default function AppError({ reset }: { error: Error; reset: () => void }) {
   return (
     <main className="page-content">
       <section className="panel empty-state">

@@ -2,8 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import type { Stop } from "@/lib/ride-types";
 import type { DriverPassenger, DriverRide, DriverRoute, EditableRoute } from "@/lib/driver-types";
 
-export * from "@/lib/driver-types";
-
 // Data Access Layer for the Driver Hub. The Postgres functions and RLS
 // (supabase/migrations/0003_driver.sql) limit everything to the signed-in driver.
 

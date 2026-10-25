@@ -1,13 +1,10 @@
 import Link from "next/link";
 import { ArrowLeft, CalendarDays, Clock, MapPin, Users } from "lucide-react";
 import { formatRideDate, formatTime } from "@/lib/dates";
-import { avatarColorFor, formatPrice, initialsOf, kindLabel, type RideSummary } from "@/lib/rides";
+import type { RideSummary } from "@/lib/ride-types";
+import { avatarColorFor, formatPrice, initialsOf, kindLabel, seatsText } from "@/lib/format";
 
 const iconProps = { className: "icon", strokeWidth: 1.8 } as const;
-
-export function seatsText(n: number) {
-  return n === 1 ? "מקום פנוי אחד" : `${n} מקומות פנויים`;
-}
 
 export function TripCard({ trip }: { trip: RideSummary }) {
   const full = trip.seats_left <= 0;

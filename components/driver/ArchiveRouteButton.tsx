@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { archiveRoute } from "@/app/(driver)/actions";
+import { archiveRoute } from "@/app/(app)/(driver)/actions";
 import { Toast } from "@/components/ui/Toast";
 
 // Asks once, then stops offering the route.

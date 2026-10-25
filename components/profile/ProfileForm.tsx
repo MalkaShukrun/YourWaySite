@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Car, Landmark, Mail, Phone, User } from "lucide-react";
-import { saveProfile } from "@/app/profile/actions";
+import { saveProfile } from "@/app/(app)/profile/actions";
 import { profileSchema, type ProfileValues } from "@/lib/validation/profile";
 import { Toast } from "@/components/ui/Toast";
 

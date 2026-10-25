@@ -1,6 +1,6 @@
 import { Suspense, type ReactNode } from "react";
 import { getCurrentUser } from "@/lib/auth";
-import { initialsOf } from "@/lib/rides";
+import { initialsOf } from "@/lib/format";
 import { AdminNavLink, Sidebar } from "./Sidebar";
 import { Header, UserMenu } from "./Header";
 import { BottomNav } from "./BottomNav";

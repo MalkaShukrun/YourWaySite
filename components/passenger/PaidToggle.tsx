@@ -2,7 +2,7 @@
 
 import { useOptimistic, useTransition } from "react";
 import { Check } from "lucide-react";
-import { setBookingPaid } from "@/app/(passenger)/actions";
+import { setBookingPaid } from "@/app/(app)/(passenger)/actions";
 
 // Personal "Paid / Unpaid" toggle — only the passenger sees it (SRS §4.3).
 export function PaidToggle({ bookingId, isPaid, price }: { bookingId: string; isPaid: boolean; price: string }) {

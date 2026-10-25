@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MapPin, Plus, Route } from "lucide-react";
-import { createGroup, updateGroup } from "@/app/admin/actions";
+import { createGroup, updateGroup } from "@/app/(app)/admin/actions";
 import { groupSchema, type GroupValues } from "@/lib/validation/group";
 import { Toast } from "@/components/ui/Toast";
 

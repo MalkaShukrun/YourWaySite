@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { Car, Clock, MapPin, Repeat, Search } from "lucide-react";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Select } from "@/components/ui/Select";
-import type { RideGroup, RideKind, TimeWindow } from "@/lib/ride-types";
-import { TIME_WINDOWS, groupLabel } from "@/lib/ride-types";
+import { TIME_WINDOWS, type RideGroup, type RideKind, type TimeWindow } from "@/lib/ride-types";
+import { groupLabel } from "@/lib/format";
 
 type Filters = { groupId?: string; date?: string; kind?: RideKind; time?: TimeWindow };
 const iconProps = { className: "icon", strokeWidth: 1.8 } as const;

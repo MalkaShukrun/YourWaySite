@@ -1,5 +1,5 @@
 -- YourWay — full database setup. Paste this whole file into Supabase → SQL Editor → Run.
--- Generated from supabase/migrations/0001–0004. Safe to run more than once.
+-- Generated from supabase/migrations/0001–0005. Safe to run more than once.
 
 
 -- ════════ supabase/migrations/0001_profiles.sql ════════
@@ -751,3 +751,18 @@ grant execute on function public.my_drivers_bank to authenticated;
 
 -- The system owner is an admin (she must have signed in once before).
 update public.profiles set is_admin = true where email = 'malkycohen1@gmail.com';
+
+
+-- ════════ supabase/migrations/0005_optional_stop_location.sql ════════
+-- YourWay — marking stops on the map is optional (SRS §5.1): a stop may have
+-- just a name. save_route already passes missing coordinates through as null.
+-- Run after 0004_profile.sql. Safe to run again.
+
+alter table public.stops
+  alter column lat drop not null,
+  alter column lng drop not null;
+
+-- A stop is either on the map (both coordinates) or not at all.
+alter table public.stops drop constraint if exists stops_location_complete;
+alter table public.stops
+  add constraint stops_location_complete check ((lat is null) = (lng is null));

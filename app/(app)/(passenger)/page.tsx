@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth";
 import { greetingFor, isIsoDate, israelHour, israelToday } from "@/lib/dates";
-import { getRideGroups, searchRides, TIME_WINDOWS, type RideKind, type TimeWindow } from "@/lib/rides";
+import { getRideGroups, searchRides } from "@/lib/rides";
+import { TIME_WINDOWS, type RideKind, type TimeWindow } from "@/lib/ride-types";
 import { SearchPanel } from "@/components/passenger/SearchPanel";
 import { TripCard } from "@/components/passenger/TripCard";
 

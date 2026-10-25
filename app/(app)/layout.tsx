@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/shell/AppShell";
 
-export default function ProfileLayout({ children }: LayoutProps<"/profile">) {
+export default function AppLayout({ children }: LayoutProps<"/">) {
   return <AppShell>{children}</AppShell>;
 }

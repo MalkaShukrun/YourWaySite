@@ -3,8 +3,9 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Check } from "lucide-react";
-import { bookRide } from "@/app/(passenger)/actions";
-import { formatPrice, type Stop } from "@/lib/ride-types";
+import { bookRide } from "@/app/(app)/(passenger)/actions";
+import type { Stop } from "@/lib/ride-types";
+import { formatPrice } from "@/lib/format";
 import { LazyRouteMap } from "@/components/map/LazyRouteMap";
 
 type Props = {

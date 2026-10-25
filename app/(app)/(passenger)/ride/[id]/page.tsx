@@ -4,9 +4,9 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, Car, Phone, Users } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { formatRideDate, formatTime, isIsoDate } from "@/lib/dates";
-import { avatarColorFor, getRide, initialsOf, kindLabel } from "@/lib/rides";
+import { getRide } from "@/lib/rides";
+import { avatarColorFor, initialsOf, kindLabel, seatsText } from "@/lib/format";
 import { BookingForm } from "@/components/passenger/BookingForm";
-import { seatsText } from "@/components/passenger/TripCard";
 
 const iconProps = { className: "icon", strokeWidth: 1.8 } as const;
 const UUID = /^[0-9a-f-]{36}$/i;

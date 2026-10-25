@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Clock, Phone } from "lucide-react";
-import { cancelBooking } from "@/app/(passenger)/actions";
+import { cancelBooking } from "@/app/(app)/(passenger)/actions";
 import { Toast } from "@/components/ui/Toast";
 
 type Props = { bookingId: string; driverName: string; driverPhone: string | null };
