@@ -49,7 +49,15 @@ export async function expectNotFound(page: Page) {
 
 // Next 16 keeps the previous layout mounted (hidden) after switching between
 // the passenger and driver areas, so there can be two menus — use the visible one.
-export const sideNav = (page: Page) => page.locator(".side-nav").filter({ visible: true });
+// Opens a page with a form and waits for its submit button to turn on — the
+// form enables it once React has taken over the page. Typing before that can
+// be undone by hydration (slow in dev mode).
+export async function openForm(page: Page, path: string, submit: string) {
+  await page.goto(path);
+  await expect(page.getByRole("button", { name: submit })).toBeEnabled();
+}
+
+export const sideNav =(page: Page) => page.locator(".side-nav").filter({ visible: true });
 export const bottomNav = (page: Page) => page.locator(".bottom-nav").filter({ visible: true });
 
 // `next dev`'s floating dev-tools button covers the bottom tab bar on phones.

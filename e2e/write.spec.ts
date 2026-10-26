@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { choose, expectNotFound, hideDevTools, isAdmin, nextWeekday, toast } from "./helpers";
+import { choose, expectNotFound, hideDevTools, isAdmin, nextWeekday, openForm, toast } from "./helpers";
 
 // Tests that SAVE data, against the real Supabase project. They only run with
 // E2E_WRITE=1 (npm run test:e2e:write) and as an admin, and touch only things
@@ -103,7 +103,7 @@ test.describe("admin: groups", () => {
 
 test.describe("driver: route lifecycle", () => {
   test("adds a route with stops on the map", async ({ page }) => {
-    await page.goto("/routes/new");
+    await openForm(page, "/routes/new", "שמירת המסלול");
     await choose(page, "קבוצת נסיעה", label());
 
     const days = page.getByRole("group", { name: "ימים בשבוע" }).getByRole("button");
@@ -140,14 +140,14 @@ test.describe("driver: route lifecycle", () => {
   });
 
   test("a stop without a name blocks saving", async ({ page }) => {
-    await page.goto(`/routes/${routeId}`);
+    await openForm(page, `/routes/${routeId}`, "שמירת המסלול");
     await page.locator(".editor-stop-group:not(.dropoff-editor-group) input").first().fill("");
     await page.getByRole("button", { name: "שמירת המסלול" }).click();
     await expect(page.locator(".form-alert")).toHaveText("יש לתת שם לכל תחנה");
   });
 
   test("updates the route", async ({ page }) => {
-    await page.goto(`/routes/${routeId}`);
+    await openForm(page, `/routes/${routeId}`, "שמירת המסלול");
     await expect(page.getByRole("heading", { level: 1, name: "עריכת מסלול" })).toBeVisible();
     await expect(page.getByLabel("מקומות פנויים")).toHaveValue("3");
     await expect(page.locator(".editor-stop-group:not(.dropoff-editor-group) input")).toHaveValue("תחנת בדיקה א");
@@ -213,7 +213,7 @@ test.describe("driver: route lifecycle", () => {
     await expectNotFound(page); // a removed route can't be edited
 
     // A replacement route in the same group — without touching the map at all.
-    await page.goto("/routes/new");
+    await openForm(page, "/routes/new", "שמירת המסלול");
     await choose(page, "קבוצת נסיעה", label());
     await page.getByLabel("מחיר לכל טרמפיסטית").fill("5");
     await page.getByRole("button", { name: "הוספת תחנת איסוף" }).click();
@@ -244,7 +244,7 @@ test.describe("driver: route lifecycle", () => {
 
 test.describe("profile", () => {
   test("saves the profile and keeps the values after reload", async ({ page }) => {
-    await page.goto("/profile");
+    await openForm(page, "/profile", "שמירת שינויים");
     const name = await page.getByLabel("שם מלא").inputValue();
     const phone = await page.getByLabel("מספר טלפון").inputValue();
 

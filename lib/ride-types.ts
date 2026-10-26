@@ -19,9 +19,10 @@ export type RideSummary = {
   price: number;
 };
 
+// The driver's phone and email are null unless the user is booked on the ride.
 export type RideDetails = RideSummary & {
   driver_phone: string | null;
-  driver_email: string;
+  driver_email: string | null;
   vehicle_model: string | null;
   vehicle_color: string | null;
   is_available: boolean;

@@ -36,6 +36,18 @@ export function formatRideDate(isoDate: string) {
   return `יום ${WEEKDAY_LETTERS[date.getDay()]}, ${format(date, "d בMMMM", { locale: he })}`;
 }
 
+// "2025-06-22" → "א׳ 22.6"
+export function formatShortRideDate(isoDate: string) {
+  const date = parseISO(isoDate);
+  return `${WEEKDAY_LETTERS[date.getDay()]} ${format(date, "d.M")}`;
+}
+
+// The weekdays of some dates, Sunday first: ["2025-06-24", "2025-06-22"] → "א׳ · ג׳"
+export function weekdaysOf(isoDates: string[]) {
+  const days = [...new Set(isoDates.map((d) => parseISO(d).getDay()))].sort((a, b) => a - b);
+  return days.map((d) => WEEKDAY_LETTERS[d]).join(" · ");
+}
+
 // "07:15:00" → "07:15"
 export function formatTime(time: string | null) {
   return time ? time.slice(0, 5) : "";

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { avatarColorFor, formatPrice, groupLabel, initialsOf, kindLabel, seatsText, weekdaysLabel } from "./format";
+import { avatarColorFor, formatPrice, groupLabel, initialsOf, kindLabel, seatsText, weekdaysLabel } from "@/lib/format";
 
 describe("groupLabel", () => {
   it("joins origin and destination with an arrow", () => {

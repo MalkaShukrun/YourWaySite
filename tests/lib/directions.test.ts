@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { googleMapsUrl, wazeUrl } from "./directions";
+import { googleMapsUrl, wazeUrl } from "@/lib/directions";
 
 describe("navigation links", () => {
   it("builds a Waze link", () => {

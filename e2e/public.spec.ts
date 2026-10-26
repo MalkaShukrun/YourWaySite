@@ -18,12 +18,11 @@ test.describe("login page", () => {
     await expect(page.locator('a[href^="mailto:"]').first()).toHaveAttribute("href", /^mailto:.+@.+/);
   });
 
-  test("shows the sign-in error passed back from the callback", async ({ page }) => {
+  test("shows a sign-in error, but not the text from the URL", async ({ page }) => {
     await page.goto("/login?error=invalid%20grant");
 
     const alert = page.locator(".auth-error");
-    await expect(alert).toContainText("ההתחברות לא הושלמה. נסי שוב.");
-    await expect(alert).toContainText("invalid grant");
+    await expect(alert).toHaveText("ההתחברות לא הושלמה. נסי שוב.");
   });
 
   test("shows no error without one", async ({ page }) => {
@@ -33,8 +32,9 @@ test.describe("login page", () => {
 
   test("the Google button starts the OAuth flow", async ({ page }) => {
     await page.goto("/login");
-    // Stop at the first hop so the test never reaches Google itself.
-    await page.route(/supabase\.co\/auth\/v1\/authorize/, (route) => route.fulfill({ status: 204 }));
+    // Stop at the first hop so the test never reaches Google itself. Abort, not
+    // an empty response: a 204 never finishes the navigation, so click() hangs.
+    await page.route(/supabase\.co\/auth\/v1\/authorize/, (route) => route.abort());
     const authorize = page.waitForRequest(/supabase\.co\/auth\/v1\/authorize/);
 
     await page.getByRole("button", { name: "הצטרפות עם Google" }).click();
@@ -75,10 +75,10 @@ test.describe("signed-out redirects", () => {
     await expect(page).toHaveURL("http://localhost:3000/login");
   });
 
-  test("a stray OAuth error lands on the login page with the reason", async ({ page }) => {
+  test("a stray OAuth error lands on the login page with an error", async ({ page }) => {
     await page.goto("/?error=access_denied&error_description=User%20cancelled");
     await expect(page).toHaveURL(/\/login\?error=User%20cancelled$/);
-    await expect(page.locator(".auth-error")).toContainText("User cancelled");
+    await expect(page.locator(".auth-error")).toHaveText("ההתחברות לא הושלמה. נסי שוב.");
   });
 
   test("the callback without a code reports it", async ({ page }) => {

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createSupabaseMock } from "@/test/supabase-mock";
-import { getProfileValues } from "./profile";
+import { createSupabaseMock } from "@/tests/supabase-mock";
+import { getProfileValues } from "@/lib/profile";
 
 const sb = createSupabaseMock();
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => sb.client }));

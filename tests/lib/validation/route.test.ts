@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { routeSchema, type RouteValues } from "./route";
+import { routeSchema, type RouteValues } from "@/lib/validation/route";
 
 const valid: RouteValues = {
   groupId: "11111111-1111-4111-8111-111111111111",

@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { refresh } from "next/cache";
-import { createSupabaseMock } from "@/test/supabase-mock";
-import { runAction } from "@/test/redirect";
+import { createSupabaseMock } from "@/tests/supabase-mock";
+import { runAction } from "@/tests/redirect";
 import { requireAdmin } from "@/lib/auth";
-import { RedirectError } from "@/test/setup";
-import { createGroup, deleteGroup, setGroupActive, updateGroup } from "./actions";
+import { RedirectError } from "@/tests/setup";
+import { createGroup, deleteGroup, setGroupActive, updateGroup } from "@/app/(app)/admin/actions";
 
 const sb = createSupabaseMock();
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => sb.client }));

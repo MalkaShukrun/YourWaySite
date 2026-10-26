@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { refresh } from "next/cache";
-import { createSupabaseMock } from "@/test/supabase-mock";
-import { runAction } from "@/test/redirect";
-import { bookRide, cancelBooking, setBookingPaid } from "./actions";
+import { createSupabaseMock } from "@/tests/supabase-mock";
+import { runAction } from "@/tests/redirect";
+import { bookRide, cancelBooking, setBookingPaid } from "@/app/(app)/(passenger)/actions";
 
 const sb = createSupabaseMock();
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => sb.client }));

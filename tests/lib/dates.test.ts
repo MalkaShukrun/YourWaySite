@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { formatMonth, formatRideDate, formatTime, greetingFor, isIsoDate, israelHour, israelToday, recentMonths } from "./dates";
+import { formatMonth, formatRideDate, formatShortRideDate, formatTime, greetingFor, isIsoDate, israelHour, israelToday, recentMonths, weekdaysOf } from "@/lib/dates";
 
 afterEach(() => vi.useRealTimers());
 
@@ -36,6 +36,19 @@ describe("formatRideDate", () => {
   it("formats with the Hebrew weekday letter and month", () => {
     expect(formatRideDate("2025-06-22")).toBe("יום א׳, 22 ביוני");
     expect(formatRideDate("2026-10-30")).toBe("יום ו׳, 30 באוקטובר");
+  });
+});
+
+describe("formatShortRideDate", () => {
+  it("formats as weekday letter and day.month", () => {
+    expect(formatShortRideDate("2026-10-27")).toBe("ג׳ 27.10");
+    expect(formatShortRideDate("2026-11-01")).toBe("א׳ 1.11");
+  });
+});
+
+describe("weekdaysOf", () => {
+  it("lists each weekday once, Sunday first", () => {
+    expect(weekdaysOf(["2026-10-29", "2026-10-27", "2026-11-01", "2026-11-03"])).toBe("א׳ · ג׳ · ה׳");
   });
 });
 

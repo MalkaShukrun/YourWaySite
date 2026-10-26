@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createSupabaseMock } from "@/test/supabase-mock";
-import { getMyBookings, getMyDriversBankAccounts, getRide, getRideGroups, searchRides } from "./rides";
+import { createSupabaseMock } from "@/tests/supabase-mock";
+import { getMyBookings, getMyDriversBankAccounts, getRide, getRideGroups, getRouteDates, searchRides } from "@/lib/rides";
 
 const sb = createSupabaseMock();
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => sb.client }));
@@ -23,6 +23,19 @@ describe("getRideGroups", () => {
 
   it("returns an empty list when there's no data", async () => {
     expect(await getRideGroups()).toEqual([]);
+  });
+});
+
+describe("getRouteDates", () => {
+  it("returns the coming week's dates of one route only", async () => {
+    sb.onRpc("search_rides", {
+      data: [
+        { route_id: "r1", ride_date: "2026-10-27" },
+        { route_id: "r2", ride_date: "2026-10-27" },
+        { route_id: "r1", ride_date: "2026-10-29" },
+      ],
+    });
+    expect((await getRouteDates("r1")).map((r) => r.ride_date)).toEqual(["2026-10-27", "2026-10-29"]);
   });
 });
 

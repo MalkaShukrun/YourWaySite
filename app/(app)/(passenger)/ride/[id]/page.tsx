@@ -4,9 +4,10 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, Car, Phone, Users } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { formatRideDate, formatTime, isIsoDate } from "@/lib/dates";
-import { getRide } from "@/lib/rides";
+import { getRide, getRouteDates } from "@/lib/rides";
 import { avatarColorFor, initialsOf, kindLabel, seatsText } from "@/lib/format";
 import { BookingForm } from "@/components/passenger/BookingForm";
+import { RideDateChips } from "@/components/passenger/RideDateChips";
 import { iconProps } from "@/components/ui/icon";
 import { isUuid } from "@/lib/validation/patterns";
 
@@ -30,7 +31,7 @@ async function RideDetailsView({ params, searchParams }: PageProps<"/ride/[id]">
   const date = query.date;
   if (!isUuid(id) || !isIsoDate(date)) notFound();
 
-  const result = await getRide(id, date);
+  const [result, dates] = await Promise.all([getRide(id, date), getRouteDates(id)]);
   if (!result) notFound();
   const { ride, stops } = result;
 
@@ -41,6 +42,15 @@ async function RideDetailsView({ params, searchParams }: PageProps<"/ride/[id]">
   return (
     <div className="detail-layout">
       <div className="detail-main">
+        {dates.length > 1 && (
+          <section className="booking-card ride-days">
+            <div className="booking-step">
+              <span className="step-number"><CalendarDays {...iconProps} size={16} /></span>
+              <div><h2>בחרי יום</h2><p>נסיעה קבועה — אפשר להירשם לכל אחד מהימים הקרובים</p></div>
+            </div>
+            <RideDateChips rides={dates} time={dates[0].out_time} selected={ride.ride_date} />
+          </section>
+        )}
         <BookingForm
           routeId={ride.route_id}
           date={ride.ride_date}
@@ -55,11 +65,18 @@ async function RideDetailsView({ params, searchParams }: PageProps<"/ride/[id]">
         <section className="driver-contact-card driver-info-card">
           <div className={`avatar avatar-${avatarColorFor(ride.driver_id)}`}>{initialsOf(ride.driver_name)}</div>
           <div><span>פרטי הנהגת</span><strong>{ride.driver_name}</strong></div>
+          {/* The database sends contact details only to booked passengers. */}
           <div className="driver-contact-links">
-            {ride.driver_phone && (
-              <a href={`tel:${ride.driver_phone}`}><Phone {...iconProps} size={16} />{ride.driver_phone}</a>
+            {ride.driver_email ? (
+              <>
+                {ride.driver_phone && (
+                  <a href={`tel:${ride.driver_phone}`}><Phone {...iconProps} size={16} />{ride.driver_phone}</a>
+                )}
+                <a href={`mailto:${ride.driver_email}`}>{ride.driver_email}</a>
+              </>
+            ) : (
+              <small>הטלפון והדוא״ל של הנהגת יוצגו אחרי ההרשמה לנסיעה.</small>
             )}
-            <a href={`mailto:${ride.driver_email}`}>{ride.driver_email}</a>
           </div>
         </section>
         <section className="panel detail-hero">

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupArea } from "./places";
+import { groupArea } from "@/lib/places";
 
 describe("groupArea", () => {
   it("covers both places", () => {

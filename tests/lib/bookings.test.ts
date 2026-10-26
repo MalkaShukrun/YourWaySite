@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { MyBooking } from "./ride-types";
-import { isCharged, splitByDeparture } from "./bookings";
+import type { MyBooking } from "@/lib/ride-types";
+import { isCharged, splitByDeparture } from "@/lib/bookings";
 
 describe("splitByDeparture", () => {
   const at = (departure_at: string) => ({ booking_id: departure_at, departure_at }) as MyBooking;

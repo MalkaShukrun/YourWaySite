@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { choose, expectNotFound, hideDevTools, isAdmin, israelToday, optionsOf, sideNav, trackPageErrors } from "./helpers";
+import { choose, expectNotFound, hideDevTools, isAdmin, israelToday, openForm, optionsOf, sideNav, trackPageErrors } from "./helpers";
 
 test.beforeEach(({ page }) => hideDevTools(page));
 
@@ -59,7 +59,7 @@ test.describe("access control", () => {
 
 test.describe("profile", () => {
   test("loads the saved details with a read-only email", async ({ page }) => {
-    await page.goto("/profile");
+    await openForm(page, "/profile", "שמירת שינויים");
 
     await expect(page.getByLabel("שם מלא")).not.toHaveValue("");
     await expect(page.getByLabel("מספר טלפון")).toHaveValue(/^0\d/);
@@ -69,7 +69,7 @@ test.describe("profile", () => {
   });
 
   test("validates the name and phone before saving", async ({ page }) => {
-    await page.goto("/profile");
+    await openForm(page, "/profile", "שמירת שינויים");
     await page.getByLabel("שם מלא").fill("א");
     await page.getByLabel("מספר טלפון").fill("12345");
     await page.getByRole("button", { name: "שמירת שינויים" }).click();
@@ -80,7 +80,7 @@ test.describe("profile", () => {
   });
 
   test("requires all bank fields once one is filled", async ({ page }) => {
-    await page.goto("/profile");
+    await openForm(page, "/profile", "שמירת שינויים");
     for (const label of ["שם בעלת החשבון", "שם הבנק", "מספר סניף", "מספר חשבון"]) await page.getByLabel(label).fill("");
     await page.getByLabel("שם הבנק").fill("בנק הפועלים");
     await page.getByLabel("מספר סניף").fill("12345");
@@ -92,7 +92,7 @@ test.describe("profile", () => {
   });
 
   test("adding and removing the car shows and hides its fields", async ({ page }) => {
-    await page.goto("/profile");
+    await openForm(page, "/profile", "שמירת שינויים");
     const remove = page.getByRole("button", { name: "הסרת הרכב" });
     if (await remove.isVisible()) await remove.click();
 
@@ -371,7 +371,7 @@ test.describe("driver hub", () => {
   });
 
   test("route editor: sections, days, one-time date and cancel", async ({ page }) => {
-    await page.goto("/routes/new");
+    await openForm(page, "/routes/new", "שמירת המסלול");
     for (const name of ["פרטי הנסיעה", "ימים ושעות", "תחנות איסוף והורדה", "סימון המסלול על המפה"]) {
       await expect(page.getByRole("heading", { level: 2, name })).toBeVisible();
     }
@@ -393,7 +393,7 @@ test.describe("driver hub", () => {
   test("route editor: won't save without stops and asks for them", async ({ page }) => {
     let posted = false;
     page.on("request", (r) => r.method() === "POST" && r.url().includes("/routes/new") && (posted = true));
-    await page.goto("/routes/new");
+    await openForm(page, "/routes/new", "שמירת המסלול");
     await page.getByLabel("מחיר לכל טרמפיסטית").fill("10");
     await page.getByRole("button", { name: "שמירת המסלול" }).click();
 
@@ -402,7 +402,7 @@ test.describe("driver hub", () => {
   });
 
   test("route editor: bad seats, price and time are rejected", async ({ page }) => {
-    await page.goto("/routes/new");
+    await openForm(page, "/routes/new", "שמירת המסלול");
     await page.getByLabel("מקומות פנויים").fill("9");
     await page.getByRole("button", { name: "שמירת המסלול" }).click();
     await expect(page.locator(".form-alert")).toBeVisible();
@@ -414,7 +414,7 @@ test.describe("driver hub", () => {
   });
 
   test("route editor: the map is limited to the group's two cities", async ({ page }) => {
-    await page.goto("/routes/new");
+    await openForm(page, "/routes/new", "שמירת המסלול");
     const known = (await optionsOf(page, "קבוצת נסיעה")).find((o) =>
       /^(בית שמש|רמת בית שמש|ירושלים|הר חוצבים) ← (בית שמש|רמת בית שמש|ירושלים|הר חוצבים)$/.test(o),
     );
@@ -428,7 +428,7 @@ test.describe("driver hub", () => {
   });
 
   test("route editor: stops are added without the map; the pin button marks one on it", async ({ page }) => {
-    await page.goto("/routes/new");
+    await openForm(page, "/routes/new", "שמירת המסלול");
     await expect(page.locator(".optional-tag")).toHaveText("לא חובה");
 
     await page.getByRole("button", { name: "הוספת תחנת איסוף" }).click();

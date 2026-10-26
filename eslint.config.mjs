@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Saved e2e login (a whole Chrome profile, extensions included) and test output.
+    "e2e/.auth/**",
+    "playwright-report/**",
+    "test-results/**",
   ]),
 ]);
 

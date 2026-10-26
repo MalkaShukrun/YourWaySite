@@ -15,6 +15,7 @@ import type { EditableRoute } from "@/lib/driver-types";
 import { groupLabel, RIDE_WEEKDAYS } from "@/lib/format";
 import { groupArea } from "@/lib/places";
 import { routeSchema, type RouteValues } from "@/lib/validation/route";
+import { useHydrated } from "@/components/ui/useHydrated";
 
 type Props = { groups: RideGroup[]; route: EditableRoute | null; today: string };
 
@@ -25,6 +26,7 @@ export function RouteEditor({ groups, route, today }: Props) {
   const [placing, setPlacing] = useState<number | null>(null);
   const [serverError, setServerError] = useState("");
   const [pending, startTransition] = useTransition();
+  const hydrated = useHydrated();
 
   const {
     register,
@@ -214,8 +216,8 @@ export function RouteEditor({ groups, route, today }: Props) {
             {(firstError || serverError) && <p className="form-alert" role="alert">{serverError || firstError}</p>}
             <div className="editor-actions">
               <Link className="btn btn-secondary" href="/routes">ביטול</Link>
-              <button type="submit" className="btn btn-primary" disabled={pending}>
-                {pending ? "שומרת…" : "שמירת המסלול"}
+              <button type="submit" className="btn btn-primary" disabled={!hydrated || pending}>
+                {pending ? "שומר..." : "שמירת המסלול"}
               </button>
             </div>
           </div>

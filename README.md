@@ -6,7 +6,7 @@ Ride-sharing and group transportation app. Next.js (App Router) + Supabase.
 
 1. **Supabase project** — create one at https://supabase.com.
 2. **Database** — open *SQL Editor*, paste the whole of `supabase/setup.sql` and run it
-   (it combines `supabase/migrations/0001–0005`; safe to run again). Optional demo rides: `supabase/seed_demo.sql`.
+   (it combines `supabase/migrations/0001–0007`; safe to run again). Optional demo rides: `supabase/seed_demo.sql`.
 3. **Google login** — *Authentication → Sign In / Providers → Google*: enable it and paste the
    Client ID / Secret from Google Cloud Console (OAuth client, type "Web application").
    In Google Cloud, add the redirect URI shown by Supabase (`https://<project>.supabase.co/auth/v1/callback`).
@@ -28,6 +28,9 @@ modal (phone is required, vehicle is optional).
 
 - **User** → lands on `/` (passenger home)
 - **Admin** → lands on `/admin/groups`
+
+On a new database nobody is admin yet: sign in once with the owner's account, then run
+`setup.sql` again (it makes the owner admin) — or use the statement below.
 
 To make someone an admin, run in the SQL editor (after they've logged in once):
 

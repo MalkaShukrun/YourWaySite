@@ -7,8 +7,10 @@ import { Car, Landmark, Mail, Phone, User } from "lucide-react";
 import { saveProfile } from "@/app/(app)/profile/actions";
 import { profileSchema, type ProfileValues } from "@/lib/validation/profile";
 import { Toast } from "@/components/ui/Toast";
+import { VehicleFields } from "@/components/profile/VehicleFields";
 import { iconProps } from "@/components/ui/icon";
 import { FieldError } from "@/components/ui/FieldError";
+import { useHydrated } from "@/components/ui/useHydrated";
 
 type Props = { initials: string; email: string; defaults: ProfileValues };
 
@@ -17,6 +19,7 @@ export function ProfileForm({ initials, email, defaults }: Props) {
   const [serverError, setServerError] = useState("");
   const [saved, setSaved] = useState(0);
   const [pending, startTransition] = useTransition();
+  const hydrated = useHydrated();
   const {
     register,
     handleSubmit,
@@ -74,21 +77,11 @@ export function ProfileForm({ initials, email, defaults }: Props) {
       </div>
       {hasVehicle && (
         <div className="form-grid compact profile-subgrid">
-          <label className="field">
-            <span>סוג רכב</span>
-            <div className="input-shell"><input {...register("vehicleModel")} placeholder="לדוגמה: יונדאי איוניק" /></div>
-            <FieldError message={errors.vehicleModel?.message} />
-          </label>
-          <label className="field">
-            <span>צבע</span>
-            <div className="input-shell"><input {...register("vehicleColor")} placeholder="לדוגמה: לבן" /></div>
-            <FieldError message={errors.vehicleColor?.message} />
-          </label>
-          <label className="field">
-            <span>מספר מקומות</span>
-            <div className="input-shell"><input {...register("vehicleSeats")} inputMode="numeric" /></div>
-            <FieldError message={errors.vehicleSeats?.message} />
-          </label>
+          <VehicleFields
+            model={{ input: register("vehicleModel"), error: errors.vehicleModel?.message }}
+            color={{ input: register("vehicleColor"), error: errors.vehicleColor?.message }}
+            seats={{ input: register("vehicleSeats"), error: errors.vehicleSeats?.message }}
+          />
         </div>
       )}
 
@@ -125,7 +118,7 @@ export function ProfileForm({ initials, email, defaults }: Props) {
 
       {serverError && <p className="auth-error" role="alert">{serverError}</p>}
       <div className="profile-save">
-        <button type="submit" className="btn btn-primary" disabled={pending}>{pending ? "שומרת…" : "שמירת שינויים"}</button>
+        <button type="submit" className="btn btn-primary" disabled={!hydrated || pending}>{pending ? "שומר..." : "שמירת שינויים"}</button>
       </div>
       <Toast message={saved ? "הפרטים נשמרו בהצלחה" : ""} id={saved} />
     </form>

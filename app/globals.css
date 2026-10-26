@@ -1,3 +1,6 @@
+/* No Tailwind utility classes are used, but the design CSS relies on its base
+   reset (zero-width borders, list bullets removed, links without decoration).
+   Removing this import changes the login and privacy pages. */
 @import "tailwindcss";
 @import "./yourway.css";
 
@@ -29,6 +32,18 @@ a.nav-item { text-decoration: none; }
 .empty-state .btn { margin-top: 6px; }
 .search-placeholder { min-height: 200px; }
 .btn.is-disabled { color: #8a958f; cursor: not-allowed; }
+
+/* A recurring route's dates, on its search card and its ride page
+   (components/passenger/RideDateChips.tsx) */
+.trip-dates { display: flex; flex-wrap: wrap; gap: 6px; }
+.trip-info .trip-dates { gap: 6px; }
+.ride-days .trip-dates { margin-top: 14px; gap: 8px; }
+.ride-days .trip-dates a, .ride-days .trip-dates span { min-width: 76px; padding: 7px 10px; font-size: 15px; }
+.trip-dates a.selected, .trip-dates a.selected:hover { border-color: var(--green); background: var(--lime); color: var(--green-dark); }
+.trip-dates a, .trip-dates span { min-width: 62px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 9px; display: inline-flex; flex-direction: column; align-items: center; color: #3b4842; font-size: 14px; font-weight: 700; line-height: 1.35; text-decoration: none; transition: .2s ease; }
+.trip-dates a:hover { border-color: #9DB2C0; color: var(--green); background: var(--green-soft); }
+.trip-dates small { color: #66736C; font-size: 12px; font-weight: 500; }
+.trip-dates .is-full { color: #8a958f; background: #F3F5F4; cursor: not-allowed; }
 
 /* Payments */
 .paid-pill.unpaid { color: #875D54; background: #F7E8E3; }
@@ -159,6 +174,7 @@ a.nav-item { text-decoration: none; }
 /* Onboarding asks only for name and phone (the email comes from Google), so
    each field gets the full row. */
 .onboarding-card > .form-grid { grid-template-columns: 1fr; }
+.onboarding-switch { margin-top: 8px; color: #59665F; font-size: 15px; }
 /* Only the phone (last of the personal fields) spans the row; the vehicle and
    bank grids stay in even columns. */
 .profile-panel .form-grid.compact .field:last-child { grid-column: auto; }

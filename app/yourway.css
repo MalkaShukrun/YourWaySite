@@ -478,7 +478,6 @@ button { cursor: pointer; }
 
 @media (max-width: 1100px) {
   .trip-grid { grid-template-columns: repeat(2, 1fr); }
-  .trip-card:last-child { display: none; }
   .filters { grid-template-columns: 1.4fr 1fr; }
   .search-button { min-height: 45px; margin-top: 3px; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -511,7 +510,6 @@ button { cursor: pointer; }
   .filters { grid-template-columns: 1fr; }
   .filters > .field:nth-child(3) { display: none; }
   .trip-grid { grid-template-columns: 1fr; }
-  .trip-card:last-child { display: block; }
   .results-head { align-items: center; }
   .results-head .btn { width: 41px; padding: 0; font-size: 0; }
   .bottom-nav { position: fixed; display: grid; grid-template-columns: repeat(4, 1fr); align-items: center; right: 0; left: 0; bottom: 0; height: 68px; background: rgba(255,255,255,.96); border-top: 1px solid var(--line); z-index: 30; backdrop-filter: blur(10px); }

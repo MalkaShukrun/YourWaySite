@@ -5,9 +5,11 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Car, Phone, User } from "lucide-react";
 import { onboardingSchema, type OnboardingValues } from "@/lib/validation/profile";
-import { completeProfile } from "@/app/(auth)/login/actions";
+import { completeProfile, signOut } from "@/app/(auth)/login/actions";
+import { VehicleFields } from "@/components/profile/VehicleFields";
 import { iconProps } from "@/components/ui/icon";
 import { FieldError } from "@/components/ui/FieldError";
+import { useHydrated } from "@/components/ui/useHydrated";
 
 type Props = { defaultName: string };
 
@@ -15,6 +17,7 @@ type Props = { defaultName: string };
 export function OnboardingModal({ defaultName }: Props) {
   const [serverError, setServerError] = useState("");
   const [pending, startTransition] = useTransition();
+  const hydrated = useHydrated();
   const {
     register,
     handleSubmit,
@@ -74,21 +77,11 @@ export function OnboardingModal({ defaultName }: Props) {
         {hasVehicle ? (
           <div className="vehicle-fields">
             <div className="form-grid compact">
-              <label className="field">
-                <span>סוג רכב</span>
-                <div className="input-shell"><input {...register("vehicleModel")} placeholder="לדוגמה: יונדאי איוניק" /></div>
-                <FieldError message={errors.vehicleModel?.message} />
-              </label>
-              <label className="field">
-                <span>צבע</span>
-                <div className="input-shell"><input {...register("vehicleColor")} placeholder="לדוגמה: לבן" /></div>
-                <FieldError message={errors.vehicleColor?.message} />
-              </label>
-              <label className="field">
-                <span>מספר מקומות</span>
-                <div className="input-shell"><input {...register("vehicleSeats")} inputMode="numeric" /></div>
-                <FieldError message={errors.vehicleSeats?.message} />
-              </label>
+              <VehicleFields
+                model={{ input: register("vehicleModel"), error: errors.vehicleModel?.message }}
+                color={{ input: register("vehicleColor"), error: errors.vehicleColor?.message }}
+                seats={{ input: register("vehicleSeats"), error: errors.vehicleSeats?.message }}
+              />
             </div>
             <button type="button" className="btn btn-ghost" onClick={() => setValue("hasVehicle", false)}>
               בלי רכב כרגע
@@ -108,8 +101,12 @@ export function OnboardingModal({ defaultName }: Props) {
         )}
 
         {serverError && <p className="auth-error" role="alert">{serverError}</p>}
-        <button type="submit" className="btn btn-primary full-button" disabled={pending}>
+        <button type="submit" className="btn btn-primary full-button" disabled={!hydrated || pending}>
           {pending ? "שומרת…" : "שמירה וכניסה למערכת"}
+        </button>
+        {/* Signed in with the wrong Google account? Back to the login screen. */}
+        <button type="button" className="btn btn-ghost full-button onboarding-switch" disabled={pending} onClick={() => startTransition(() => signOut())}>
+          לא את? התחברות עם חשבון אחר
         </button>
       </form>
     </div>

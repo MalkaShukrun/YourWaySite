@@ -97,11 +97,11 @@ async function SessionGate() {
 async function LoginError({ searchParams }: Pick<PageProps<"/login">, "searchParams">) {
   const { error } = await searchParams;
   if (!error) return null;
+  // The reason itself isn't shown: anyone can put text in the URL. The auth
+  // callback logs the real reason on the server.
   return (
     <p className="auth-error" role="alert">
       ההתחברות לא הושלמה. נסי שוב.
-      <br />
-      <small dir="ltr">{String(error)}</small>
     </p>
   );
 }

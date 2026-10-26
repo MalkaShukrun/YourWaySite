@@ -12,6 +12,9 @@ export default defineConfig({
   testDir: "e2e",
   fullyParallel: true,
   reporter: [["list"], ["html", { open: "never" }]],
+  // The dev server compiles each page on its first visit, so a navigation can
+  // take several seconds on a fresh start — more than the 5s default.
+  expect: { timeout: 15_000 },
   use: {
     baseURL: "http://localhost:3000",
     locale: "he-IL",

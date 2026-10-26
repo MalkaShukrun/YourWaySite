@@ -34,6 +34,12 @@ export async function searchRides(filters: {
   return (data ?? []) as RideSummary[];
 }
 
+// The dates a route runs in the coming week, as search lists them (departed
+// and cancelled dates left out) — for switching days on the ride page.
+export async function getRouteDates(routeId: string): Promise<RideSummary[]> {
+  return (await searchRides({})).filter((ride) => ride.route_id === routeId);
+}
+
 // A route's current stops, in the order the driver set.
 export async function getRouteStops(routeId: string): Promise<Stop[]> {
   const supabase = await createClient();

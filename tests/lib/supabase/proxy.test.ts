@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import { updateSession } from "./proxy";
+import { updateSession } from "@/lib/supabase/proxy";
 
 const getClaims = vi.fn();
 vi.mock("@supabase/ssr", () => ({ createServerClient: vi.fn(() => ({ auth: { getClaims } })) }));

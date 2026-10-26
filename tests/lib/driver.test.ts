@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createSupabaseMock } from "@/test/supabase-mock";
-import { getDriverDay, getMyRoutes, getRouteForEdit } from "./driver";
+import { createSupabaseMock } from "@/tests/supabase-mock";
+import { getDriverDay, getMyRoutes, getRouteForEdit } from "@/lib/driver";
 
 const sb = createSupabaseMock();
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => sb.client }));

@@ -4,6 +4,7 @@ import { greetingFor, isIsoDate, israelHour, israelToday } from "@/lib/dates";
 import { getRideGroups, searchRides } from "@/lib/rides";
 import { TIME_WINDOWS, type RideKind, type TimeWindow } from "@/lib/ride-types";
 import { firstNameOf } from "@/lib/format";
+import { groupByRoute } from "@/lib/search-results";
 import { isUuid } from "@/lib/validation/patterns";
 import { SearchPanel } from "@/components/passenger/SearchPanel";
 import { RideCard } from "@/components/passenger/RideCard";
@@ -64,11 +65,12 @@ async function Search({ searchParams }: { searchParams: SearchParams }) {
 async function Results({ searchParams }: { searchParams: SearchParams }) {
   const filters = await readFilters(searchParams);
   const rides = await searchRides(filters);
+  const routes = groupByRoute(rides);
   const filtered = Object.values(filters).some(Boolean);
 
   return (
     <>
-      <ResultsHead subtitle={filtered ? `${rides.length} תוצאות` : "נסיעות קרובות בשבוע הקרוב"} />
+      <ResultsHead subtitle={filtered ? `${routes.length} תוצאות` : "נסיעות קרובות בשבוע הקרוב"} />
       {rides.length === 0 ? (
         <div className="panel empty-state">
           <strong>לא נמצאו נסיעות מתאימות</strong>
@@ -76,8 +78,8 @@ async function Results({ searchParams }: { searchParams: SearchParams }) {
         </div>
       ) : (
         <div className="trip-grid">
-          {rides.map((ride) => (
-            <RideCard key={`${ride.route_id}-${ride.ride_date}`} ride={ride} />
+          {routes.map((dates) => (
+            <RideCard key={dates[0].route_id} rides={dates} />
           ))}
         </div>
       )}

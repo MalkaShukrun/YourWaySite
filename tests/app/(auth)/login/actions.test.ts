@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createSupabaseMock } from "@/test/supabase-mock";
-import { runAction } from "@/test/redirect";
+import { createSupabaseMock } from "@/tests/supabase-mock";
+import { runAction } from "@/tests/redirect";
 import { getCurrentUser } from "@/lib/auth";
 import type { OnboardingValues } from "@/lib/validation/profile";
-import { completeProfile, signOut } from "./actions";
+import { completeProfile, signOut } from "@/app/(auth)/login/actions";
 
 const sb = createSupabaseMock();
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => sb.client }));
@@ -38,7 +38,7 @@ describe("completeProfile", () => {
     expect(sb.client.from).not.toHaveBeenCalled();
   });
 
-  it("updates the existing profile with the Google email and goes home", async () => {
+  it("updates the existing profile without the email (the database sets it) and goes home", async () => {
     sb.onTable("profiles", { data: [{ id: "user-1" }] });
 
     expect(await runAction(() => completeProfile(onboarding()))).toEqual({ redirectedTo: "/" });
@@ -48,7 +48,6 @@ describe("completeProfile", () => {
         [
           {
             full_name: "מלכה כהן",
-            email: "a@example.com",
             phone: "0501234567",
             vehicle_model: null,
             vehicle_color: null,
@@ -81,8 +80,9 @@ describe("completeProfile", () => {
 
     expect(await runAction(() => completeProfile(onboarding()))).toEqual({ redirectedTo: "/" });
     expect(sb.callsOn("profiles", 1)).toEqual([
-      ["insert", [expect.objectContaining({ id: "user-1", full_name: "מלכה כהן", email: "a@example.com" })]],
+      ["insert", [expect.objectContaining({ id: "user-1", full_name: "מלכה כהן" })]],
     ]);
+    expect(sb.callsOn("profiles", 1)[0][1][0]).not.toHaveProperty("email");
   });
 
   it("rejects invalid details", async () => {

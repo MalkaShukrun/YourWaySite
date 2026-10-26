@@ -36,5 +36,8 @@ $$;
 revoke execute on function public.my_drivers_bank from anon, public;
 grant execute on function public.my_drivers_bank to authenticated;
 
--- The system owner is an admin (she must have signed in once before).
-update public.profiles set is_admin = true where email = 'malkycohen1@gmail.com';
+-- The system owner is an admin (she must have signed in once before). Matched
+-- on her sign-in email: the profile email used to be editable (see 0006).
+update public.profiles p set is_admin = true
+from auth.users u
+where u.id = p.id and u.email = 'malkycohen1@gmail.com';

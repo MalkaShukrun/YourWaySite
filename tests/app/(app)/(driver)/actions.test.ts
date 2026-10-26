@@ -77,7 +77,7 @@ vi.mock("next/cache", () => ({ refresh: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn(async () => supabase) }));
 vi.mock("@/lib/auth", () => ({ requireUser: vi.fn(async () => ({ id: db.currentUser })) }));
 
-const { saveRoute, archiveRoute, updateRideTime, setRideCancelled } = await import("./actions");
+const { saveRoute, archiveRoute, updateRideTime, setRideCancelled } = await import("@/app/(app)/(driver)/actions");
 const { refresh } = await import("next/cache");
 
 function routeValues(overrides: Partial<RouteValues> = {}): RouteValues {
