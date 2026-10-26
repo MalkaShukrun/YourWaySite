@@ -79,18 +79,6 @@ test.describe("profile", () => {
     await expect(page.locator(".toast")).toHaveCount(0);
   });
 
-  test("requires all bank fields once one is filled", async ({ page }) => {
-    await openForm(page, "/profile", "שמירת שינויים");
-    for (const label of ["שם בעלת החשבון", "שם הבנק", "מספר סניף", "מספר חשבון"]) await page.getByLabel(label).fill("");
-    await page.getByLabel("שם הבנק").fill("בנק הפועלים");
-    await page.getByLabel("מספר סניף").fill("12345");
-    await page.getByRole("button", { name: "שמירת שינויים" }).click();
-
-    await expect(page.getByText("יש להזין שם", { exact: true })).toBeVisible();
-    await expect(page.getByText("עד 4 ספרות")).toBeVisible();
-    await expect(page.getByText("מספר חשבון לא תקין")).toBeVisible();
-  });
-
   test("adding and removing the car shows and hides its fields", async ({ page }) => {
     await openForm(page, "/profile", "שמירת שינויים");
     const remove = page.getByRole("button", { name: "הסרת הרכב" });

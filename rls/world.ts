@@ -55,7 +55,7 @@ export async function createWorld(): Promise<World> {
   check(
     await service
       .from("profiles")
-      .update({ full_name: "Driver", phone: "050-0000000", bank_name: "Bank", bank_account: "12345" })
+      .update({ full_name: "Driver", phone: "050-0000000" })
       .eq("id", driver.id),
   );
 

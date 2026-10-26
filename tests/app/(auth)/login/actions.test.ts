@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createSupabaseMock } from "@/tests/supabase-mock";
 import { runAction } from "@/tests/redirect";
 import { getCurrentUser } from "@/lib/auth";
-import type { OnboardingValues } from "@/lib/validation/profile";
+import type { ProfileValues } from "@/lib/validation/profile";
 import { completeProfile, signOut } from "@/app/(auth)/login/actions";
 
 const sb = createSupabaseMock();
@@ -14,7 +14,7 @@ vi.mock("@/lib/auth", async (importOriginal) => ({
 
 const user = { id: "user-1", email: "a@example.com", fullName: "", phone: null, isAdmin: false };
 
-function onboarding(overrides: Partial<OnboardingValues> = {}): OnboardingValues {
+function onboarding(overrides: Partial<ProfileValues> = {}): ProfileValues {
   return {
     fullName: "מלכה כהן",
     phone: "0501234567",

@@ -4,13 +4,13 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser, homePathFor } from "@/lib/auth";
 import { vehicleColumns } from "@/lib/profile";
-import { onboardingSchema, type OnboardingValues } from "@/lib/validation/profile";
+import { profileSchema, type ProfileValues } from "@/lib/validation/profile";
 
-export async function completeProfile(values: OnboardingValues) {
+export async function completeProfile(values: ProfileValues) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const parsed = onboardingSchema.safeParse(values);
+  const parsed = profileSchema.safeParse(values);
   if (!parsed.success) {
     return { error: "חלק מהפרטים אינם תקינים, נא לבדוק ולנסות שוב." };
   }

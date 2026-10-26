@@ -6,7 +6,7 @@ Ride-sharing and group transportation app. Next.js (App Router) + Supabase.
 
 1. **Supabase project** — create one at https://supabase.com.
 2. **Database** — open *SQL Editor*, paste the whole of `supabase/setup.sql` and run it
-   (it combines `supabase/migrations/0001–0007`; safe to run again). Optional demo rides: `supabase/seed_demo.sql`.
+   (it combines `supabase/migrations/0001–0008`; safe to run again). Optional demo rides: `supabase/seed_demo.sql`.
 3. **Google login** — *Authentication → Sign In / Providers → Google*: enable it and paste the
    Client ID / Secret from Google Cloud Console (OAuth client, type "Web application").
    In Google Cloud, add the redirect URI shown by Supabase (`https://<project>.supabase.co/auth/v1/callback`).

@@ -199,7 +199,7 @@ as $$
     and coalesce(x.cancelled, false) = false
     and public.departure_at(days.ride_date, coalesce(x.out_time, r.out_time)) > now()
     and (p_group_id is null or r.group_id = p_group_id)
-    and (p_kind is null or r.kind = p_kind)
+    and (p_kind is null or r.kind::text = p_kind)   -- ::text: still valid once 0008 makes kind an enum
     and (p_from_time is null or coalesce(x.out_time, r.out_time) >= p_from_time)
     and (p_to_time is null or coalesce(x.out_time, r.out_time) < p_to_time)
   order by days.ride_date, coalesce(x.out_time, r.out_time)

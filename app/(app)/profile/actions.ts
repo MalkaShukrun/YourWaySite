@@ -15,7 +15,6 @@ export async function saveProfile(values: ProfileValues) {
   if (!parsed.success) return { error: firstIssue(parsed.error) };
 
   const v = parsed.data;
-  const hasBank = Boolean(v.bankAccount);
   const supabase = await createClient();
   const { error } = await supabase
     .from("profiles")
@@ -23,19 +22,10 @@ export async function saveProfile(values: ProfileValues) {
       full_name: v.fullName,
       phone: v.phone,
       ...vehicleColumns(v),
-      bank_account_name: hasBank ? v.bankAccountName : null,
-      bank_name: hasBank ? v.bankName : null,
-      bank_branch: hasBank ? v.bankBranch : null,
-      bank_account: hasBank ? v.bankAccount : null,
     })
     .eq("id", user.id);
 
-  if (error) {
-    if (error.code === "42703" || error.code === "PGRST204") {
-      return { error: "בסיס הנתונים עדיין לא עודכן — יש להריץ את supabase/migrations/0004_profile.sql ב־Supabase." };
-    }
-    return { error: "לא הצלחנו לשמור את הפרטים. נסי שוב בעוד רגע." };
-  }
+  if (error) return { error: "לא הצלחנו לשמור את הפרטים. נסי שוב בעוד רגע." };
 
   refresh();
   return {};

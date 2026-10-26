@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createSupabaseMock } from "@/tests/supabase-mock";
-import { getMyBookings, getMyDriversBankAccounts, getRide, getRideGroups, getRouteDates, searchRides } from "@/lib/rides";
+import { getMyBookings, getRide, getRideGroups, getRouteDates, searchRides } from "@/lib/rides";
 
 const sb = createSupabaseMock();
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => sb.client }));
@@ -95,22 +95,6 @@ describe("getRide", () => {
   it("returns null when the ride doesn't exist", async () => {
     sb.onRpc("get_ride", { data: [] });
     expect(await getRide("r1", "2026-11-02")).toBeNull();
-  });
-});
-
-describe("getMyDriversBankAccounts", () => {
-  it("formats one line per driver", async () => {
-    sb.onRpc("my_drivers_bank", {
-      data: [{ driver_id: "d1", bank_account_name: "רחל כהן", bank_name: "בנק הפועלים", bank_branch: "538", bank_account: "4821" }],
-    });
-    const banks = await getMyDriversBankAccounts();
-    expect(banks.get("d1")).toEqual({ holder: "רחל כהן", details: "בנק הפועלים · סניף 538 · חשבון 4821" });
-    expect(banks.size).toBe(1);
-  });
-
-  it("is empty before the migration has run", async () => {
-    sb.onRpc("my_drivers_bank", { data: null, error: { message: "function does not exist" } });
-    expect((await getMyDriversBankAccounts()).size).toBe(0);
   });
 });
 

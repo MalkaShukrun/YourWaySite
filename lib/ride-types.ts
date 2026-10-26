@@ -51,8 +51,9 @@ export type MyBooking = {
   dropoff_label: string;
   driver_id: string;
   driver_name: string;
+  // Null for a booking cancelled in time.
   driver_phone: string | null;
-  driver_email: string;
+  driver_email: string | null;
 };
 
 export const TIME_WINDOWS = {

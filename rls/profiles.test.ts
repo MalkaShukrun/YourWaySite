@@ -64,8 +64,8 @@ describe("a non-admin", () => {
     expect(data).toEqual([{ id: w.stranger.id }]);
   });
 
-  it("can't read another user's phone or bank details", async () => {
-    const { data } = await w.passenger.db.from("profiles").select("phone, bank_account").eq("id", w.driver.id);
+  it("can't read another user's phone", async () => {
+    const { data } = await w.passenger.db.from("profiles").select("phone").eq("id", w.driver.id);
     expect(data).toEqual([]);
   });
 

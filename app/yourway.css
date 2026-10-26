@@ -30,7 +30,7 @@ button { cursor: pointer; }
 .input-shell input, .input-shell select, .field { text-align: right; }
 .activity-date, .passenger-name, .driver, .today-route, .activity-route, .route-card-body { text-align: right; }
 .time-control input, .price-input input { text-align: center; }
-.logo-wrap, .sidebar-help, .header-user, .welcome, .search-heading, .trip-card, .today-card, .panel, .route-card, .profile-panel, .bank-section, .vehicle-section, .modal-card { text-align: right; }
+.logo-wrap, .sidebar-help, .header-user, .welcome, .search-heading, .trip-card, .today-card, .panel, .route-card, .profile-panel, .vehicle-section, .modal-card { text-align: right; }
 .avatar, .logo-mark, .help-icon, .stat-icon, .route-badge, .passenger-number, .seat-icon, .map-pin { text-align: center; }
 .side-nav, .nav-item, .field > span, .driver-contact-card, .group-row { text-align: right; }
 .role-switch, .activity-tabs, .day-picker, .kind-switch { text-align: center; }
@@ -393,10 +393,6 @@ button { cursor: pointer; }
 .paid-pill.toggleable { cursor: pointer; }
 .row-cancelled { opacity: .55; }
 .profile-save { gap: 10px; }
-.bank-section { margin-top: 18px; padding: 19px; border: 1px solid var(--line); border-radius: 14px; background: #FAFBFA; }
-.bank-section-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
-.bank-section-head h3 { margin: 0; font-size: 18px; }
-.bank-section-head > div > span { color: #59665F; font-size: 15px; }
 
 .modal-backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(25,41,35,.48); display: grid; place-items: center; padding: 18px; backdrop-filter: blur(4px); }
 .modal-card { width: min(580px, 100%); max-height: calc(100vh - 36px); overflow: auto; background: white; border-radius: 20px; padding: 28px; box-shadow: 0 24px 70px rgba(20,42,34,.24); position: relative; }
@@ -563,7 +559,6 @@ button { cursor: pointer; }
   .group-row > .row-actions { grid-column: 2; grid-row: auto; }
   .payment-summary { margin: 14px; }
   .profile-save { justify-content: space-between; }
-  .bank-section-head { gap: 10px; }
   .inline-driver-contact { align-items: flex-end; }
   .inline-driver-contact a { white-space: normal; text-align: left; overflow-wrap: anywhere; }
   .auth-page { grid-template-columns: 1fr; grid-template-rows: 58px auto 48px; grid-template-areas: "header" "form" "footer"; padding: 8px 12px; background: linear-gradient(180deg, #EDF2EF 0%, #F7FAF6 46%); overflow: auto; }

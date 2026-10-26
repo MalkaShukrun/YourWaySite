@@ -16,10 +16,6 @@ describe("getProfileValues", () => {
         vehicle_model: "יונדאי",
         vehicle_color: "לבן",
         vehicle_seats: 3,
-        bank_account_name: "מלכה כהן",
-        bank_name: "בנק הפועלים",
-        bank_branch: "538",
-        bank_account: "4821",
       },
     });
 
@@ -30,10 +26,6 @@ describe("getProfileValues", () => {
       vehicleModel: "יונדאי",
       vehicleColor: "לבן",
       vehicleSeats: "3",
-      bankAccountName: "מלכה כהן",
-      bankName: "בנק הפועלים",
-      bankBranch: "538",
-      bankAccount: "4821",
     });
     expect(sb.callsOn("profiles")).toContainEqual(["eq", ["id", "u1"]]);
   });
@@ -46,10 +38,6 @@ describe("getProfileValues", () => {
       vehicleModel: "",
       vehicleColor: "",
       vehicleSeats: "4",
-      bankAccountName: "",
-      bankName: "",
-      bankBranch: "",
-      bankAccount: "",
     });
   });
 });

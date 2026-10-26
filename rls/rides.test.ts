@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createWorld, DENIED, type User, type World } from "./world";
 
-// Routes, stops and bookings (0002, 0003, 0007): drivers manage only their own
+// Routes, stops and bookings (0002, 0003, 0007, 0009): drivers manage only their own
 // routes, bookings change only through book_ride / cancel_booking, and contact
-// and bank details reach only passengers booked with the driver.
+// details reach only passengers booked with the driver.
 
 let w: World;
 beforeAll(async () => {
@@ -90,7 +90,7 @@ describe("bookings", () => {
   });
 });
 
-describe("contact and bank details", () => {
+describe("contact details", () => {
   const ride = (u: User) =>
     u.db.rpc("get_ride", { p_route_id: w.routeId, p_date: w.rideDate }).single<{ driver_phone: string | null }>();
 
@@ -99,11 +99,32 @@ describe("contact and bank details", () => {
     expect((await ride(w.stranger)).data?.driver_phone).toBeNull();
   });
 
-  it("the driver's bank details go only to booked passengers", async () => {
-    const booked = await w.passenger.db.rpc("my_drivers_bank");
-    expect(booked.data).toEqual([expect.objectContaining({ driver_id: w.driver.id, bank_account: "12345" })]);
-    const stranger = await w.stranger.db.rpc("my_drivers_bank");
-    expect(stranger.data).toEqual([]);
+  it("only the driver gets the passengers' contact details", async () => {
+    const passengers = (u: User) => u.db.rpc("driver_passengers", { p_date: w.rideDate });
+    expect((await passengers(w.driver)).data).toHaveLength(1);
+    expect((await passengers(w.passenger)).data).toEqual([]);
+    expect((await passengers(w.stranger)).data).toEqual([]);
+  });
+
+  // Runs last in this file: the stranger books and then leaves the ride.
+  it("the driver's phone is gone from a booking cancelled in time", async () => {
+    const { data: stops } = await w.stranger.db.from("stops").select("id, kind").eq("route_id", w.routeId);
+    const stop = (kind: string) => stops!.find((s) => s.kind === kind)!.id;
+    const { data: bookingId } = await w.stranger.db.rpc("book_ride", {
+      p_route_id: w.routeId,
+      p_date: w.rideDate,
+      p_pickup_stop_id: stop("pickup"),
+      p_dropoff_stop_id: stop("dropoff"),
+    });
+    const driverPhone = async () => {
+      const { data } = await w.stranger.db.rpc("my_bookings");
+      return (data as { booking_id: string; driver_phone: string | null }[]).find((b) => b.booking_id === bookingId)
+        ?.driver_phone;
+    };
+
+    expect(await driverPhone()).toBe("050-0000000");
+    expect((await w.stranger.db.rpc("cancel_booking", { p_booking_id: bookingId })).data).toBe("cancelled");
+    expect(await driverPhone()).toBeNull();
   });
 });
 
@@ -112,7 +133,6 @@ describe("signed out", () => {
     for (const [fn, args] of [
       ["search_rides", {}],
       ["get_ride", { p_route_id: w.routeId, p_date: w.rideDate }],
-      ["my_drivers_bank", {}],
     ] as const) {
       const { error } = await w.anon.rpc(fn, args);
       expect(error?.code, fn).toBe(DENIED);

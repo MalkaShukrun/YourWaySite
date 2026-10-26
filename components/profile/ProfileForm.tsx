@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Car, Landmark, Mail, Phone, User } from "lucide-react";
+import { Car, Mail, Phone, User } from "lucide-react";
 import { saveProfile } from "@/app/(app)/profile/actions";
 import { profileSchema, type ProfileValues } from "@/lib/validation/profile";
 import { Toast } from "@/components/ui/Toast";
@@ -14,7 +14,7 @@ import { useHydrated } from "@/components/ui/useHydrated";
 
 type Props = { initials: string; email: string; defaults: ProfileValues };
 
-// Personal details, vehicle and payment account — the design's profile panel.
+// Personal details and vehicle — the design's profile panel.
 export function ProfileForm({ initials, email, defaults }: Props) {
   const [serverError, setServerError] = useState("");
   const [saved, setSaved] = useState(0);
@@ -84,37 +84,6 @@ export function ProfileForm({ initials, email, defaults }: Props) {
           />
         </div>
       )}
-
-      <div className="bank-section">
-        <div className="bank-section-head">
-          <div>
-            <h3><Landmark {...iconProps} size={20} /> פרטי חשבון לקבלת תשלום</h3>
-            <span>לנהגות — הפרטים יוצגו לטרמפיסטית שנרשמה לנסיעה. השאירי ריק אם אינך מציעה נסיעות.</span>
-          </div>
-        </div>
-        <div className="form-grid compact">
-          <label className="field">
-            <span>שם בעלת החשבון</span>
-            <div className="input-shell"><input {...register("bankAccountName")} /></div>
-            <FieldError message={errors.bankAccountName?.message} />
-          </label>
-          <label className="field">
-            <span>שם הבנק</span>
-            <div className="input-shell"><input {...register("bankName")} placeholder="לדוגמה: בנק הפועלים" /></div>
-            <FieldError message={errors.bankName?.message} />
-          </label>
-          <label className="field">
-            <span>מספר סניף</span>
-            <div className="input-shell"><input {...register("bankBranch")} inputMode="numeric" dir="ltr" /></div>
-            <FieldError message={errors.bankBranch?.message} />
-          </label>
-          <label className="field">
-            <span>מספר חשבון</span>
-            <div className="input-shell"><input {...register("bankAccount")} inputMode="numeric" dir="ltr" /></div>
-            <FieldError message={errors.bankAccount?.message} />
-          </label>
-        </div>
-      </div>
 
       {serverError && <p className="auth-error" role="alert">{serverError}</p>}
       <div className="profile-save">

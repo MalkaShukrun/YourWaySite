@@ -16,10 +16,6 @@ function profile(overrides: Partial<ProfileValues> = {}): ProfileValues {
     vehicleModel: "טויוטה קורולה",
     vehicleColor: "לבן",
     vehicleSeats: "4",
-    bankAccountName: "מלכה כהן",
-    bankName: "בנק הפועלים",
-    bankBranch: "538",
-    bankAccount: "123456",
     ...overrides,
   };
 }
@@ -42,10 +38,6 @@ describe("saveProfile", () => {
       vehicle_model: "טויוטה קורולה",
       vehicle_color: "לבן",
       vehicle_seats: 4,
-      bank_account_name: "מלכה כהן",
-      bank_name: "בנק הפועלים",
-      bank_branch: "538",
-      bank_account: "123456",
     });
     expect(refresh).toHaveBeenCalledOnce();
   });
@@ -53,11 +45,6 @@ describe("saveProfile", () => {
   it("clears vehicle fields when the user has no car", async () => {
     await saveProfile(profile({ hasVehicle: false, vehicleModel: "ישן", vehicleColor: "", vehicleSeats: "" }));
     expect(savedRow()).toMatchObject({ vehicle_model: null, vehicle_color: null, vehicle_seats: null });
-  });
-
-  it("clears bank fields when no account is given", async () => {
-    await saveProfile(profile({ bankAccountName: "", bankName: "", bankBranch: "", bankAccount: "" }));
-    expect(savedRow()).toMatchObject({ bank_account_name: null, bank_name: null, bank_branch: null, bank_account: null });
   });
 
   it("trims names before saving", async () => {
@@ -71,22 +58,12 @@ describe("saveProfile", () => {
     ["a car without a model", { vehicleModel: "" }, "יש להזין סוג רכב"],
     ["a car without a colour", { vehicleColor: "" }, "יש להזין צבע"],
     ["a car with 9 seats", { vehicleSeats: "9" }, "בין 1 ל־8 מקומות"],
-    ["a partial bank account", { bankName: "" }, "יש להזין שם בנק"],
-    ["a 5-digit branch", { bankBranch: "12345" }, "עד 4 ספרות"],
-    ["a 1-digit account", { bankAccount: "1" }, "מספר חשבון לא תקין"],
   ])("rejects %s", async (_name, overrides, message) => {
     expect(await saveProfile(profile(overrides))).toEqual({ error: message });
     expect(sb.client.from).not.toHaveBeenCalled();
   });
 
-  it.each(["42703", "PGRST204"])("asks to run migration 0004 when a column is missing (%s)", async (code) => {
-    sb.onTable("profiles", { error: { code } });
-    expect(await saveProfile(profile())).toEqual({
-      error: "בסיס הנתונים עדיין לא עודכן — יש להריץ את supabase/migrations/0004_profile.sql ב־Supabase.",
-    });
-  });
-
-  it("returns a generic error on other failures", async () => {
+  it("returns a generic error when saving fails", async () => {
     sb.onTable("profiles", { error: { code: "XX000" } });
     expect(await saveProfile(profile())).toEqual({ error: "לא הצלחנו לשמור את הפרטים. נסי שוב בעוד רגע." });
     expect(refresh).not.toHaveBeenCalled();

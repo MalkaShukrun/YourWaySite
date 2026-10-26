@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Car, Phone, User } from "lucide-react";
-import { onboardingSchema, type OnboardingValues } from "@/lib/validation/profile";
+import { profileSchema, type ProfileValues } from "@/lib/validation/profile";
 import { completeProfile, signOut } from "@/app/(auth)/login/actions";
 import { VehicleFields } from "@/components/profile/VehicleFields";
 import { iconProps } from "@/components/ui/icon";
@@ -24,8 +24,8 @@ export function OnboardingModal({ defaultName }: Props) {
     control,
     setValue,
     formState: { errors },
-  } = useForm<OnboardingValues>({
-    resolver: zodResolver(onboardingSchema),
+  } = useForm<ProfileValues>({
+    resolver: zodResolver(profileSchema),
     defaultValues: {
       fullName: defaultName,
       phone: "",
@@ -37,7 +37,7 @@ export function OnboardingModal({ defaultName }: Props) {
   });
   const hasVehicle = useWatch({ control, name: "hasVehicle" });
 
-  const onSubmit = (values: OnboardingValues) =>
+  const onSubmit = (values: ProfileValues) =>
     startTransition(async () => {
       setServerError("");
       const result = await completeProfile(values);

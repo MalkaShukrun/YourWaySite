@@ -51,12 +51,6 @@ a.nav-item { text-decoration: none; }
 .balance-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; border-bottom: 1px solid var(--line); }
 .balance-row:last-child { border: 0; }
 .balance-row > span { color: var(--ink); font-weight: 800; font-size: 17px; }
-.bank-details { display: flex; align-items: flex-start; gap: 6px; color: #53615A; font-size: 14px; line-height: 1.45; direction: rtl; overflow-wrap: anywhere; }
-.inline-driver-contact .bank-details { align-self: stretch; border-top: 1px solid var(--line); padding-top: 6px; margin-top: 2px; }
-.bank-details .icon { flex: 0 0 auto; margin-top: 2px; color: var(--green); }
-.bank-details > div { display: flex; flex-direction: column; min-width: 0; }
-.bank-details b { color: var(--ink); font-weight: 700; }
-.bank-details.is-missing { color: #8A968F; font-style: italic; }
 .late-call { margin-top: 18px; }
 
 /* Leaflet map (replaces the design's static map illustration) */
@@ -175,9 +169,8 @@ a.nav-item { text-decoration: none; }
    each field gets the full row. */
 .onboarding-card > .form-grid { grid-template-columns: 1fr; }
 .onboarding-switch { margin-top: 8px; color: #59665F; font-size: 15px; }
-/* Only the phone (last of the personal fields) spans the row; the vehicle and
-   bank grids stay in even columns. */
+/* Only the phone (last of the personal fields) spans the row; the vehicle
+   grid stays in even columns. */
 .profile-panel .form-grid.compact .field:last-child { grid-column: auto; }
 .profile-panel .profile-subgrid { grid-template-columns: repeat(3, 1fr); }
 @media (max-width: 780px) { .profile-panel .profile-subgrid { grid-template-columns: 1fr; } }
-.bank-section-head h3 { display: flex; align-items: center; gap: 8px; }
