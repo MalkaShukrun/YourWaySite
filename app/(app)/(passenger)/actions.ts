@@ -4,6 +4,7 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth";
 import { messageForCode } from "@/lib/action-errors";
 
 const ERRORS: Record<string, string> = {
@@ -26,6 +27,7 @@ const bookingSchema = z.object({
 });
 
 export async function bookRide(input: z.infer<typeof bookingSchema>) {
+  await requireUser();
   const parsed = bookingSchema.safeParse(input);
   if (!parsed.success) return { error: ERRORS.INVALID_STOP };
 
@@ -43,6 +45,7 @@ export async function bookRide(input: z.infer<typeof bookingSchema>) {
 
 // Returns whether the cancellation was inside the free window (SRS §6.2).
 export async function cancelBooking(bookingId: string) {
+  await requireUser();
   if (!z.uuid().safeParse(bookingId).success) return { error: ERRORS.BOOKING_NOT_FOUND };
 
   const supabase = await createClient();
@@ -55,6 +58,7 @@ export async function cancelBooking(bookingId: string) {
 
 // The personal "Paid / Unpaid" toggle (SRS §4.3).
 export async function setBookingPaid(bookingId: string, isPaid: boolean) {
+  await requireUser();
   if (!z.uuid().safeParse(bookingId).success) return { error: ERRORS.BOOKING_NOT_FOUND };
 
   const supabase = await createClient();

@@ -9,7 +9,7 @@ type Props = {
   selected?: string; // the date being viewed (ride page)
 };
 
-// A recurring route's dates, each linking to its booking page. A full date
+// A route's dates (a single one for a one-time ride), each linking to its booking page. A full date
 // can't be picked.
 export function RideDateChips({ rides, time, selected }: Props) {
   return (

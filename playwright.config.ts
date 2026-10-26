@@ -10,6 +10,7 @@ const write = Boolean(process.env.E2E_WRITE);
 
 export default defineConfig({
   testDir: "e2e",
+  globalSetup: "./e2e/refresh-session.ts",
   fullyParallel: true,
   reporter: [["list"], ["html", { open: "never" }]],
   // The dev server compiles each page on its first visit, so a navigation can

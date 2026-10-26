@@ -128,15 +128,15 @@ button { cursor: pointer; }
 .results-head h2, .panel-title h2 { margin: 0; font-size: 19px; color: var(--ink); }
 .results-head > div > span, .panel-title > div > span { color: #59665F; font-size: 15px; }
 .trip-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 17px; }
-.trip-card { background: #fff; border: 1px solid var(--line); border-radius: 17px; padding: 20px; box-shadow: 0 4px 16px rgba(40,65,56,.035); transition: .25s ease; }
+.trip-card { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--line); border-radius: 17px; padding: 20px; box-shadow: 0 4px 16px rgba(40,65,56,.035); transition: .25s ease; }
 .trip-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(40,65,56,.08); border-color: #d5dfda; }
 .trip-top { display: flex; align-items: flex-start; justify-content: space-between; }
 .driver { display: flex; align-items: center; gap: 10px; }
 .driver > div:nth-child(2) { display: flex; flex-direction: column; }
 .driver span { color: #66736C; font-size: 15px; }
 .driver strong { color: #39453f; font-size: 17px; }
-.trip-type { font-size: 15px; color: #5d766b; background: #edf4f0; padding: 5px 9px; border-radius: 20px; }
-.trip-type.special { color: #875D54; background: #F7E8E3; }
+.trip-type { font-size: 15px; color: #FFFFFF; background: #2F6B4A; padding: 5px 9px; border-radius: 20px; }
+.trip-type.special { background: #5E8F3A; }
 .route-line { height: 25px; display: flex; align-items: center; margin: 18px 7px 0; direction: rtl; }
 .route-node { flex: 0 0 auto; }
 .route-node.start { width: 9px; height: 9px; border: 2px solid var(--green); border-radius: 50%; background: white; }
@@ -147,10 +147,10 @@ button { cursor: pointer; }
 .route-names > div:last-child { text-align: left; }
 .route-names span { color: #66736C; font-size: 15px; }
 .route-names strong { color: #2d3c35; font-size: 17px; }
-.trip-info { border-top: 1px solid #edf0ee; border-bottom: 1px solid #edf0ee; margin: 18px 0; padding: 13px 0; display: flex; flex-direction: column; gap: 8px; }
+.trip-info { flex: 1; border-top: 1px solid #edf0ee; border-bottom: 1px solid #edf0ee; margin: 18px 0; padding: 13px 0; display: flex; flex-direction: column; gap: 8px; }
 .trip-info > div { display: flex; align-items: center; gap: 8px; color: #75827c; font-size: 15px; }
 .trip-info b { color: #3b4842; }
-.trip-info .trip-price { margin-top: 3px; padding-top: 9px; border-top: 1px dashed var(--line); justify-content: space-between; color: #65736C; }
+.trip-info .trip-price { margin-top: auto; padding-top: 9px; border-top: 1px dashed var(--line); justify-content: space-between; color: #65736C; }
 .trip-price b { color: var(--green); font-size: 17px; }
 .trip-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .seats { display: flex; align-items: center; gap: 8px; }

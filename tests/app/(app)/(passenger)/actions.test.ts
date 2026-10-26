@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { refresh } from "next/cache";
+import { redirect } from "next/navigation";
 import { createSupabaseMock } from "@/tests/supabase-mock";
 import { runAction } from "@/tests/redirect";
+import { requireUser } from "@/lib/auth";
 import { bookRide, cancelBooking, setBookingPaid } from "@/app/(app)/(passenger)/actions";
 
 const sb = createSupabaseMock();
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => sb.client }));
+vi.mock("@/lib/auth", () => ({ requireUser: vi.fn(async () => ({ id: "passenger" })) }));
 
 const ROUTE = "11111111-1111-4111-8111-111111111111";
 const PICKUP = "22222222-2222-4222-8222-222222222222";
@@ -15,6 +18,19 @@ const BOOKING = "44444444-4444-4444-8444-444444444444";
 const booking = { routeId: ROUTE, date: "2026-11-02", pickupStopId: PICKUP, dropoffStopId: DROPOFF };
 
 beforeEach(() => sb.reset());
+
+describe("signed out or not onboarded", () => {
+  it.each([
+    ["bookRide", () => bookRide(booking)],
+    ["cancelBooking", () => cancelBooking(BOOKING)],
+    ["setBookingPaid", () => setBookingPaid(BOOKING, true)],
+  ])("%s redirects to login without calling the database", async (_name, action) => {
+    vi.mocked(requireUser).mockImplementationOnce(async () => redirect("/login"));
+    expect(await runAction(action)).toEqual({ redirectedTo: "/login" });
+    expect(sb.client.rpc).not.toHaveBeenCalled();
+    expect(sb.client.from).not.toHaveBeenCalled();
+  });
+});
 
 describe("bookRide", () => {
   it("books through the RPC and redirects to my rides", async () => {

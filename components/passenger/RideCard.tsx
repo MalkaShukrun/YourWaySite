@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, CalendarDays, Clock, MapPin, Users } from "lucide-react";
-import { formatRideDate, formatShortRideDate, formatTime, weekdaysOf } from "@/lib/dates";
+import { formatShortRideDate, formatTime, weekdaysOf } from "@/lib/dates";
 import type { RideSummary } from "@/lib/ride-types";
 import { avatarColorFor, formatPrice, initialsOf, kindLabel, seatsText } from "@/lib/format";
 import { iconProps } from "@/components/ui/icon";
@@ -36,9 +36,10 @@ export function RideCard({ rides }: { rides: RideSummary[] }) {
       <div className="trip-info">
         <div>
           <CalendarDays {...iconProps} size={20} />
-          <span>{severalDates ? <>בימים <b>{weekdaysOf(rides.map((r) => r.ride_date))}</b></> : formatRideDate(first.ride_date)}</span>
+          <span>{severalDates ? "בימים" : "ביום"} <b>{weekdaysOf(rides.map((r) => r.ride_date))}</b></span>
         </div>
-        {severalDates && <RideDateChips rides={rides} time={first.out_time} />}
+        {/* Every card shows its dates as chips — one for a single date — so all cards share one layout. */}
+        <RideDateChips rides={rides} time={first.out_time} />
         <div><Clock {...iconProps} size={20} /><span>יציאה ב־<b>{formatTime(first.out_time)}</b></span></div>
         <div className="trip-price"><span>מחיר שקבעה הנהגת</span><b>{formatPrice(first.price)}</b></div>
       </div>

@@ -6,7 +6,8 @@
     "next.config.{js,mjs,cjs,ts}",
     "eslint.config.{js,mjs,cjs}",
     "playwright.config.{js,mjs,cjs,ts}",
-    "e2e/**/*.{js,mjs,cjs,ts}"
+    "e2e/**/*.{js,mjs,cjs,ts}",
+    "rls/**/*.test.ts"
   ],
   "project": [
     "**/*.{js,jsx,mjs,cjs,ts,tsx,css}",

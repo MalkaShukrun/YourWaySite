@@ -256,17 +256,22 @@ test.describe("ride details", () => {
   });
 
   test("picking another stop moves the selection", async ({ page }) => {
+    test.slow(); // may open several rides before finding one with two pickup stops
     await page.goto("/");
-    const link = page.locator(".trip-card a.btn-primary").first();
-    test.skip((await link.count()) === 0, "No open rides");
-    await link.click();
-
+    const links = await page.locator(".trip-card a.btn-primary").evaluateAll((as) => as.slice(0, 8).map((a) => a.getAttribute("href")!));
     const pickups = page.locator(".pickup-options [role=radio]");
-    test.skip((await pickups.count()) < 2, "Ride has a single pickup stop");
-    await expect(pickups.first()).toHaveAttribute("aria-checked", "true");
-    await pickups.nth(1).click();
-    await expect(pickups.nth(1)).toHaveAttribute("aria-checked", "true");
-    await expect(pickups.first()).toHaveAttribute("aria-checked", "false");
+    for (const href of links) {
+      await page.goto(href);
+      await expect(pickups.first()).toBeVisible();
+      if ((await pickups.count()) < 2) continue;
+
+      await expect(pickups.first()).toHaveAttribute("aria-checked", "true");
+      await pickups.nth(1).click();
+      await expect(pickups.nth(1)).toHaveAttribute("aria-checked", "true");
+      await expect(pickups.first()).toHaveAttribute("aria-checked", "false");
+      return;
+    }
+    test.skip(true, "None of the listed rides has two pickup stops");
   });
 
   test("a ride you're already booked on can't be booked again", async ({ page }) => {
@@ -296,21 +301,23 @@ test.describe("my rides & payments", () => {
     await expect(page.getByRole("button", { name: "ביטול" })).toHaveCount(0); // past rides can't be cancelled
   });
 
-  test("upcoming bookings can be cancelled and show the stops", async ({ page }) => {
+  // The list is loaded on the server from the account's real bookings, so
+  // whichever state the account is in gets checked.
+  test("upcoming bookings show the stops and can be cancelled, or the empty state links to the search", async ({ page }) => {
     await page.goto("/my-rides");
-    const rows = page.locator(".activity-row:not(.row-cancelled)");
-    test.skip((await rows.count()) === 0, "No upcoming bookings");
-    await expect(rows.first().getByRole("button", { name: "ביטול" })).toBeVisible();
+    const rows = page.locator(".activity-row");
+    const empty = page.getByText("אין לך נסיעות קרובות");
+    await expect(rows.first().or(empty)).toBeVisible();
+
+    if (await empty.isVisible()) {
+      await page.locator(".empty-state").getByRole("link", { name: "מציאת נסיעה" }).click();
+      await expect(page).toHaveURL(/\/$/);
+      return;
+    }
     await expect(rows.first()).toContainText("איסוף:");
     await expect(rows.first()).toContainText("הורדה:");
-  });
-
-  test("the empty state links to the search", async ({ page }) => {
-    await page.goto("/my-rides");
-    const empty = page.getByText("אין לך נסיעות קרובות");
-    test.skip(!(await empty.isVisible()), "There are upcoming bookings");
-    await page.getByRole("link", { name: "מציאת נסיעה" }).last().click();
-    await expect(page).toHaveURL(/\/$/);
+    const open = page.locator(".activity-row:not(.row-cancelled)");
+    if ((await open.count()) > 0) await expect(open.first().getByRole("button", { name: "ביטול" })).toBeVisible();
   });
 
   test("the booked=1 toast confirms a new booking", async ({ page }) => {
