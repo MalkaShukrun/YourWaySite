@@ -7,7 +7,7 @@ import { AuthRoadIllustration } from "@/components/auth/AuthRoadIllustration";
 import { GoogleButton } from "@/components/auth/GoogleButton";
 import { OnboardingModal } from "@/components/auth/OnboardingModal";
 import { getCurrentUser, homePathFor, needsOnboarding } from "@/lib/auth";
-import { SUPPORT_EMAIL } from "@/lib/support";
+import { ContactButton } from "@/components/contact/ContactButton";
 import { carIconProps, iconProps } from "@/components/ui/icon";
 
 export const metadata: Metadata = { title: "התחברות · בדרך שלך" };
@@ -17,9 +17,7 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
     <div className="auth-page">
       <header className="landing-header">
         <Logo />
-        <a href={`mailto:${SUPPORT_EMAIL}`}>
-          צריכה עזרה? <span>{SUPPORT_EMAIL}</span>
-        </a>
+        <ContactButton />
       </header>
 
       <section className="auth-brand" aria-label="על בדרך שלך">

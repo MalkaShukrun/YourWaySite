@@ -57,15 +57,15 @@ function RouteCard({ route }: { route: DriverRoute }) {
         </div>
         <h2>{groupLabel(route.origin, route.destination)}</h2>
         <p>
-          <CalendarDays {...iconProps} size={23} />
+          <CalendarDays {...iconProps} size={19} />
           {route.kind === "recurring"
             ? `${weekdaysLabel(route.weekdays)}${route.ride_date ? ` · החל מ${formatRideDate(route.ride_date)}` : ""}`
             : route.ride_date && formatRideDate(route.ride_date)}
         </p>
         <p>
-          <Clock {...iconProps} size={23} /> יציאה ב־{formatTime(route.out_time)}
+          <Clock {...iconProps} size={19} /> יציאה ב־{formatTime(route.out_time)}
         </p>
-        <p><Users {...iconProps} size={23} /> {route.seats} מקומות · {formatPrice(route.price)} לטרמפיסטית</p>
+        <p><Users {...iconProps} size={19} /> {route.seats} מקומות · {formatPrice(route.price)} לטרמפיסטית</p>
         <div className="route-actions">
           <ArchiveRouteButton routeId={route.id} />
           <Link className="btn btn-secondary" href={`/routes/${route.id}`}>עריכת מסלול</Link>

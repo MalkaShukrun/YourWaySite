@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/brand/Logo";
-import { SUPPORT_EMAIL } from "@/lib/support";
 import { iconProps } from "@/components/ui/icon";
 import { adminNavItem, driverNavItems, isNavItemActive, passengerNavItems, profileNavItem, type NavItem } from "./nav";
 import { useMode } from "./useMode";
@@ -37,14 +36,6 @@ export function Sidebar({ adminSlot }: { adminSlot: ReactNode }) {
         <NavLink item={profileNavItem} pathname={pathname} />
         {adminSlot}
       </nav>
-      <div className="sidebar-help">
-        <div className="help-icon">?</div>
-        <div>
-          <strong>צריכה עזרה?</strong>
-          <span>אנחנו כאן בשבילך</span>
-        </div>
-        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
-      </div>
     </aside>
   );
 }

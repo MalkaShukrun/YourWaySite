@@ -13,9 +13,29 @@ test.describe("login page", () => {
     await expect(page.getByRole("link", { name: "מדיניות הפרטיות" })).toBeVisible();
   });
 
-  test("has a support email link", async ({ page }) => {
+  // Stops short of a valid submit: that would email support through Resend.
+  test("opens the contact form and checks its fields", async ({ page }) => {
     await page.goto("/login");
-    await expect(page.locator('a[href^="mailto:"]').first()).toHaveAttribute("href", /^mailto:.+@.+/);
+    await page.getByRole("button", { name: "צרי קשר" }).click();
+
+    const dialog = page.getByRole("dialog", { name: "צרי קשר" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByLabel("שם")).toBeFocused();
+
+    await dialog.getByRole("button", { name: "שליחה" }).click();
+    await expect(dialog.getByText("לפחות 2 תווים")).toBeVisible();
+    await expect(dialog.getByText("כתובת מייל לא תקינה")).toBeVisible();
+    await expect(dialog.getByText("לפחות 5 תווים")).toBeVisible();
+
+    await dialog.getByLabel("שם").fill("מלכה");
+    await dialog.getByLabel("מייל").fill("not-an-email");
+    await dialog.getByLabel("הודעה").fill("שלום, יש לי שאלה");
+    await dialog.getByRole("button", { name: "שליחה" }).click();
+    await expect(dialog.getByText("כתובת מייל לא תקינה")).toBeVisible();
+    await expect(dialog.getByText("לפחות 2 תווים")).toHaveCount(0);
+
+    await dialog.getByRole("button", { name: "סגירה" }).click();
+    await expect(dialog).toHaveCount(0);
   });
 
   test("shows a sign-in error, but not the text from the URL", async ({ page }) => {

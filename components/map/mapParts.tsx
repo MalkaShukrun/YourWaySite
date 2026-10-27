@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import L from "leaflet";
 import { Polyline, TileLayer } from "react-leaflet";
 import type { Stop } from "@/lib/ride-types";
@@ -11,6 +12,17 @@ type Located = { lat: number | null; lng: number | null };
 // Marking a stop on the map is optional; stops without a location aren't drawn.
 export function isPlaced<T extends Located>(stop: T): stop is T & { lat: number; lng: number } {
   return stop.lat !== null && stop.lng !== null;
+}
+
+// Next keeps visited pages alive in <Activity>, so React can clean up a map's
+// effects and run them again without unmounting it. react-leaflet removes the
+// Leaflet map on that cleanup and never makes a new one, and its layers then
+// crash adding themselves to the removed map. Used as MapContainer's key, this
+// changes on every cleanup, so the map comes back as a fresh instance.
+export function useMapKey() {
+  const [key, setKey] = useState(0);
+  useEffect(() => () => setKey((k) => k + 1), []);
+  return key;
 }
 
 export function MapTiles() {

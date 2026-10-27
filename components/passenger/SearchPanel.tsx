@@ -2,14 +2,16 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Car, Clock, MapPin, Repeat, Search } from "lucide-react";
+import { Car, Clock, Info, MapPin, Repeat, Search } from "lucide-react";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Select } from "@/components/ui/Select";
 import { TIME_WINDOWS, type RideGroup, type RideKind, type TimeWindow } from "@/lib/ride-types";
 import { groupLabel } from "@/lib/format";
 import { carIconProps, iconProps } from "@/components/ui/icon";
 
-type Filters = { groupId?: string; date?: string; kind?: RideKind; time?: TimeWindow };
+const ROUTE_HINT = "להוספת מסלולי נסיעה מעיר לעיר יש ליצור קשר";
+
+type Filters ={ groupId?: string; date?: string; kind?: RideKind; time?: TimeWindow };
 
 const TIME_OPTIONS = [
   { value: "", label: "הכל" },
@@ -56,7 +58,13 @@ export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; i
       </div>
       <form className="filters" onSubmit={submit}>
         <div className="field field-wide">
-          <span>מסלול</span>
+          <span className="field-label-hint">
+            מסלול
+            <span className="hint" tabIndex={0} aria-label={ROUTE_HINT}>
+              <Info {...iconProps} size={16} />
+              <span className="hint-bubble" role="tooltip">{ROUTE_HINT}</span>
+            </span>
+          </span>
           <Select label="מסלול" value={groupId} onChange={setGroupId} options={groupOptions} icon={<MapPin {...iconProps} size={20} />} />
         </div>
         <div className="field">

@@ -15,11 +15,12 @@ type Props = {
   icon?: ReactNode; // shown before the selected value
   prefix?: ReactNode; // inline caption inside the trigger (compact variant)
   compact?: boolean; // small pill, e.g. the payments month filter
+  note?: ReactNode; // small print under the options
 };
 
 // The design's dropdown: a field-style trigger and a floating list with the
 // selected option highlighted in lime. Used instead of the native <select>.
-export function Select({ value, options, onChange, label, icon, prefix, compact = false }: Props) {
+export function Select({ value, options, onChange, label, icon, prefix, compact = false, note }: Props) {
   const { open, setOpen, ref } = usePopover();
   const selected = options.find((o) => o.value === value) ?? options[0];
 
@@ -59,6 +60,7 @@ export function Select({ value, options, onChange, label, icon, prefix, compact 
               </button>
             );
           })}
+          {note && <p className="dropdown-note">{note}</p>}
         </div>
       )}
     </div>

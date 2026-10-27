@@ -510,8 +510,27 @@ test.describe("navigation", () => {
     await expect(page.getByRole("button", { name: "התנתקות" })).toHaveCount(0);
   });
 
-  test("the help link points to the support email", async ({ page }) => {
+  // Stops short of submitting: that would email support through Resend.
+  test("the top bar's contact form can be filled", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator(".sidebar-help a")).toHaveAttribute("href", /^mailto:.+@.+/);
+    await page.getByRole("button", { name: "צרי קשר" }).click();
+
+    const dialog = page.getByRole("dialog", { name: "צרי קשר" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByLabel("שם")).toBeFocused();
+
+    await dialog.getByLabel("שם").fill("מלכה");
+    await dialog.getByLabel("מייל").fill("malka@example.com");
+    await dialog.getByLabel("הודעה").fill("שלום, יש לי שאלה");
+    await expect(dialog.getByLabel("שם")).toHaveValue("מלכה");
+    await expect(dialog.getByLabel("מייל")).toHaveValue("malka@example.com");
+    await expect(dialog.getByLabel("הודעה")).toHaveValue("שלום, יש לי שאלה");
+    await expect(dialog.getByRole("button", { name: "שליחה" })).toBeEnabled();
+
+    // Closing throws the draft away.
+    await dialog.getByRole("button", { name: "סגירה" }).click();
+    await expect(dialog).toHaveCount(0);
+    await page.getByRole("button", { name: "צרי קשר" }).click();
+    await expect(dialog.getByLabel("שם")).toHaveValue("");
   });
 });

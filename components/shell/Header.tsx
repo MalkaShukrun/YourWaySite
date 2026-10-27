@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { LogOut } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
+import { ContactButton } from "@/components/contact/ContactButton";
 import { signOut } from "@/app/(auth)/login/actions";
 import { usePopover } from "@/components/ui/usePopover";
 import { useMode } from "./useMode";
@@ -19,7 +20,7 @@ export function Header({ userSlot }: { userSlot: ReactNode }) {
         <Link href="/" className={mode === "passenger" ? "active" : ""}>אני הטרמפיסטית</Link>
         <Link href="/dashboard" className={mode === "driver" ? "active" : ""}>אני הנהגת</Link>
       </div>
-      <div className="header-actions">{userSlot}</div>
+      <div className="header-actions"><ContactButton />{userSlot}</div>
     </header>
   );
 }

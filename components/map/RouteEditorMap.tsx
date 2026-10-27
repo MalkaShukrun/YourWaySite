@@ -7,7 +7,7 @@ import { MapContainer, Marker, Tooltip, useMap, useMapEvents } from "react-leafl
 import { MapPin } from "lucide-react";
 import type { Area } from "@/lib/places";
 import { iconProps } from "@/components/ui/icon";
-import { isPlaced, MapLegend, MapTiles, RoutePath, stopPinIcon } from "./mapParts";
+import { isPlaced, MapLegend, MapTiles, RoutePath, stopPinIcon, useMapKey } from "./mapParts";
 
 type EditorStop = { kind: "pickup" | "dropoff"; label: string; lat: number | null; lng: number | null };
 
@@ -30,6 +30,7 @@ export default function RouteEditorMap({ stops, area, placing, onPlace, onMove }
     const placed = stops.filter(isPlaced);
     return placed.length ? L.latLngBounds(placed.map((s) => [s.lat, s.lng] as [number, number])).pad(0.2) : null;
   });
+  const mapKey = useMapKey();
   const startBounds = initialBounds ?? (area ? L.latLngBounds(area) : null);
   const ordered = [...stops.filter((s) => s.kind === "pickup"), ...stops.filter((s) => s.kind === "dropoff")].filter(isPlaced);
   const numberOf = (index: number) => stops.slice(0, index + 1).filter((s) => s.kind === stops[index].kind).length;
@@ -37,6 +38,7 @@ export default function RouteEditorMap({ stops, area, placing, onPlace, onMove }
   return (
     <div className={`large-map route-map ${placing ? "is-adding" : ""}`} dir="ltr">
       <MapContainer
+        key={mapKey}
         {...(startBounds ? { bounds: startBounds } : { center: DEFAULT_CENTER, zoom: 11 })}
         maxBoundsViscosity={1}
         style={{ height: "100%", width: "100%" }}
