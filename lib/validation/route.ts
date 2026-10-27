@@ -26,8 +26,13 @@ export const routeSchema = z
     if (v.kind === "recurring" && v.weekdays.length === 0) {
       ctx.addIssue({ code: "custom", path: ["weekdays"], message: "יש לבחור לפחות יום אחד" });
     }
-    if (v.kind === "one_time" && !ISO_DATE_PATTERN.test(v.rideDate)) {
-      ctx.addIssue({ code: "custom", path: ["rideDate"], message: "יש לבחור תאריך" });
+    // One-time: the ride's date. Recurring: the first date it runs.
+    if (!ISO_DATE_PATTERN.test(v.rideDate)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["rideDate"],
+        message: v.kind === "recurring" ? "יש לבחור תאריך התחלה" : "יש לבחור תאריך",
+      });
     }
     if (!v.stops.some((s) => s.kind === "pickup")) {
       ctx.addIssue({ code: "custom", path: ["stops"], message: "יש להוסיף לפחות תחנת איסוף אחת" });

@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Clock, MapPin, Plus, Users } from "lucide-react";
+import { CalendarDays, Clock, Plus, Users } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { formatRideDate, formatTime } from "@/lib/dates";
 import { formatPrice, groupLabel, routeKindLabel, weekdaysLabel } from "@/lib/format";
@@ -49,24 +49,23 @@ async function Routes({ searchParams }: Pick<PageProps<"/routes">, "searchParams
 function RouteCard({ route }: { route: DriverRoute }) {
   return (
     <article className="route-card">
-      <div className="map-placeholder">
-        <div className="map-road road-a"></div>
-        <div className="map-road road-b"></div>
-        <span className="map-pin pin-a"><MapPin {...iconProps} size={17} /></span>
-        <span className="map-pin pin-b"><MapPin {...iconProps} size={17} /></span>
-      </div>
       <div className="route-card-body">
         <div className="trip-top">
           <span className={`trip-type ${route.kind === "one_time" ? "special" : ""}`}>
             {routeKindLabel(route.kind)}
           </span>
-          <span>{route.kind === "recurring" ? weekdaysLabel(route.weekdays) : route.ride_date && formatRideDate(route.ride_date)}</span>
         </div>
         <h2>{groupLabel(route.origin, route.destination)}</h2>
         <p>
-          <Clock {...iconProps} size={17} /> יציאה ב־{formatTime(route.out_time)}
+          <CalendarDays {...iconProps} size={23} />
+          {route.kind === "recurring"
+            ? `${weekdaysLabel(route.weekdays)}${route.ride_date ? ` · החל מ${formatRideDate(route.ride_date)}` : ""}`
+            : route.ride_date && formatRideDate(route.ride_date)}
         </p>
-        <p><Users {...iconProps} size={17} /> {route.seats} מקומות · {formatPrice(route.price)} לטרמפיסטית</p>
+        <p>
+          <Clock {...iconProps} size={23} /> יציאה ב־{formatTime(route.out_time)}
+        </p>
+        <p><Users {...iconProps} size={23} /> {route.seats} מקומות · {formatPrice(route.price)} לטרמפיסטית</p>
         <div className="route-actions">
           <ArchiveRouteButton routeId={route.id} />
           <Link className="btn btn-secondary" href={`/routes/${route.id}`}>עריכת מסלול</Link>

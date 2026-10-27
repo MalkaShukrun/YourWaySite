@@ -2,11 +2,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createSupabaseMock } from "@/tests/supabase-mock";
 import { runAction } from "@/tests/redirect";
 import { getCurrentUser } from "@/lib/auth";
-import type { ProfileValues } from "@/lib/validation/profile";
+import type { OnboardingValues } from "@/lib/validation/profile";
 import { completeProfile, signOut } from "@/app/(auth)/login/actions";
 
 const sb = createSupabaseMock();
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => sb.client }));
+const cookieStore = vi.hoisted(() => ({
+  getAll: () => [{ name: "sb-abc-auth-token.0" }, { name: "sb-abc-auth-token.1" }, { name: "theme" }],
+  delete: vi.fn(),
+}));
+vi.mock("next/headers", () => ({ cookies: async () => cookieStore }));
 vi.mock("@/lib/auth", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/auth")>()),
   getCurrentUser: vi.fn(),
@@ -14,7 +19,7 @@ vi.mock("@/lib/auth", async (importOriginal) => ({
 
 const user = { id: "user-1", email: "a@example.com", fullName: "", phone: null, isAdmin: false };
 
-function onboarding(overrides: Partial<ProfileValues> = {}): ProfileValues {
+function onboarding(overrides: Partial<OnboardingValues> = {}): OnboardingValues {
   return {
     fullName: "מלכה כהן",
     phone: "0501234567",
@@ -22,6 +27,7 @@ function onboarding(overrides: Partial<ProfileValues> = {}): ProfileValues {
     vehicleModel: "",
     vehicleColor: "",
     vehicleSeats: "",
+    acceptPrivacy: true,
     ...overrides,
   };
 }
@@ -92,6 +98,13 @@ describe("completeProfile", () => {
     expect(sb.client.from).not.toHaveBeenCalled();
   });
 
+  it("rejects onboarding without accepting the privacy policy", async () => {
+    expect(await completeProfile(onboarding({ acceptPrivacy: false }))).toEqual({
+      error: "חלק מהפרטים אינם תקינים, נא לבדוק ולנסות שוב.",
+    });
+    expect(sb.client.from).not.toHaveBeenCalled();
+  });
+
   it("rejects a car without seats", async () => {
     expect(await completeProfile(onboarding({ hasVehicle: true, vehicleModel: "x", vehicleColor: "y" }))).toEqual({
       error: "חלק מהפרטים אינם תקינים, נא לבדוק ולנסות שוב.",
@@ -117,5 +130,13 @@ describe("signOut", () => {
   it("signs out and goes to /login", async () => {
     expect(await runAction(() => signOut())).toEqual({ redirectedTo: "/login" });
     expect(sb.client.auth.signOut).toHaveBeenCalledOnce();
+  });
+
+  it("clears the session cookies even when Supabase rejects the sign-out", async () => {
+    vi.mocked(sb.client.auth.signOut).mockResolvedValueOnce({ error: new Error("refresh_token_not_found") } as never);
+    expect(await runAction(() => signOut())).toEqual({ redirectedTo: "/login" });
+    expect(cookieStore.delete).toHaveBeenCalledWith("sb-abc-auth-token.0");
+    expect(cookieStore.delete).toHaveBeenCalledWith("sb-abc-auth-token.1");
+    expect(cookieStore.delete).not.toHaveBeenCalledWith("theme");
   });
 });

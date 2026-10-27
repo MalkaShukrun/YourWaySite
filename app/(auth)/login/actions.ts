@@ -1,16 +1,17 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser, homePathFor } from "@/lib/auth";
 import { vehicleColumns } from "@/lib/profile";
-import { profileSchema, type ProfileValues } from "@/lib/validation/profile";
+import { onboardingSchema, type OnboardingValues } from "@/lib/validation/profile";
 
-export async function completeProfile(values: ProfileValues) {
+export async function completeProfile(values: OnboardingValues) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const parsed = profileSchema.safeParse(values);
+  const parsed = onboardingSchema.safeParse(values);
   if (!parsed.success) {
     return { error: "חלק מהפרטים אינם תקינים, נא לבדוק ולנסות שוב." };
   }
@@ -43,5 +44,11 @@ export async function completeProfile(values: ProfileValues) {
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  // signOut() keeps the cookies when Supabase rejects the call (e.g. an
+  // already-used refresh token), and /login would send us straight back.
+  const cookieStore = await cookies();
+  for (const { name } of cookieStore.getAll()) {
+    if (/^sb-.+-auth-token/.test(name)) cookieStore.delete(name);
+  }
   redirect("/login");
 }

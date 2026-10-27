@@ -239,7 +239,8 @@ test.describe("ride details", () => {
     await expect(page.locator(".booking-summary strong")).toHaveText(price);
     await expect(page.locator(".leaflet-container, .map-empty").first()).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "אישור הרשמה לנסיעה" }).or(page.getByRole("link", { name: /את רשומה לנסיעה/ })),
+      // A booked day of a recurring ride leaves the other days to pick.
+      page.getByRole("button", { name: /אישור הרשמה לנסיעה|בחרי לפחות יום אחד/ }).or(page.locator(".booked-link").getByRole("link", { name: "לנסיעות שלי" })),
     ).toBeVisible();
   });
 
@@ -267,7 +268,7 @@ test.describe("ride details", () => {
     const links = await page.locator(".trip-card a.btn-primary").evaluateAll((as) => as.slice(0, 8).map((a) => a.getAttribute("href")!));
     for (const href of links) {
       await page.goto(href);
-      const booked = page.getByRole("link", { name: /את רשומה לנסיעה/ });
+      const booked = page.locator(".booked-link").getByRole("link", { name: "לנסיעות שלי" });
       if (await booked.isVisible()) {
         await expect(page.getByRole("button", { name: "אישור הרשמה לנסיעה" })).toHaveCount(0);
         return;

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { messageForCode } from "@/lib/action-errors";
+import { formatShortRideDate } from "@/lib/dates";
 
 const ERRORS: Record<string, string> = {
   RIDE_FULL: "הנסיעה התמלאה — אין יותר מקומות פנויים.",
@@ -21,26 +22,39 @@ const messageFor = (error: { message: string }) => messageForCode(error, ERRORS)
 
 const bookingSchema = z.object({
   routeId: z.uuid(),
-  date: z.iso.date(),
+  dates: z.array(z.iso.date()).min(1).max(31),
   pickupStopId: z.uuid(),
   dropoffStopId: z.uuid(),
 });
 
+// Books the same stops on each chosen date of the route. When only some dates
+// go through, the others are listed with their reason.
 export async function bookRide(input: z.infer<typeof bookingSchema>) {
   await requireUser();
   const parsed = bookingSchema.safeParse(input);
   if (!parsed.success) return { error: ERRORS.INVALID_STOP };
 
+  const { routeId, pickupStopId, dropoffStopId } = parsed.data;
+  const dates = [...new Set(parsed.data.dates)];
   const supabase = await createClient();
-  const { error } = await supabase.rpc("book_ride", {
-    p_route_id: parsed.data.routeId,
-    p_date: parsed.data.date,
-    p_pickup_stop_id: parsed.data.pickupStopId,
-    p_dropoff_stop_id: parsed.data.dropoffStopId,
-  });
-  if (error) return { error: messageFor(error) };
+  const failures: { date: string; message: string }[] = [];
+  for (const date of dates) {
+    const { error } = await supabase.rpc("book_ride", {
+      p_route_id: routeId,
+      p_date: date,
+      p_pickup_stop_id: pickupStopId,
+      p_dropoff_stop_id: dropoffStopId,
+    });
+    if (error) failures.push({ date, message: messageFor(error) });
+  }
 
-  redirect("/my-rides?booked=1");
+  if (failures.length === 0) redirect("/my-rides?booked=1");
+  if (dates.length === 1) return { error: failures[0].message };
+
+  const booked = dates.length - failures.length;
+  if (booked > 0) refresh();
+  const details = failures.map((f) => `${formatShortRideDate(f.date)} — ${f.message}`).join(" ");
+  return { error: booked > 0 ? `נרשמת ל־${booked} מתוך ${dates.length} הימים. לא נרשמת ל: ${details}` : details };
 }
 
 // Returns whether the cancellation was inside the free window (SRS §6.2).

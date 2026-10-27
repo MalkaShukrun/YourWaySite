@@ -5,7 +5,7 @@ const valid: RouteValues = {
   groupId: "11111111-1111-4111-8111-111111111111",
   kind: "recurring",
   weekdays: [0],
-  rideDate: "",
+  rideDate: "2026-11-01",
   outTime: "07:30",
   seats: "4",
   price: "15",
@@ -29,8 +29,8 @@ describe("routeSchema", () => {
     expect(issues({ kind: "one_time", weekdays: [], rideDate: "2026-11-02" })).toEqual([]);
   });
 
-  it("doesn't require a date on a recurring route", () => {
-    expect(issues({ rideDate: "garbage" })).toEqual([]);
+  it.each(["", "garbage"])("asks for a start date on a recurring route given %j", (rideDate) => {
+    expect(issues({ rideDate })).toEqual(["יש לבחור תאריך התחלה"]);
   });
 
   it.each(["00:00", "23:59", "09:05"])("accepts the time %s", (outTime) => {

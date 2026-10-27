@@ -8,7 +8,7 @@ import { firstNameOf } from "@/lib/format";
 import { DashboardDatePicker } from "@/components/driver/DashboardDatePicker";
 import { DriverRideCard } from "@/components/driver/DriverRideCard";
 import { StatCard } from "@/components/ui/StatCard";
-import { iconProps } from "@/components/ui/icon";
+import { carIconProps, iconProps } from "@/components/ui/icon";
 
 // Driver daily dashboard (SRS §5.2).
 export default function DriverDashboardPage({ searchParams }: PageProps<"/dashboard">) {
@@ -49,7 +49,7 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
 
       <div className="stats-grid">
         <StatCard icon={<Users {...iconProps} size={20} />} value={booked} label="טרמפיסטיות רשומות" tone="peach" />
-        <StatCard icon={<Car {...iconProps} size={20} />} value={free} label="מקומות פנויים" tone="green" />
+        <StatCard icon={<Car {...carIconProps} size={20} />} value={free} label="מקומות פנויים" tone="green" />
         <StatCard icon={<MapPin {...iconProps} size={20} />} value={pickupStops} label="תחנות איסוף" tone="purple" />
         <StatCard icon={<Clock {...iconProps} size={20} />} value={firstOut} label="שעת יציאה" tone="blue" />
       </div>

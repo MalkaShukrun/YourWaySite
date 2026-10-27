@@ -25,6 +25,14 @@ test.describe("login page", () => {
     await expect(alert).toHaveText("ההתחברות לא הושלמה. נסי שוב.");
   });
 
+  test("asks to accept the privacy policy before Google", async ({ page }) => {
+    await page.goto("/login");
+    await page.getByRole("button", { name: "הצטרפות עם Google" }).click();
+
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.locator(".auth-error")).toHaveText("יש לאשר את מדיניות הפרטיות כדי להמשיך.");
+  });
+
   test("shows no error without one", async ({ page }) => {
     await page.goto("/login");
     await expect(page.locator(".auth-error")).toHaveCount(0);
@@ -37,6 +45,7 @@ test.describe("login page", () => {
     await page.route(/supabase\.co\/auth\/v1\/authorize/, (route) => route.abort());
     const authorize = page.waitForRequest(/supabase\.co\/auth\/v1\/authorize/);
 
+    await page.getByRole("checkbox", { name: /מדיניות הפרטיות/ }).check();
     await page.getByRole("button", { name: "הצטרפות עם Google" }).click();
 
     const url = new URL((await authorize).url());

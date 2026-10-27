@@ -15,7 +15,7 @@ const PICKUP = "22222222-2222-4222-8222-222222222222";
 const DROPOFF = "33333333-3333-4333-8333-333333333333";
 const BOOKING = "44444444-4444-4444-8444-444444444444";
 
-const booking = { routeId: ROUTE, date: "2026-11-02", pickupStopId: PICKUP, dropoffStopId: DROPOFF };
+const booking = { routeId: ROUTE, dates: ["2026-11-02"], pickupStopId: PICKUP, dropoffStopId: DROPOFF };
 
 beforeEach(() => sb.reset());
 
@@ -45,7 +45,8 @@ describe("bookRide", () => {
 
   it.each([
     ["route id", { routeId: "x" }],
-    ["date", { date: "2.11.2026" }],
+    ["date", { dates: ["2.11.2026"] }],
+    ["empty date list", { dates: [] }],
     ["pickup stop", { pickupStopId: "" }],
     ["dropoff stop", { dropoffStopId: "nope" }],
   ])("rejects an invalid %s without calling the database", async (_name, override) => {
@@ -63,6 +64,20 @@ describe("bookRide", () => {
   ])("maps the database error %s to a message", async (code, message) => {
     sb.onRpc("book_ride", { error: { message: `P0001: ${code}` } });
     expect(await runAction(() => bookRide(booking))).toEqual({ error: message });
+  });
+
+  it("books every chosen day once and redirects", async () => {
+    const dates = ["2026-11-02", "2026-11-04", "2026-11-02"];
+    expect(await runAction(() => bookRide({ ...booking, dates }))).toEqual({ redirectedTo: "/my-rides?booked=1" });
+    expect(sb.client.rpc).toHaveBeenCalledTimes(2);
+    expect(sb.client.rpc).toHaveBeenLastCalledWith("book_ride", expect.objectContaining({ p_date: "2026-11-04" }));
+  });
+
+  it("lists the days that failed and refreshes when others were booked", async () => {
+    sb.onRpc("book_ride", { data: null, error: null }, { error: { message: "P0001: RIDE_FULL" } });
+    const result = await runAction(() => bookRide({ ...booking, dates: ["2026-11-02", "2026-11-04"] }));
+    expect(result).toEqual({ error: "נרשמת ל־1 מתוך 2 הימים. לא נרשמת ל: ד׳ 4.11 — הנסיעה התמלאה — אין יותר מקומות פנויים." });
+    expect(refresh).toHaveBeenCalledOnce();
   });
 });
 

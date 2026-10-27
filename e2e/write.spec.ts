@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { choose, expectNotFound, hideDevTools, isAdmin, nextWeekday, openForm, toast } from "./helpers";
+import { choose, chooseTime, expectNotFound, hideDevTools, isAdmin, nextWeekday, openForm, toast } from "./helpers";
 
 // Tests that SAVE data, against the real Supabase project. They only run with
 // E2E_WRITE=1 (npm run test:e2e:write) and as an admin, and touch only things
@@ -110,7 +110,7 @@ test.describe("driver: route lifecycle", () => {
     for (let i = 0; i < 6; i++) {
       if ((await days.nth(i).getAttribute("aria-pressed")) !== "true") await days.nth(i).click();
     }
-    await page.getByLabel("שעת יציאה").fill("06:05");
+    await chooseTime(page, "שעת יציאה", "06:05");
     await page.getByLabel("מקומות פנויים").fill("3");
     await page.getByLabel("מחיר לכל טרמפיסטית").fill("7");
 
@@ -153,7 +153,7 @@ test.describe("driver: route lifecycle", () => {
     await expect(page.locator(".editor-stop-group:not(.dropoff-editor-group) input")).toHaveValue("תחנת בדיקה א");
 
     await page.getByLabel("מחיר לכל טרמפיסטית").fill("9");
-    await page.getByLabel("שעת יציאה").fill("06:10");
+    await chooseTime(page, "שעת יציאה", "06:10");
     await page.locator(".dropoff-editor-group input").first().fill("תחנת בדיקה ג");
     await page.getByRole("button", { name: "שמירת המסלול" }).click();
 
@@ -167,20 +167,20 @@ test.describe("driver: route lifecycle", () => {
     const date = nextWeekday();
     await page.goto(`/dashboard?date=${date}`);
     const card = page.locator(".today-card").filter({ hasText: label() });
-    await expect(card).toContainText("יציאה 06:10");
-    await expect(card.locator(".status-pill")).toHaveText("מתקיימת כרגיל");
+    await expect(card.getByRole("button", { name: "שעת יציאה: 06:10" })).toBeVisible();
+    await expect(card.locator(".status-pill")).toHaveCount(0);
 
-    await card.getByLabel("שעת יציאה").fill("06:40");
+    await chooseTime(card, "שעת יציאה", "06:40");
     await card.getByRole("button", { name: "עדכון שעה" }).click();
     await expect(toast(page, "שעת היציאה עודכנה ל־06:40")).toBeVisible();
-    await expect(card).toContainText("יציאה 06:40");
+    await expect(card.getByRole("button", { name: "שעת יציאה: 06:40" })).toBeVisible();
 
     await card.getByRole("button", { name: "ביטול הנסיעה לתאריך זה בלבד" }).click();
     await expect(card.locator(".status-pill")).toHaveText("בוטלה לתאריך זה");
     await expect(card.getByLabel("שעת יציאה")).toBeDisabled();
 
     await card.getByRole("button", { name: "החזרת הנסיעה" }).click();
-    await expect(card.locator(".status-pill")).toHaveText("מתקיימת כרגיל");
+    await expect(card.locator(".status-pill")).toHaveCount(0);
   });
 
   test("the time change applies to that date only", async ({ page }) => {
@@ -190,7 +190,7 @@ test.describe("driver: route lifecycle", () => {
       other = new Date(Date.parse(`${date}T12:00:00Z`) + i * 86_400_000).toISOString().slice(0, 10);
     }
     await page.goto(`/dashboard?date=${other}`);
-    await expect(page.locator(".today-card").filter({ hasText: label() })).toContainText("יציאה 06:10");
+    await expect(page.locator(".today-card").filter({ hasText: label() }).getByRole("button", { name: "שעת יציאה: 06:10" })).toBeVisible();
   });
 
   test("your own route is hidden from search and can't be booked", async ({ page }) => {

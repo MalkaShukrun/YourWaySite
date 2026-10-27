@@ -12,7 +12,7 @@ export default function ProfilePage() {
   return (
     <main className="page-content">
       <div className="welcome"><div><p>הפרטים שלך</p><h1>הפרופיל שלי</h1></div></div>
-      <Suspense fallback={<section className="panel profile-panel" aria-busy="true" />}>
+      <Suspense fallback={null}>
         <Profile />
       </Suspense>
     </main>

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Clock } from "lucide-react";
 import { setRideCancelled, updateRideTime } from "@/app/(app)/(driver)/actions";
+import { TimePicker } from "@/components/ui/TimePicker";
 import { Toast } from "@/components/ui/Toast";
 import { iconProps } from "@/components/ui/icon";
 
@@ -30,7 +31,7 @@ export function TimeUpdateForm({ routeId, date, time, disabled }: RideRef & { ti
         </div>
       </div>
       <div className="time-control">
-        <input type="time" value={value} onChange={(e) => setValue(e.target.value)} aria-label="שעת יציאה" disabled={disabled} />
+        <TimePicker label="שעת יציאה" value={value} onChange={setValue} disabled={disabled} />
         <button className="btn btn-secondary" onClick={save} disabled={disabled || pending || value === time}>
           {pending ? "מעדכן..." : "עדכון שעה"}
         </button>

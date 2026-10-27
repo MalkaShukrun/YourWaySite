@@ -42,8 +42,8 @@ export function Sidebar({ adminSlot }: { adminSlot: ReactNode }) {
         <div>
           <strong>צריכה עזרה?</strong>
           <span>אנחנו כאן בשבילך</span>
-          <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
         </div>
+        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
       </div>
     </aside>
   );

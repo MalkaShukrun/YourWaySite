@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 // Today in Israel as "YYYY-MM-DD" — the app's server clock.
 export function israelToday(offsetDays = 0) {
@@ -18,6 +18,15 @@ export function nextWeekday() {
 export async function choose(page: Page, label: string, option: string | RegExp) {
   await page.getByRole("button", { name: new RegExp(`^${label}:`) }).click();
   await page.getByRole("listbox", { name: label }).getByRole("option", { name: option }).click();
+}
+
+// Pick "HH:MM" in a <TimePicker> (minutes in 5-minute steps).
+export async function chooseTime(page: Page | Locator, label: string, time: string) {
+  const [hour, minute] = time.split(":");
+  await page.getByRole("button", { name: new RegExp(`^${label}:`) }).click();
+  const panel = page.getByRole("dialog", { name: label });
+  await panel.getByRole("listbox", { name: "שעה" }).getByRole("option", { name: hour, exact: true }).click();
+  await panel.getByRole("listbox", { name: "דקות" }).getByRole("option", { name: minute, exact: true }).click();
 }
 
 // Options of a <Select>, read by opening and closing it.

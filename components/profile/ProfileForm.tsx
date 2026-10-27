@@ -8,7 +8,7 @@ import { saveProfile } from "@/app/(app)/profile/actions";
 import { profileSchema, type ProfileValues } from "@/lib/validation/profile";
 import { Toast } from "@/components/ui/Toast";
 import { VehicleFields } from "@/components/profile/VehicleFields";
-import { iconProps } from "@/components/ui/icon";
+import { carIconProps, iconProps } from "@/components/ui/icon";
 import { FieldError } from "@/components/ui/FieldError";
 import { useHydrated } from "@/components/ui/useHydrated";
 
@@ -66,7 +66,7 @@ export function ProfileForm({ initials, email, defaults }: Props) {
 
       <div className="vehicle-section profile-vehicle">
         <div>
-          <h3><Car {...iconProps} size={20} /> פרטי הרכב שלי</h3>
+          <h3><Car {...carIconProps} size={20} /> פרטי הרכב שלי</h3>
           <span>הפרטים יוצגו לטרמפיסטיות</span>
         </div>
         {hasVehicle ? (

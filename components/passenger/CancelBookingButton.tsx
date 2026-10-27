@@ -26,7 +26,7 @@ export function CancelBookingButton({ bookingId, driverName, driverPhone }: Prop
   return (
     <>
       <button className="btn btn-ghost" onClick={cancel} disabled={pending}>
-        {pending ? "מבטלת…" : "ביטול"}
+        {pending ? "מבטל…" : "ביטול"}
       </button>
       <Toast message={message} />
       {late && (

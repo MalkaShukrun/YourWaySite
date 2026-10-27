@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Car, Check, Clock, MapPin, Search, Users } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
@@ -9,7 +8,7 @@ import { GoogleButton } from "@/components/auth/GoogleButton";
 import { OnboardingModal } from "@/components/auth/OnboardingModal";
 import { getCurrentUser, homePathFor, needsOnboarding } from "@/lib/auth";
 import { SUPPORT_EMAIL } from "@/lib/support";
-import { iconProps } from "@/components/ui/icon";
+import { carIconProps, iconProps } from "@/components/ui/icon";
 
 export const metadata: Metadata = { title: "התחברות · בדרך שלך" };
 
@@ -33,7 +32,7 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
         <div className="brand-ticket" aria-hidden="true">
           <div className="ticket-route">
             <div><small>יציאה</small><strong>בית שמש</strong></div>
-            <span className="ticket-line"><i></i><Car {...iconProps} size={22} /><i></i></span>
+            <span className="ticket-line"><i></i><Car {...carIconProps} size={22} /><i></i></span>
             <div><small>יעד</small><strong>ירושלים</strong></div>
           </div>
           <div className="ticket-meta">
@@ -60,20 +59,17 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
           <p>מוצאות טרמפ שמתאים בדיוק לדרך שלך, מתחברות לנהגות מהקהילה ומתאמות הכול בפשטות.</p>
           <div className="auth-role-pills">
             <span><Search {...iconProps} size={17} /> אני מחפשת טרמפ</span>
-            <span><Car {...iconProps} size={17} /> אני מציעה נסיעה</span>
+            <span><Car {...carIconProps} size={17} /> אני מציעה נסיעה</span>
           </div>
           <GoogleButton />
           <Suspense fallback={null}>
             <LoginError searchParams={searchParams} />
           </Suspense>
-          <p className="privacy-link">
-            בהתחברות את מסכימה ל<Link href="/privacy">מדיניות הפרטיות</Link>
-          </p>
         </div>
       </div>
 
       <footer className="landing-footer">
-        <span>© 2026 DeveLogic</span>
+        <span>© 2026 Your Way</span>
         <strong>נוסעות יחד, מגיעות רחוק.</strong>
       </footer>
 

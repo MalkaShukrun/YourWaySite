@@ -60,7 +60,7 @@ async function Payments({ searchParams }: Pick<PageProps<"/payments">, "searchPa
           <div className="empty-state"><strong>אין נסיעות לתשלום בחודש הזה</strong></div>
         ) : (
           rows.map((b) => (
-            <div className="activity-row" key={b.booking_id}>
+            <div className="activity-row payment-row" key={b.booking_id}>
               <div className="activity-date payment-date">
                 <strong>{formatRideDate(b.ride_date)}</strong>
                 <span>שעה {formatTime(b.out_time)}</span>
@@ -72,10 +72,10 @@ async function Payments({ searchParams }: Pick<PageProps<"/payments">, "searchPa
                   {b.status === "late_cancelled" && <small>בוטלה באיחור · נשמרה ביומן</small>}
                 </div>
               </div>
-              <PaidToggle bookingId={b.booking_id} isPaid={b.is_paid} priceLabel={formatPrice(b.price)} />
               <div className="row-actions">
                 <DriverContact name={b.driver_name} phone={b.driver_phone} email={b.driver_email} />
               </div>
+              <PaidToggle bookingId={b.booking_id} isPaid={b.is_paid} priceLabel={formatPrice(b.price)} />
             </div>
           ))
         )}

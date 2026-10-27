@@ -7,7 +7,7 @@ import { DatePicker } from "@/components/ui/DatePicker";
 import { Select } from "@/components/ui/Select";
 import { TIME_WINDOWS, type RideGroup, type RideKind, type TimeWindow } from "@/lib/ride-types";
 import { groupLabel } from "@/lib/format";
-import { iconProps } from "@/components/ui/icon";
+import { carIconProps, iconProps } from "@/components/ui/icon";
 
 type Filters = { groupId?: string; date?: string; kind?: RideKind; time?: TimeWindow };
 
@@ -49,7 +49,7 @@ export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; i
           <h2>מצאי את הנסיעה שמתאימה לך</h2>
         </div>
         <div className="search-art" aria-hidden="true">
-          <Car {...iconProps} size={32} />
+          <Car {...carIconProps} size={32} />
           <span className="road-dot one"></span>
           <span className="road-dot two"></span>
         </div>

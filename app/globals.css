@@ -7,10 +7,12 @@
 /* Additions on top of the Figma design (states the static design doesn't show). */
 .google-button:disabled,
 .btn:disabled { opacity: .7; cursor: wait; transform: none; }
-.auth-error { color: #A8584E; font-size: 14px; margin: 12px 0 0; text-align: right; }
-.field-error { color: #A8584E; font-size: 13px; padding-right: 2px; }
+.auth-error { color: #A8584E; font-size: 15px; margin: 12px 0 0; text-align: right; }
+.field-error { color: #A8584E; font-size: 14px; padding-right: 2px; }
 .vehicle-fields { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin-bottom: 18px; }
 .vehicle-fields .form-grid { width: 100%; }
+.booked-link { display: flex; flex-direction: column; align-items: stretch; gap: 6px; text-align: center; }
+.booked-link span { color: var(--green); font-size: 15px; font-weight: 700; }
 
 /* The design uses <button> for navigation; the app uses real links. */
 a.nav-item { text-decoration: none; }
@@ -20,7 +22,7 @@ a.nav-item { text-decoration: none; }
 .activity-tabs a.active { color: var(--green-dark); border-bottom-color: var(--green); background: var(--lime); border-radius: 9px 9px 0 0; font-weight: 800; padding-inline: 13px; padding-top: 6px; }
 .user-menu form { margin: 0; }
 @media (max-width: 780px) {
-  .bottom-nav a { color: #59665F; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 15px; text-decoration: none; }
+  .bottom-nav a { color: #59665F; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 16px; text-decoration: none; }
   .bottom-nav a.active { color: var(--green-dark); font-weight: 800; }
   .bottom-nav a.active .icon { background: var(--lime); border-radius: 9px; padding: 3px; width: 27px; height: 27px; }
   .role-switch a { min-width: 0; padding: 7px 12px; }
@@ -38,12 +40,13 @@ a.nav-item { text-decoration: none; }
 .trip-dates { display: flex; flex-wrap: wrap; gap: 6px; }
 .trip-info .trip-dates { gap: 6px; }
 .ride-days .trip-dates { margin-top: 14px; gap: 8px; }
-.ride-days .trip-dates a, .ride-days .trip-dates span { min-width: 76px; padding: 7px 10px; font-size: 15px; }
-.trip-dates a.selected, .trip-dates a.selected:hover { border-color: var(--green); background: var(--lime); color: var(--green-dark); }
-.trip-dates a, .trip-dates span { min-width: 62px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 9px; display: inline-flex; flex-direction: column; align-items: center; color: #3b4842; font-size: 14px; font-weight: 700; line-height: 1.35; text-decoration: none; transition: .2s ease; }
-.trip-dates a:hover { border-color: #9DB2C0; color: var(--green); background: var(--green-soft); }
-.trip-dates small { color: #66736C; font-size: 12px; font-weight: 500; }
+.ride-days .trip-dates a, .ride-days .trip-dates button, .ride-days .trip-dates span { min-width: 76px; padding: 7px 10px; font-size: 16px; }
+.trip-dates a.selected, .trip-dates a.selected:hover, .trip-dates button.selected, .trip-dates button.selected:hover { border-color: var(--green); background: var(--lime); color: var(--green-dark); }
+.trip-dates a, .trip-dates button, .trip-dates span { min-width: 62px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 9px; display: inline-flex; flex-direction: column; align-items: center; color: #3b4842; font-size: 15px; font-weight: 700; line-height: 1.35; text-decoration: none; transition: .2s ease; }
+.trip-dates a:hover, .trip-dates button:hover { border-color: #9DB2C0; color: var(--green); background: var(--green-soft); }
+.trip-dates small { color: #66736C; font-size: 13px; font-weight: 500; }
 .trip-dates .is-full { color: #8a958f; background: #F3F5F4; cursor: not-allowed; }
+.trip-dates button { background: white; font-family: inherit; cursor: pointer; }
 
 /* Payments */
 .paid-pill.unpaid { color: #875D54; background: #F7E8E3; }
@@ -57,7 +60,7 @@ a.nav-item { text-decoration: none; }
 .route-map { isolation: isolate; }
 .route-map .leaflet-container { font-family: inherit; background: #E8ECEE; }
 .route-map .map-legend { z-index: 500; }
-.leaflet-stop-pin { width: 32px; height: 32px; color: #fff; background: var(--green); border: 3px solid #fff; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 5px 10px rgba(30,55,71,.25); font-size: 15px; }
+.leaflet-stop-pin { width: 32px; height: 32px; color: #fff; background: var(--green); border: 3px solid #fff; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 5px 10px rgba(30,55,71,.25); font-size: 16px; }
 .leaflet-stop-pin.drop { background: #C2703D; }
 .leaflet-stop-pin.selected { outline: 3px solid var(--lime); transform: scale(1.12); }
 .map-empty { height: 160px; display: grid; place-items: center; color: #59665F; background: #F3F5F4; }
@@ -66,12 +69,12 @@ a.nav-item { text-decoration: none; }
 /* Driver Hub */
 .today-list { display: flex; flex-direction: column; gap: 20px; }
 .time-control { display: flex; gap: 8px; }
-.time-control input { width: 96px; }
+.time-control .time-picker { width: 168px; }
+@media (max-width: 780px) { .time-control .time-picker { flex: 1; width: auto; } }
 .passenger-empty { margin: 0; padding: 18px 25px; color: #59665F; }
-.daily-stop > .nav-buttons { flex-direction: row; gap: 5px; }
 .daily-stops-empty { color: #66736C; }
 .today-card .daily-route-preview { margin-bottom: 22px; }
-.confirm-inline { display: inline-flex; align-items: center; gap: 6px; color: #59665F; font-size: 15px; }
+.confirm-inline { display: inline-flex; align-items: center; gap: 6px; color: #59665F; font-size: 16px; }
 .form-alert { margin: -12px 0 18px; padding: 11px 14px; border-radius: 10px; background: #f9ebe8; color: #a8584e; font-weight: 700; }
 .editor-stops input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; font-weight: 700; color: var(--ink); }
 .editor-stops input[aria-invalid="true"] { color: #a8584e; }
@@ -84,14 +87,17 @@ a.nav-item { text-decoration: none; }
 @media (max-width: 780px) { .editor-map .large-map.route-map { height: 320px; } }
 
 /* Privacy policy (public page, linked from the login screen) */
-.auth-card > .privacy-link { max-width: none; margin: 12px 0 0; text-align: center; color: #66736C; font-size: 15px; line-height: 1.4; }
+.auth-card > .privacy-link { max-width: none; margin: 12px 0 0; text-align: center; color: #66736C; font-size: 16px; line-height: 1.4; }
 .privacy-link a { color: var(--green); font-weight: 700; text-decoration: underline; }
+.privacy-consent { display: flex; align-items: center; gap: 9px; margin: 4px 0 6px; color: #48554f; font-size: 16px; cursor: pointer; }
+.privacy-consent input { width: 18px; height: 18px; flex: 0 0 auto; accent-color: var(--green); }
+.privacy-consent a { color: var(--green); font-weight: 700; text-decoration: underline; }
 .legal-page { min-height: 100vh; background: #F7FAF6; padding: 10px 18px 48px; }
 .legal-header { max-width: 860px; margin: 0 auto; height: 64px; display: flex; align-items: center; justify-content: space-between; }
 .legal-header .back-link { margin: 0; }
 .legal-card { max-width: 860px; margin: 14px auto 0; background: #FFFFFF; border: 1px solid var(--line); border-top: 4px solid var(--lime); border-radius: 20px; padding: 32px 36px; color: var(--ink); line-height: 1.7; box-shadow: 0 7px 24px rgba(36,52,47,.045); }
 .legal-card h1 { margin: 0; font-size: 30px; font-weight: 800; color: var(--green-dark); }
-.legal-updated { margin: 4px 0 26px; color: #66736C; font-size: 14px; }
+.legal-updated { margin: 4px 0 26px; color: #66736C; font-size: 15px; }
 .legal-card section { margin-bottom: 24px; }
 .legal-card h2 { margin: 0 0 8px; font-size: 20px; font-weight: 800; }
 .legal-card p { margin: 0 0 8px; color: #46544D; }
@@ -109,7 +115,7 @@ a.nav-item { text-decoration: none; }
 .panel:has(.dropdown.open) { overflow: visible; }
 .dropdown-options { max-height: 288px; overflow-y: auto; }
 .dropdown.compact .dropdown-trigger { width: auto; min-height: 37px; display: flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: #fff; border-radius: 9px; padding: 0 10px; color: #59665F; }
-.dropdown.compact .dropdown-trigger > small { font-size: 15px; }
+.dropdown.compact .dropdown-trigger > small { font-size: 16px; }
 .dropdown.compact .dropdown-trigger > span { color: var(--ink); font-weight: 700; white-space: nowrap; }
 .dropdown.compact.open .dropdown-trigger { border-color: #6e9486; }
 /* The month list is exactly as wide as its button. */
@@ -121,20 +127,27 @@ a.nav-item { text-decoration: none; }
 .dropdown-trigger > span.placeholder { color: #8A968F; }
 .dropdown-options.calendar { max-height: none; overflow: visible; padding: 10px; }
 .date-picker:has(.date-picker-button) .dropdown-options.calendar { left: auto; width: 300px; }
+/* Time picker — hour and minute columns */
+.time-picker .dropdown-trigger > span { text-align: right; }
+.dropdown-options.time-panel { left: auto; width: 168px; max-height: none; padding: 8px; display: flex; gap: 6px; }
+.time-column { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.time-column small { text-align: center; color: #8A968F; font-size: 14px; font-weight: 700; }
+.time-column [role="listbox"] { position: relative; height: 216px; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 2px; }
+.dropdown-options .time-column button { min-height: 34px; padding: 0; justify-content: center; border-radius: 8px; font-variant-numeric: tabular-nums; }
 .calendar-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .calendar-head strong { color: var(--ink); font-size: 16px; font-weight: 800; }
 .calendar-head button { width: 34px; height: 34px; border: 0; border-radius: 9px; background: transparent; color: var(--green); display: grid; place-items: center; cursor: pointer; }
 .calendar-head button:hover:not(:disabled) { background: #EEF3F6; }
 .calendar-head button:disabled { color: #C5CEC9; cursor: default; }
 .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
-.calendar-weekday { height: 30px; display: grid; place-items: center; color: #8A968F; font-size: 13px; font-weight: 700; }
-.dropdown-options .calendar-grid button { width: 100%; min-height: 0; height: 34px; min-width: 0; padding: 0; justify-content: center; border-radius: 9px; color: var(--ink); font-size: 15px; font-weight: 600; }
+.calendar-weekday { height: 30px; display: grid; place-items: center; color: #8A968F; font-size: 14px; font-weight: 700; }
+.dropdown-options .calendar-grid button { width: 100%; min-height: 0; height: 34px; min-width: 0; padding: 0; justify-content: center; border-radius: 9px; color: var(--ink); font-size: 16px; font-weight: 600; }
 .dropdown-options .calendar-grid button.outside { color: #A9B3AE; }
 .dropdown-options .calendar-grid button.today { box-shadow: inset 0 0 0 1.5px var(--green); }
 .dropdown-options .calendar-grid button.selected { background: var(--lime); color: var(--green-dark); font-weight: 800; box-shadow: none; }
 .dropdown-options .calendar-grid button:disabled { color: #CDD5D1; background: transparent; cursor: default; }
 .calendar-foot { display: flex; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
-.dropdown-options .calendar-foot button { width: auto; min-height: 32px; padding: 0 12px; border-radius: 8px; background: #EEF3F6; color: var(--green); font-size: 14px; font-weight: 700; justify-content: center; }
+.dropdown-options .calendar-foot button { width: auto; min-height: 32px; padding: 0 12px; border-radius: 8px; background: #EEF3F6; color: var(--green); font-size: 15px; font-weight: 700; justify-content: center; }
 .dropdown-options .calendar-foot button:hover:not(:disabled) { background: var(--lime); color: var(--green-dark); }
 .dropdown-options .calendar-foot button.muted { margin-right: auto; background: transparent; color: #66736C; }
 .dropdown-options .calendar-foot button:disabled { opacity: .45; cursor: default; }
@@ -155,20 +168,20 @@ a.nav-item { text-decoration: none; }
 .profile-subgrid { padding: 14px 0 0; }
 /* Route editor — numbered how-to under the map title */
 .editor-map .panel-title > div { flex: 1; min-width: 0; }
-.map-steps { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; color: #59665F; font-size: 14px; line-height: 1.3; }
+.map-steps { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; color: #59665F; font-size: 15px; line-height: 1.3; }
 .map-steps li { display: inline-flex; align-items: center; gap: 6px; }
-.optional-tag { margin-right: 6px; padding: 2px 8px; border-radius: 10px; background: var(--green-soft); color: var(--green); font-size: 13px; font-weight: 700; vertical-align: middle; }
+.optional-tag { margin-right: 6px; padding: 2px 8px; border-radius: 10px; background: var(--green-soft); color: var(--green); font-size: 14px; font-weight: 700; vertical-align: middle; }
 .editor-stops .stop-place { width: 30px; height: 30px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 8px; color: #9AA7A0; font-size: 0; }
 .editor-stops .stop-place:hover { color: var(--green); background: var(--green-soft); }
 .editor-stops .stop-place.is-placed { color: var(--green); }
 .dropoff-editor-stops .stop-place.is-placed { color: #C2703D; }
 .editor-stops .stop-place.is-armed { color: var(--green-dark); background: var(--lime); }
-.map-steps li > span { width: 20px; height: 20px; flex: 0 0 auto; border-radius: 6px; background: var(--green); color: #fff; display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+.map-steps li > span { width: 20px; height: 20px; flex: 0 0 auto; border-radius: 6px; background: var(--green); color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 700; }
 
 /* Onboarding asks only for name and phone (the email comes from Google), so
    each field gets the full row. */
 .onboarding-card > .form-grid { grid-template-columns: 1fr; }
-.onboarding-switch { margin-top: 8px; color: #59665F; font-size: 15px; }
+.onboarding-switch { margin-top: 8px; color: #59665F; font-size: 16px; }
 /* Only the phone (last of the personal fields) spans the row; the vehicle
    grid stays in even columns. */
 .profile-panel .form-grid.compact .field:last-child { grid-column: auto; }

@@ -3,7 +3,7 @@ import { getAdminGroups } from "@/lib/admin";
 import { groupLabel } from "@/lib/format";
 import { StatCard } from "@/components/ui/StatCard";
 import { GroupActions } from "@/components/admin/GroupActions";
-import { iconProps } from "@/components/ui/icon";
+import { carIconProps, iconProps } from "@/components/ui/icon";
 
 // Ride group management (SRS §8) — stats and the group list from the design.
 // Render only for admins (the caller checks with requireAdmin).
@@ -18,7 +18,7 @@ export async function GroupsSection() {
       <div className="admin-stats">
         <StatCard icon={<Route {...iconProps} size={20} />} value={groups.filter((g) => g.is_active).length} label="קבוצות פעילות" tone="green" />
         <StatCard icon={<Users {...iconProps} size={20} />} value={drivers} label="נהגות עם מסלולים" tone="purple" />
-        <StatCard icon={<Car {...iconProps} size={20} />} value={activeRoutes.length} label="מסלולים פעילים" tone="blue" />
+        <StatCard icon={<Car {...carIconProps} size={20} />} value={activeRoutes.length} label="מסלולים פעילים" tone="blue" />
       </div>
 
       <section className="panel">

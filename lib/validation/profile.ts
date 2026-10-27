@@ -28,3 +28,10 @@ export const profileSchema = z
   });
 
 export type ProfileValues = z.infer<typeof profileSchema>;
+
+// Onboarding also asks the new user to accept the privacy policy.
+export const onboardingSchema = profileSchema.safeExtend({
+  acceptPrivacy: z.boolean().refine((v) => v, "יש לאשר את מדיניות הפרטיות"),
+});
+
+export type OnboardingValues = z.infer<typeof onboardingSchema>;

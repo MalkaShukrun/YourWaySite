@@ -4,10 +4,11 @@ import { useState, useTransition } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Car, Phone, User } from "lucide-react";
-import { profileSchema, type ProfileValues } from "@/lib/validation/profile";
+import Link from "next/link";
+import { onboardingSchema, type OnboardingValues } from "@/lib/validation/profile";
 import { completeProfile, signOut } from "@/app/(auth)/login/actions";
 import { VehicleFields } from "@/components/profile/VehicleFields";
-import { iconProps } from "@/components/ui/icon";
+import { carIconProps, iconProps } from "@/components/ui/icon";
 import { FieldError } from "@/components/ui/FieldError";
 import { useHydrated } from "@/components/ui/useHydrated";
 
@@ -24,8 +25,8 @@ export function OnboardingModal({ defaultName }: Props) {
     control,
     setValue,
     formState: { errors },
-  } = useForm<ProfileValues>({
-    resolver: zodResolver(profileSchema),
+  } = useForm<OnboardingValues>({
+    resolver: zodResolver(onboardingSchema),
     defaultValues: {
       fullName: defaultName,
       phone: "",
@@ -33,11 +34,12 @@ export function OnboardingModal({ defaultName }: Props) {
       vehicleModel: "",
       vehicleColor: "",
       vehicleSeats: "4",
+      acceptPrivacy: false,
     },
   });
   const hasVehicle = useWatch({ control, name: "hasVehicle" });
 
-  const onSubmit = (values: ProfileValues) =>
+  const onSubmit = (values: OnboardingValues) =>
     startTransition(async () => {
       setServerError("");
       const result = await completeProfile(values);
@@ -89,7 +91,7 @@ export function OnboardingModal({ defaultName }: Props) {
           </div>
         ) : (
           <div className="optional-car">
-            <Car {...iconProps} size={20} />
+            <Car {...carIconProps} size={20} />
             <div>
               <strong>רוצה גם להציע נסיעות?</strong>
               <span>ניתן להוסיף פרטי רכב עכשיו או בהמשך בפרופיל.</span>
@@ -100,9 +102,17 @@ export function OnboardingModal({ defaultName }: Props) {
           </div>
         )}
 
+        <label className="privacy-consent">
+          <input type="checkbox" {...register("acceptPrivacy")} />
+          <span>
+            קראתי ואני מסכימה ל<Link href="/privacy" target="_blank">מדיניות הפרטיות</Link>
+          </span>
+        </label>
+        <FieldError message={errors.acceptPrivacy?.message} />
+
         {serverError && <p className="auth-error" role="alert">{serverError}</p>}
         <button type="submit" className="btn btn-primary full-button" disabled={!hydrated || pending}>
-          {pending ? "שומרת…" : "שמירה וכניסה למערכת"}
+          {pending ? "שומר…" : "שמירה וכניסה למערכת"}
         </button>
         {/* Signed in with the wrong Google account? Back to the login screen. */}
         <button type="button" className="btn btn-ghost full-button onboarding-switch" disabled={pending} onClick={() => startTransition(() => signOut())}>

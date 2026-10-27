@@ -4,11 +4,12 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarDays, Clock, MapPin, Plus, Repeat, Route, Users } from "lucide-react";
+import { CalendarDays, MapPin, Plus, Repeat, Route, Users } from "lucide-react";
 import { saveRoute } from "@/app/(app)/(driver)/actions";
 import { LazyRouteEditorMap } from "@/components/map/LazyMaps";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Select } from "@/components/ui/Select";
+import { TimePicker } from "@/components/ui/TimePicker";
 import { iconProps } from "@/components/ui/icon";
 import type { RideGroup } from "@/lib/ride-types";
 import type { EditableRoute } from "@/lib/driver-types";
@@ -40,7 +41,7 @@ export function RouteEditor({ groups, route, today }: Props) {
       groupId: route?.group_id ?? groups[0]?.id ?? "",
       kind: route?.kind ?? "recurring",
       weekdays: route?.weekdays ?? [0, 2, 4],
-      rideDate: route?.ride_date ?? "",
+      rideDate: route?.ride_date ?? today,
       outTime: route ? route.out_time.slice(0, 5) : "07:15",
       seats: String(route?.seats ?? 4),
       price: String(route?.price ?? ""),
@@ -53,6 +54,7 @@ export function RouteEditor({ groups, route, today }: Props) {
   const group = groups.find((g) => g.id === groupId);
   const area = group ? groupArea(group.origin, group.destination) : null;
   const weekdays = useWatch({ control, name: "weekdays" });
+  const dateLabel = kind === "recurring" ? "תאריך התחלה" : "תאריך הנסיעה";
   const stops = useWatch({ control, name: "stops" });
 
   const toggleDay = (day: number) =>
@@ -170,7 +172,7 @@ export function RouteEditor({ groups, route, today }: Props) {
 
           <div className="editor-section">
             <div className="section-heading"><span>2</span><div><h2>ימים ושעות</h2><p>מתי את יוצאת וחוזרת?</p></div></div>
-            {kind === "recurring" ? (
+            {kind === "recurring" && (
               <div className="day-picker" role="group" aria-label="ימים בשבוע">
                 {RIDE_WEEKDAYS.map((day, index) => (
                   <button type="button" key={day} className={weekdays.includes(index) ? "active" : ""} aria-pressed={weekdays.includes(index)} onClick={() => toggleDay(index)}>
@@ -178,23 +180,27 @@ export function RouteEditor({ groups, route, today }: Props) {
                   </button>
                 ))}
               </div>
-            ) : (
-              <div className="field one-time-date">
-                <span>תאריך הנסיעה</span>
+            )}
+            {/* One-time: the ride's date. Recurring: the first date it runs. */}
+            <div className="field one-time-date">
+              <span>{dateLabel}</span>
+              <Controller
+                control={control}
+                name="rideDate"
+                render={({ field }) => (
+                  <DatePicker label={dateLabel} value={field.value} onChange={field.onChange} today={today} min={today} />
+                )}
+              />
+            </div>
+            <div className="form-grid compact">
+              <div className="field">
+                <span>שעת יציאה</span>
                 <Controller
                   control={control}
-                  name="rideDate"
-                  render={({ field }) => (
-                    <DatePicker label="תאריך הנסיעה" value={field.value} onChange={field.onChange} today={today} min={today} />
-                  )}
+                  name="outTime"
+                  render={({ field }) => <TimePicker label="שעת יציאה" value={field.value} onChange={field.onChange} />}
                 />
               </div>
-            )}
-            <div className="form-grid compact">
-              <label className="field">
-                <span>שעת יציאה</span>
-                <div className="input-shell"><Clock {...iconProps} size={20} /><input type="time" {...register("outTime")} /></div>
-              </label>
               <label className="field">
                 <span>מקומות פנויים</span>
                 <div className="input-shell"><Users {...iconProps} size={20} /><input inputMode="numeric" {...register("seats")} /></div>

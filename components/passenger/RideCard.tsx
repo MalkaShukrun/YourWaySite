@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, CalendarDays, Clock, MapPin, Users } from "lucide-react";
-import { formatShortRideDate, formatTime, weekdaysOf } from "@/lib/dates";
+import { formatTime, weekdaysOf } from "@/lib/dates";
 import type { RideSummary } from "@/lib/ride-types";
 import { avatarColorFor, formatPrice, initialsOf, kindLabel, seatsText } from "@/lib/format";
 import { iconProps } from "@/components/ui/icon";
@@ -48,7 +48,7 @@ export function RideCard({ rides }: { rides: RideSummary[] }) {
           <span className="seat-icon"><Users {...iconProps} size={18} /></span>
           <div>
             <strong>{next ? seatsText(next.seats_left) : "הנסיעה מלאה"}</strong>
-            <span>{next && severalDates ? `ב־${formatShortRideDate(next.ride_date)} · מתוך ${first.seats}` : `מתוך ${first.seats} מקומות`}</span>
+            <span>מתוך {first.seats} מקומות</span>
           </div>
         </div>
         {next ? (

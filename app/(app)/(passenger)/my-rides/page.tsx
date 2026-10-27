@@ -62,7 +62,7 @@ async function MyRides({ searchParams }: Pick<PageProps<"/my-rides">, "searchPar
 
 function BookingRow({ booking, upcoming }: { booking: MyBooking; upcoming: boolean }) {
   return (
-    <div className={`activity-row ${booking.ride_cancelled ? "row-cancelled" : ""}`}>
+    <div className={`activity-row booking-row ${booking.ride_cancelled ? "row-cancelled" : ""}`}>
       <div className="activity-date">
         <strong>{formatTime(booking.out_time)}</strong>
         <span>{formatRideDate(booking.ride_date)}</span>
@@ -72,16 +72,17 @@ function BookingRow({ booking, upcoming }: { booking: MyBooking; upcoming: boole
         <div>
           <strong>{groupLabel(booking.origin, booking.destination)}</strong>
           <span>{formatPrice(booking.price)}</span>
-          <div className="registered-stops">
-            <span><i className="pickup-dot"></i>איסוף: {booking.pickup_label}</span>
-            <span><i className="dropoff-dot"></i>הורדה: {booking.dropoff_label}</span>
-          </div>
         </div>
       </div>
-      <div>
+      <div className="activity-stops">
+        <div className="registered-stops">
+          <span><i className="pickup-dot"></i>איסוף: {booking.pickup_label}</span>
+          <span><i className="dropoff-dot"></i>הורדה: {booking.dropoff_label}</span>
+        </div>
         {booking.ride_cancelled && <span className="status-pill danger"><i></i>הנהגת ביטלה את הנסיעה</span>}
       </div>
       <div className="row-actions">
+        <DriverContact name={booking.driver_name} phone={booking.driver_phone} email={booking.driver_email} />
         {upcoming && !booking.ride_cancelled && (
           <CancelBookingButton
             bookingId={booking.booking_id}
@@ -89,7 +90,6 @@ function BookingRow({ booking, upcoming }: { booking: MyBooking; upcoming: boole
             driverPhone={booking.driver_phone}
           />
         )}
-        <DriverContact name={booking.driver_name} phone={booking.driver_phone} email={booking.driver_email} />
       </div>
     </div>
   );

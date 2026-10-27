@@ -21,7 +21,7 @@ export default function FindRidePage({ searchParams }: PageProps<"/">) {
       <Suspense fallback={<section className="search-card search-placeholder" aria-busy="true" />}>
         <Search searchParams={searchParams} />
       </Suspense>
-      <Suspense fallback={<ResultsHead subtitle="טוענת נסיעות…" />}>
+      <Suspense fallback={<ResultsHead subtitle="טוען נסיעות…" />}>
         <Results searchParams={searchParams} />
       </Suspense>
     </main>
@@ -70,7 +70,7 @@ async function Results({ searchParams }: { searchParams: SearchParams }) {
 
   return (
     <>
-      <ResultsHead subtitle={filtered ? `${routes.length} תוצאות` : "נסיעות קרובות בשבוע הקרוב"} />
+      <ResultsHead subtitle={filtered ? `${routes.length} תוצאות` : ""} />
       {rides.length === 0 ? (
         <div className="panel empty-state">
           <strong>לא נמצאו נסיעות מתאימות</strong>

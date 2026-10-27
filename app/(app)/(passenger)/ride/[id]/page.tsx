@@ -4,11 +4,10 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, Car, Phone, Users } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { formatRideDate, formatTime, isIsoDate } from "@/lib/dates";
-import { getRide, getRouteDates } from "@/lib/rides";
+import { getMyBookings, getRide, getRouteDates } from "@/lib/rides";
 import { avatarColorFor, initialsOf, kindLabel, seatsText } from "@/lib/format";
 import { BookingForm } from "@/components/passenger/BookingForm";
-import { RideDateChips } from "@/components/passenger/RideDateChips";
-import { iconProps } from "@/components/ui/icon";
+import { carIconProps, iconProps } from "@/components/ui/icon";
 import { isUuid } from "@/lib/validation/patterns";
 
 // Ride details & booking (SRS §4.2).
@@ -31,9 +30,10 @@ async function RideDetailsView({ params, searchParams }: PageProps<"/ride/[id]">
   const date = query.date;
   if (!isUuid(id) || !isIsoDate(date)) notFound();
 
-  const [result, dates] = await Promise.all([getRide(id, date), getRouteDates(id)]);
+  const [result, dates, bookings] = await Promise.all([getRide(id, date), getRouteDates(id), getMyBookings()]);
   if (!result) notFound();
   const { ride, stops } = result;
+  const bookedDates = bookings.filter((b) => b.route_id === id && b.status === "active").map((b) => b.ride_date);
 
   const full = ride.seats_left <= 0;
   const blockedReason = !ride.is_available ? "הנסיעה אינה זמינה" : full ? "הנסיעה מלאה" : null;
@@ -42,15 +42,6 @@ async function RideDetailsView({ params, searchParams }: PageProps<"/ride/[id]">
   return (
     <div className="detail-layout">
       <div className="detail-main">
-        {dates.length > 1 && (
-          <section className="booking-card ride-days">
-            <div className="booking-step">
-              <span className="step-number"><CalendarDays {...iconProps} size={16} /></span>
-              <div><h2>בחרי יום</h2><p>נסיעה קבועה — אפשר להירשם לכל אחד מהימים הקרובים</p></div>
-            </div>
-            <RideDateChips rides={dates} time={dates[0].out_time} selected={ride.ride_date} />
-          </section>
-        )}
         <BookingForm
           routeId={ride.route_id}
           date={ride.ride_date}
@@ -59,6 +50,8 @@ async function RideDetailsView({ params, searchParams }: PageProps<"/ride/[id]">
           canBook={!blockedReason}
           blockedReason={blockedReason}
           alreadyBooked={Boolean(ride.my_booking_id)}
+          days={dates}
+          bookedDates={bookedDates}
         />
       </div>
       <aside className="detail-side">
@@ -87,14 +80,14 @@ async function RideDetailsView({ params, searchParams }: PageProps<"/ride/[id]">
             </div>
             {vehicle && (
               <div className="vehicle-chip">
-                <Car {...iconProps} size={20} />
+                <Car {...carIconProps} size={20} />
                 <div><span>הרכב</span><strong>{vehicle}</strong></div>
               </div>
             )}
           </div>
           <div className="detail-route">
             <div><span>יציאה</span><h1>{ride.origin}</h1><small>{formatTime(ride.out_time)}</small></div>
-            <div className="detail-route-line"><i></i><Car {...iconProps} size={20} /><i></i></div>
+            <div className="detail-route-line"><i></i><Car {...carIconProps} size={20} /><i></i></div>
             <div>
               <span>יעד</span><h1>{ride.destination}</h1>
             </div>
