@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createSupabaseMock } from "@/tests/supabase-mock";
 import { runAction } from "@/tests/redirect";
 import { getCurrentUser } from "@/lib/auth";
-import type { OnboardingValues } from "@/lib/validation/profile";
+import type { ProfileValues } from "@/lib/validation/profile";
 import { completeProfile, signOut } from "@/app/(auth)/login/actions";
 
 const sb = createSupabaseMock();
@@ -19,7 +19,7 @@ vi.mock("@/lib/auth", async (importOriginal) => ({
 
 const user = { id: "user-1", email: "a@example.com", fullName: "", phone: null, isAdmin: false };
 
-function onboarding(overrides: Partial<OnboardingValues> = {}): OnboardingValues {
+function onboarding(overrides: Partial<ProfileValues> = {}): ProfileValues {
   return {
     fullName: "מלכה כהן",
     phone: "0501234567",
@@ -27,7 +27,6 @@ function onboarding(overrides: Partial<OnboardingValues> = {}): OnboardingValues
     vehicleModel: "",
     vehicleColor: "",
     vehicleSeats: "",
-    acceptPrivacy: true,
     ...overrides,
   };
 }
@@ -98,24 +97,28 @@ describe("completeProfile", () => {
     expect(sb.client.from).not.toHaveBeenCalled();
   });
 
-  it("rejects onboarding without accepting the privacy policy", async () => {
-    expect(await completeProfile(onboarding({ acceptPrivacy: false }))).toEqual({
-      error: "חלק מהפרטים אינם תקינים, נא לבדוק ולנסות שוב.",
-    });
-    expect(sb.client.from).not.toHaveBeenCalled();
-  });
-
   it("rejects a car without seats", async () => {
     expect(await completeProfile(onboarding({ hasVehicle: true, vehicleModel: "x", vehicleColor: "y" }))).toEqual({
       error: "חלק מהפרטים אינם תקינים, נא לבדוק ולנסות שוב.",
     });
   });
 
-  it.each(["PGRST205", "42P01"])("asks to run setup.sql when the table is missing (%s)", async (code) => {
+  it.each(["PGRST205", "42P01"])("asks to run setup.sql when the table is missing in development (%s)", async (code) => {
+    vi.stubEnv("NODE_ENV", "development");
     sb.onTable("profiles", { error: { code } });
     expect(await runAction(() => completeProfile(onboarding()))).toEqual({
       error: "בסיס הנתונים עדיין לא הוגדר — יש להריץ את supabase/setup.sql ב־Supabase.",
     });
+    vi.unstubAllEnvs();
+  });
+
+  it("hides the setup hint in production", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    sb.onTable("profiles", { error: { code: "PGRST205" } });
+    expect(await runAction(() => completeProfile(onboarding()))).toEqual({
+      error: "לא הצלחנו לשמור את הפרטים. נסי שוב בעוד רגע.",
+    });
+    vi.unstubAllEnvs();
   });
 
   it("reports a failed insert", async () => {

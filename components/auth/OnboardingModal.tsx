@@ -4,8 +4,7 @@ import { useState, useTransition } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Car, Phone, User } from "lucide-react";
-import Link from "next/link";
-import { onboardingSchema, type OnboardingValues } from "@/lib/validation/profile";
+import { profileSchema, type ProfileValues } from "@/lib/validation/profile";
 import { completeProfile, signOut } from "@/app/(auth)/login/actions";
 import { VehicleFields } from "@/components/profile/VehicleFields";
 import { carIconProps, iconProps } from "@/components/ui/icon";
@@ -25,8 +24,8 @@ export function OnboardingModal({ defaultName }: Props) {
     control,
     setValue,
     formState: { errors },
-  } = useForm<OnboardingValues>({
-    resolver: zodResolver(onboardingSchema),
+  } = useForm<ProfileValues>({
+    resolver: zodResolver(profileSchema),
     defaultValues: {
       fullName: defaultName,
       phone: "",
@@ -34,12 +33,11 @@ export function OnboardingModal({ defaultName }: Props) {
       vehicleModel: "",
       vehicleColor: "",
       vehicleSeats: "4",
-      acceptPrivacy: false,
     },
   });
   const hasVehicle = useWatch({ control, name: "hasVehicle" });
 
-  const onSubmit = (values: OnboardingValues) =>
+  const onSubmit = (values: ProfileValues) =>
     startTransition(async () => {
       setServerError("");
       const result = await completeProfile(values);
@@ -101,14 +99,6 @@ export function OnboardingModal({ defaultName }: Props) {
             </button>
           </div>
         )}
-
-        <label className="privacy-consent">
-          <input type="checkbox" {...register("acceptPrivacy")} />
-          <span>
-            קראתי ואני מסכימה ל<Link href="/privacy" target="_blank">מדיניות הפרטיות</Link>
-          </span>
-        </label>
-        <FieldError message={errors.acceptPrivacy?.message} />
 
         {serverError && <p className="auth-error" role="alert">{serverError}</p>}
         <button type="submit" className="btn btn-primary full-button" disabled={!hydrated || pending}>

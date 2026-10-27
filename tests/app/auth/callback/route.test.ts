@@ -26,39 +26,45 @@ beforeEach(() => {
 
 describe("GET /auth/callback", () => {
   it("exchanges the code and sends the user home", async () => {
-    expect(await callback("?code=abc")).toEqual({ status: 307, location: "https://yourway.test/" });
+    expect(await callback("?code=abc")).toEqual({ status: 307, location: "/" });
     expect(sb.client.auth.exchangeCodeForSession).toHaveBeenCalledWith("abc");
   });
 
   it("sends admins to group management", async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ ...user, isAdmin: true });
-    expect((await callback("?code=abc")).location).toBe("https://yourway.test/admin/groups");
+    expect((await callback("?code=abc")).location).toBe("/admin/groups");
   });
 
   it("sends new users to onboarding", async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ ...user, phone: null });
-    expect((await callback("?code=abc")).location).toBe("https://yourway.test/login");
+    expect((await callback("?code=abc")).location).toBe("/login");
   });
 
   it("reports a failed code exchange", async () => {
     sb.client.auth.exchangeCodeForSession.mockResolvedValueOnce({ error: { message: "invalid grant" } });
-    expect((await callback("?code=abc")).location).toBe("https://yourway.test/login?error=invalid%20grant");
+    expect((await callback("?code=abc")).location).toBe("/login?error=invalid%20grant");
   });
 
   it("reports a missing user after sign-in", async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(null);
-    expect((await callback("?code=abc")).location).toBe("https://yourway.test/login?error=no%20user%20after%20sign-in");
+    expect((await callback("?code=abc")).location).toBe("/login?error=no%20user%20after%20sign-in");
   });
 
   it("passes the provider's error description through", async () => {
     expect((await callback("?error=access_denied&error_description=User%20cancelled")).location).toBe(
-      "https://yourway.test/login?error=User%20cancelled",
+      "/login?error=User%20cancelled",
     );
     expect(sb.client.auth.exchangeCodeForSession).not.toHaveBeenCalled();
   });
 
   it("falls back to the error code, then to 'missing code'", async () => {
-    expect((await callback("?error=access_denied")).location).toBe("https://yourway.test/login?error=access_denied");
-    expect((await callback("")).location).toBe("https://yourway.test/login?error=missing%20code");
+    expect((await callback("?error=access_denied")).location).toBe("/login?error=access_denied");
+    expect((await callback("")).location).toBe("/login?error=missing%20code");
+  });
+});
+describe("GET /auth/callback behind a hosting proxy", () => {
+  it("never puts the internal address in the redirect", async () => {
+    const request = new NextRequest("https://localhost:10000/auth/callback?code=abc");
+    expect((await GET(request)).headers.get("location")).toBe("/");
   });
 });

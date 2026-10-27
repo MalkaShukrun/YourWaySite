@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { publicOrigin } from "@/lib/public-origin";
 
 const PUBLIC_PATHS = ["/login", "/auth", "/privacy"];
 
@@ -11,9 +12,7 @@ export async function updateSession(request: NextRequest) {
   // isn't in its Redirect URLs list — hand the code to the callback anyway.
   const { pathname, searchParams } = request.nextUrl;
   if (pathname !== "/auth/callback" && (searchParams.has("code") || searchParams.has("error_description"))) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/auth/callback";
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(new URL(`/auth/callback${request.nextUrl.search}`, publicOrigin(request)));
   }
 
   let response = NextResponse.next({ request });
@@ -44,10 +43,7 @@ export async function updateSession(request: NextRequest) {
   const isPublic = PUBLIC_PATHS.some((publicPath) => pathname.startsWith(publicPath));
 
   if (!isSignedIn && !isPublic) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.search = "";
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(new URL("/login", publicOrigin(request)));
   }
 
   return response;
