@@ -6,8 +6,9 @@ import { getCurrentUser, homePathFor, needsOnboarding } from "@/lib/auth";
 // so the hosting proxy's internal one (https://localhost:10000) never leaks.
 const redirectTo = (path: string) => new NextResponse(null, { status: 307, headers: { Location: path } });
 
-// Google OAuth returns here with ?code=… — exchange it for a session,
-// then send the user to onboarding or to their role's home page.
+// Google OAuth returns here with ?code=… — exchange it for a session, then
+// send the user to onboarding or to their role's home page. Nothing in the
+// URL picks the destination, so the callback can't redirect off-site.
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const code = searchParams.get("code");
@@ -21,8 +22,7 @@ export async function GET(request: NextRequest) {
     if (!error) {
       const user = await getCurrentUser();
       if (user) {
-        const next = needsOnboarding(user) ? "/login" : homePathFor(user);
-        return redirectTo(next);
+        return redirectTo(needsOnboarding(user) ? "/login" : homePathFor(user));
       }
       reason = "no user after sign-in";
     } else {
@@ -30,6 +30,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  console.error("[auth/callback] Google sign-in failed:", reason);
+  console.error("[auth/callback] sign-in failed:", reason);
   return redirectTo(`/login?error=${encodeURIComponent(reason)}`);
 }

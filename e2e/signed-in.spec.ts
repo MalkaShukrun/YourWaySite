@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { choose, expectNotFound, hideDevTools, isAdmin, israelToday, openForm, optionsOf, sideNav, trackPageErrors } from "./helpers";
+import { choose, chooseTime, expectNotFound, hideDevTools, isAdmin, israelToday, openForm, optionsOf, sideNav, trackPageErrors } from "./helpers";
 
 test.beforeEach(({ page }) => hideDevTools(page));
 
@@ -167,17 +167,41 @@ test.describe("ride search", () => {
     await expect(page.getByRole("button", { name: `מסלול: ${groups[0]}` })).toBeVisible();
   });
 
-  test("time window and ride type filters", async ({ page }) => {
+  test("departure time range and ride type filters", async ({ page }) => {
     await page.goto("/");
-    await choose(page, "שעת יציאה", "07:30–09:00");
+    await expect(page.getByRole("button", { name: "יציאה משעה: כל שעה" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "עד שעה: כל שעה" })).toBeVisible();
+
+    await chooseTime(page, "יציאה משעה", "07:00");
+    await chooseTime(page, "עד שעה", "09:00");
     await choose(page, "סוג נסיעה", "נסיעות קבועות");
     await page.getByRole("button", { name: "חיפוש נסיעה" }).click();
 
-    await expect(page).toHaveURL(/time=morning/);
+    await expect(page).toHaveURL(/from=07%3A00&to=09%3A00/);
     await expect(page).toHaveURL(/kind=recurring/);
+    await expect(page.getByRole("button", { name: "יציאה משעה: 07:00" })).toBeVisible();
     for (const card of await page.locator(".trip-card").all()) {
       await expect(card.locator(".trip-type")).toHaveText("קבועה");
+      const time = (await card.locator(".trip-info b").first().innerText()).trim();
+      expect(time >= "07:00" && time <= "09:00", time).toBe(true);
     }
+  });
+
+  test("a reversed time range is swapped and a bad time is ignored", async ({ page }) => {
+    await page.goto("/?from=09:00&to=07:00");
+    await expect(page.getByRole("button", { name: "יציאה משעה: 07:00" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "עד שעה: 09:00" })).toBeVisible();
+
+    await page.goto("/?from=25:00");
+    await expect(page.getByRole("button", { name: "יציאה משעה: כל שעה" })).toBeVisible();
+  });
+
+  test("clearing the search resets the time range", async ({ page }) => {
+    await page.goto("/?from=07:00&to=09:00");
+    await page.getByRole("button", { name: "ניקוי" }).click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole("button", { name: "יציאה משעה: כל שעה" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "עד שעה: כל שעה" })).toBeVisible();
   });
 
   test("the date picker can't go before today and filters by the picked day", async ({ page }) => {
@@ -219,7 +243,7 @@ test.describe("ride search", () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
 
     const route = await page.getByRole("button", { name: /^מסלול:/ }).boundingBox();
-    const time = await page.getByRole("button", { name: /^שעת יציאה:/ }).boundingBox();
+    const time = await page.getByRole("button", { name: /^יציאה משעה:/ }).boundingBox();
     expect(route!.width).toBeGreaterThan(time!.width); // the route field is the wide one
   });
 });
@@ -337,15 +361,20 @@ test.describe("my rides & payments", () => {
 test.describe("driver hub", () => {
   test("dashboard shows the four stats and moves between dates", async ({ page }) => {
     await page.goto("/dashboard");
-    await expect(page.getByRole("heading", { level: 1, name: "הנסיעות שלך להיום" })).toBeVisible();
-    for (const label of ["טרמפיסטיות רשומות", "מקומות פנויים", "תחנות איסוף", "שעת יציאה"]) {
+    await expect(page.getByRole("heading", { level: 1, name: "הנסיעות שלך השבוע" })).toBeVisible();
+    for (const label of ["טרמפיסטיות רשומות", "מקומות פנויים", "תחנות איסוף", "נסיעות השבוע"]) {
       await expect(page.locator(".stat-card").filter({ hasText: label })).toBeVisible();
     }
 
+    // The whole ride week (Sunday–Friday) is marked, not just one day.
     await page.getByRole("button", { name: /^בחירת תאריך:/ }).click();
+    const week = page.locator(".calendar-grid button.selected");
+    await expect(week).toHaveCount(6);
+    await expect(week.first()).toHaveAttribute("aria-label", /^יום ראשון/);
+    await expect(week.last()).toHaveAttribute("aria-label", /^יום שישי/);
     await page.locator(".calendar-grid button:not(.outside):not(.today)").last().click();
     await expect(page).toHaveURL(/\/dashboard\?date=\d{4}-\d{2}-\d{2}$/);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(/^הנסיעות שלך ל/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(/^הנסיעות שלך (השבוע|לשבוע )/);
   });
 
   test("dashboard ride cards have time and per-date controls", async ({ page }) => {
@@ -355,6 +384,29 @@ test.describe("driver hub", () => {
     await expect(card.getByLabel("שעת יציאה")).toBeVisible();
     await expect(card.getByRole("button", { name: "עדכון שעה" })).toBeDisabled(); // unchanged time
     await expect(card.getByRole("button", { name: /ביטול הנסיעה לתאריך זה בלבד|החזרת הנסיעה/ })).toBeVisible();
+  });
+
+  test("a ride card opens and closes the add-passenger form without saving", async ({ page }) => {
+    await page.goto("/dashboard");
+    const card = page.locator(".today-card").filter({ has: page.getByRole("button", { name: "הוספת טרמפיסטית", includeHidden: true }) }).first();
+    test.skip((await card.count()) === 0, "No ride with free seats this week");
+    if (await card.locator(".today-toggle[aria-expanded=false]").count()) await card.locator(".today-toggle").click();
+
+    // The form takes the button's place, so it's found on the page, not in `card`.
+    await card.getByRole("button", { name: "הוספת טרמפיסטית" }).click();
+    const form = page.locator("form.add-passenger");
+    for (const field of ["שם מלא", "טלפון"]) await expect(form.getByLabel(field)).toBeVisible();
+    await expect(form.getByLabel("מייל (לא חובה)")).toHaveCount(0);
+    await expect(form.getByRole("button", { name: /^תחנת איסוף:/ })).toBeVisible();
+    await expect(form.getByRole("button", { name: /^תחנת הורדה:/ })).toBeVisible();
+
+    // Missing phone: stopped by validation before reaching the database.
+    await form.getByLabel("שם מלא").fill("בדיקה");
+    await form.getByRole("button", { name: "הוספה לנסיעה" }).click();
+    await expect(form.getByRole("alert")).toHaveText("מספר טלפון לא תקין (לדוגמה 050-000-0000)");
+
+    await form.getByRole("button", { name: "ביטול" }).click();
+    await expect(form).toHaveCount(0);
   });
 
   test("'נסיעה חדשה' and 'הוספת מסלול' open the route editor", async ({ page }) => {
@@ -425,7 +477,7 @@ test.describe("driver hub", () => {
 
   test("route editor: stops are added without the map; the pin button marks one on it", async ({ page }) => {
     await openForm(page, "/routes/new", "שמירת המסלול");
-    await expect(page.locator(".optional-tag")).toHaveText("לא חובה");
+    await expect(page.getByRole("heading", { name: /סימון המסלול על המפה/ }).locator(".optional-tag")).toHaveText("לא חובה");
 
     await page.getByRole("button", { name: "הוספת תחנת איסוף" }).click();
     const name = page.locator(".editor-stop-group:not(.dropoff-editor-group) input").last();

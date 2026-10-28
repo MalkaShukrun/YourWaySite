@@ -28,6 +28,7 @@ type Props = {
   placeholder?: string;
   clearable?: boolean; // show "ניקוי" to reset to ""
   display?: string; // custom text for the selected date
+  selectedDays?: string[]; // highlight these days instead of just `value` (dashboard week)
   button?: boolean; // render the trigger as a secondary button (dashboard)
   icon?: ReactNode;
 };
@@ -44,6 +45,7 @@ export function DatePicker({
   placeholder = "בחרי תאריך",
   clearable = false,
   display,
+  selectedDays,
   button = false,
   icon = <CalendarDays {...iconProps} size={20} />,
 }: Props) {
@@ -99,8 +101,9 @@ export function DatePicker({
             {days.map((date) => {
               const day = format(date, "yyyy-MM-dd");
               const disabled = Boolean(min && day < min);
+              const selected = selectedDays ? selectedDays.includes(day) : day === value;
               const classes = [
-                day === value && "selected",
+                selected && "selected",
                 day === today && "today",
                 !isSameMonth(date, month) && "outside",
               ].filter(Boolean).join(" ");
@@ -110,7 +113,7 @@ export function DatePicker({
                   type="button"
                   className={classes}
                   disabled={disabled}
-                  aria-pressed={day === value}
+                  aria-pressed={selected}
                   aria-label={format(date, "EEEE, d בMMMM yyyy", { locale: he })}
                   onClick={() => pick(day)}
                 >

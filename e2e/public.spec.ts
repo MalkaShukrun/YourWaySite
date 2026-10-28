@@ -13,29 +13,11 @@ test.describe("login page", () => {
     await expect(page.getByRole("link", { name: "מדיניות הפרטיות" })).toBeVisible();
   });
 
-  // Stops short of a valid submit: that would email support through Resend.
-  test("opens the contact form and checks its fields", async ({ page }) => {
+  // The contact form is for signed-in users only (signed-in.spec.ts).
+  test("has no contact button", async ({ page }) => {
     await page.goto("/login");
-    await page.getByRole("button", { name: "צרי קשר" }).click();
-
-    const dialog = page.getByRole("dialog", { name: "צרי קשר" });
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByLabel("שם")).toBeFocused();
-
-    await dialog.getByRole("button", { name: "שליחה" }).click();
-    await expect(dialog.getByText("לפחות 2 תווים")).toBeVisible();
-    await expect(dialog.getByText("כתובת מייל לא תקינה")).toBeVisible();
-    await expect(dialog.getByText("לפחות 5 תווים")).toBeVisible();
-
-    await dialog.getByLabel("שם").fill("מלכה");
-    await dialog.getByLabel("מייל").fill("not-an-email");
-    await dialog.getByLabel("הודעה").fill("שלום, יש לי שאלה");
-    await dialog.getByRole("button", { name: "שליחה" }).click();
-    await expect(dialog.getByText("כתובת מייל לא תקינה")).toBeVisible();
-    await expect(dialog.getByText("לפחות 2 תווים")).toHaveCount(0);
-
-    await dialog.getByRole("button", { name: "סגירה" }).click();
-    await expect(dialog).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "הצטרפות עם Google" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "צרי קשר" })).toHaveCount(0);
   });
 
   test("shows a sign-in error, but not the text from the URL", async ({ page }) => {
@@ -51,6 +33,14 @@ test.describe("login page", () => {
 
     await expect(page).toHaveURL(/\/login$/);
     await expect(page.locator(".auth-error")).toHaveText("יש לאשר את מדיניות הפרטיות כדי להמשיך.");
+  });
+
+  test("offers Google only, with no email or password fields", async ({ page }) => {
+    await page.goto("/login");
+    await expect(page.getByRole("button", { name: "הצטרפות עם Google" })).toBeVisible();
+    await expect(page.locator('input[type="email"], input[type="password"]')).toHaveCount(0);
+    await expect(page.getByRole("tab")).toHaveCount(0);
+    await expect(page.getByText(/סיסמה/)).toHaveCount(0);
   });
 
   test("shows no error without one", async ({ page }) => {

@@ -11,6 +11,7 @@
     "test:rls": "vitest run --config vitest.rls.config.mts",
     "test:e2e": "playwright test",
     "test:e2e:login": "node e2e/save-session.mjs",
+    "test:e2e:login:passenger": "node e2e/save-session.mjs --passenger",
     "test:e2e:login:google": "node e2e/save-login.mjs",
     "test:e2e:write": "cross-env E2E_WRITE=1 playwright test --project=write",
     "knip": "knip"

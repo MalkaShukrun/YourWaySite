@@ -23,7 +23,7 @@ test("driver mode shows the driver tabs, with groups only for admins", async ({ 
   await page.goto("/dashboard");
   const bar = bottomNav(page);
 
-  await expect(bar.getByRole("link", { name: "היום" })).toBeVisible();
+  await expect(bar.getByRole("link", { name: "השבוע" })).toBeVisible();
   await bar.getByRole("link", { name: "מסלולים" }).click();
   await expect(page).toHaveURL(/\/routes$/);
   await expect(bar.getByRole("link", { name: "קבוצות" })).toHaveCount(admin ? 1 : 0);

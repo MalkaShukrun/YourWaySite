@@ -14,14 +14,16 @@ type Props = {
   label: string; // accessible name
   icon?: ReactNode;
   disabled?: boolean;
+  placeholder?: string; // shown while value is ""
 };
 
 // The design's time field: a trigger like the dropdown and two scrolling
 // columns (hours, then minutes in 5-minute steps). Used instead of the native
 // <input type="time">, whose picker ignores the RTL layout.
-export function TimePicker({ value, onChange, label, icon = <Clock {...iconProps} size={20} />, disabled = false }: Props) {
+export function TimePicker({ value, onChange, label, icon = <Clock {...iconProps} size={20} />, disabled = false, placeholder = "" }: Props) {
   const { open, setOpen, ref } = usePopover();
-  const [hour = "07", minute = "00"] = value.split(":");
+  // Nothing is highlighted while empty; the other part starts at 00.
+  const [hour, minute] = value ? value.split(":") : ["", ""];
   const hoursRef = useRef<HTMLDivElement>(null);
   const minutesRef = useRef<HTMLDivElement>(null);
 
@@ -34,7 +36,7 @@ export function TimePicker({ value, onChange, label, icon = <Clock {...iconProps
     }
   }, [open]);
 
-  const minutes = MINUTES.includes(minute) ? MINUTES : [...MINUTES, minute].sort();
+  const minutes = !minute || MINUTES.includes(minute) ? MINUTES : [...MINUTES, minute].sort();
 
   return (
     <div className={`dropdown time-picker ${open ? "open" : ""}`} ref={ref}>
@@ -43,12 +45,12 @@ export function TimePicker({ value, onChange, label, icon = <Clock {...iconProps
         className="input-shell dropdown-trigger"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={`${label}: ${value}`}
+        aria-label={`${label}: ${value || placeholder}`}
         disabled={disabled}
         onClick={() => setOpen(!open)}
       >
         {icon}
-        <span dir="ltr">{value}</span>
+        {value ? <span dir="ltr">{value}</span> : <span className="placeholder">{placeholder}</span>}
         <ChevronDown className="icon dropdown-chevron" size={16} strokeWidth={1.8} />
       </button>
 
@@ -59,7 +61,7 @@ export function TimePicker({ value, onChange, label, icon = <Clock {...iconProps
             <small>שעה</small>
             <div ref={hoursRef} role="listbox" aria-label="שעה">
               {HOURS.map((h) => (
-                <button key={h} type="button" role="option" aria-selected={h === hour} className={h === hour ? "selected" : ""} onClick={() => onChange(`${h}:${minute}`)}>
+                <button key={h} type="button" role="option" aria-selected={h === hour} className={h === hour ? "selected" : ""} onClick={() => onChange(`${h}:${minute || "00"}`)}>
                   {h}
                 </button>
               ))}
@@ -76,7 +78,7 @@ export function TimePicker({ value, onChange, label, icon = <Clock {...iconProps
                   aria-selected={m === minute}
                   className={m === minute ? "selected" : ""}
                   onClick={() => {
-                    onChange(`${hour}:${m}`);
+                    onChange(`${hour || "00"}:${m}`);
                     setOpen(false);
                   }}
                 >

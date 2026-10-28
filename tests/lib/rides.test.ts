@@ -52,11 +52,12 @@ describe("searchRides", () => {
   });
 
   it.each([
-    ["early", "06:00", "07:30"],
-    ["morning", "07:30", "09:00"],
-    ["later", "09:00", null],
-  ] as const)("maps the %s time window", async (time, from, to) => {
-    await searchRides({ groupId: "g1", date: "2026-11-02", kind: "recurring", time });
+    ["from only", { from: "07:30" }, "07:30", null],
+    ["until only, including rides leaving at that minute", { to: "09:00" }, null, "09:01"],
+    ["from and until", { from: "06:00", to: "08:45" }, "06:00", "08:46"],
+    ["until the last minute of the day", { to: "23:59" }, null, null],
+  ])("searches by departure time: %s", async (_name, times, from, to) => {
+    await searchRides({ groupId: "g1", date: "2026-11-02", kind: "recurring", ...times });
     expect(sb.client.rpc).toHaveBeenCalledWith("search_rides", {
       p_group_id: "g1",
       p_date: "2026-11-02",

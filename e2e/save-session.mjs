@@ -1,21 +1,30 @@
 // npm run test:e2e:login — signs the e2e tests in as a user without Google.
 //
-// Uses the Supabase secret key (SUPABASE_SECRET_KEY in .env.local) to mint a
+// Uses the Supabase secret key (SUPABASE_SECRET_KEY in .env.e2e.local) to mint a
 // one-time magic-link token for E2E_EMAIL, redeems it right here, and saves
 // the resulting session cookies for Playwright. No email is sent. Local only:
-// the secret key must never be exposed to the app or committed.
+// the secret key must never be exposed to the app or committed — Next.js
+// doesn't load .env.e2e.local, so the app's server never has it.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 
-const AUTH_FILE = "e2e/.auth/user.json";
-const EMAIL = process.env.E2E_EMAIL ?? "malkycohen1@gmail.com";
-
-try {
-  process.loadEnvFile(".env.local");
-} catch {
-  // Variables may come from the shell instead.
+// With --passenger it signs in a second account (E2E_PASSENGER_EMAIL), which the
+// write tests use to book the driver's test route.
+for (const file of [".env.local", ".env.e2e.local"]) {
+  try {
+    process.loadEnvFile(file);
+  } catch {
+    // Variables may come from the shell instead.
+  }
+}
+const passenger = process.argv.includes("--passenger");
+const AUTH_FILE = passenger ? "e2e/.auth/passenger.json" : "e2e/.auth/user.json";
+const EMAIL = passenger ? process.env.E2E_PASSENGER_EMAIL : (process.env.E2E_EMAIL ?? "malkycohen1@gmail.com");
+if (!EMAIL) {
+  console.error("Set E2E_PASSENGER_EMAIL in .env.e2e.local: an account (not the driver's) that has finished sign-up.");
+  process.exit(1);
 }
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -23,7 +32,7 @@ const secretKey = process.env.SUPABASE_SECRET_KEY;
 
 if (!url || !publishableKey || !secretKey) {
   console.error(
-    "Missing SUPABASE_SECRET_KEY (or the public Supabase variables) in .env.local.\n" +
+    "Missing SUPABASE_SECRET_KEY in .env.e2e.local (or the public Supabase variables in .env.local).\n" +
       "Copy it from Supabase → Project Settings → API Keys → Secret keys.",
   );
   process.exit(1);

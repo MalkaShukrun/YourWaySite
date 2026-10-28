@@ -8,18 +8,24 @@ import { createServerClient } from "@supabase/ssr";
 import type { FullConfig } from "@playwright/test";
 
 const AUTH_FILE = "e2e/.auth/user.json";
+const PASSENGER_AUTH_FILE = "e2e/.auth/passenger.json";
 type Cookie = { name: string; value: string; expires: number } & Record<string, unknown>;
 const isSessionCookie = (name: string) => /^sb-.+-auth-token(\.\d+)?$/.test(name);
 
 export default async function refreshSession(_config: FullConfig) {
-  if (!existsSync(AUTH_FILE)) return;
-  try {
-    process.loadEnvFile(".env.local");
-  } catch {
-    // Variables may come from the shell instead.
+  for (const file of [".env.local", ".env.e2e.local"]) {
+    try {
+      process.loadEnvFile(file);
+    } catch {
+      // Variables may come from the shell instead.
+    }
   }
+  if (existsSync(AUTH_FILE)) await refresh(AUTH_FILE, process.env.SUPABASE_SECRET_KEY ? "npm run test:e2e:login" : "npm run test:e2e:login:google");
+  if (existsSync(PASSENGER_AUTH_FILE)) await refresh(PASSENGER_AUTH_FILE, "npm run test:e2e:login:passenger");
+}
 
-  const state = JSON.parse(readFileSync(AUTH_FILE, "utf8")) as { cookies: Cookie[]; origins: unknown[] };
+async function refresh(file: string, login: string) {
+  const state = JSON.parse(readFileSync(file, "utf8")) as { cookies: Cookie[]; origins: unknown[] };
   const fresh: { name: string; value: string; options?: { maxAge?: number } }[] = [];
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
     cookies: {
@@ -32,8 +38,7 @@ export default async function refreshSession(_config: FullConfig) {
 
   const { error } = await supabase.auth.refreshSession();
   if (error || fresh.length === 0) {
-    const login = process.env.SUPABASE_SECRET_KEY ? "npm run test:e2e:login" : "npm run test:e2e:login:google";
-    throw new Error(`The saved test session has expired (${error?.message ?? "no session"}). Sign in again: ${login}`);
+    throw new Error(`The saved test session in ${file} has expired (${error?.message ?? "no session"}). Sign in again: ${login}`);
   }
 
   const now = Math.floor(Date.now() / 1000);
@@ -52,5 +57,5 @@ export default async function refreshSession(_config: FullConfig) {
         sameSite: "Lax",
       })),
   ];
-  writeFileSync(AUTH_FILE, JSON.stringify(state, null, 2));
+  writeFileSync(file, JSON.stringify(state, null, 2));
 }

@@ -1,5 +1,6 @@
 import type { UseFormRegisterReturn } from "react-hook-form";
 import { FieldError } from "@/components/ui/FieldError";
+import { VEHICLE_COLOR_MAX, VEHICLE_MODEL_MAX } from "@/lib/validation/profile";
 
 type Field = { input: UseFormRegisterReturn; error?: string };
 type Props = { model: Field; color: Field; seats: Field };
@@ -11,12 +12,12 @@ export function VehicleFields({ model, color, seats }: Props) {
     <>
       <label className="field">
         <span>סוג רכב</span>
-        <div className="input-shell"><input {...model.input} placeholder="לדוגמה: יונדאי איוניק" /></div>
+        <div className="input-shell"><input {...model.input} placeholder="לדוגמה: יונדאי איוניק" maxLength={VEHICLE_MODEL_MAX} /></div>
         <FieldError message={model.error} />
       </label>
       <label className="field">
         <span>צבע</span>
-        <div className="input-shell"><input {...color.input} placeholder="לדוגמה: לבן" /></div>
+        <div className="input-shell"><input {...color.input} placeholder="לדוגמה: לבן" maxLength={VEHICLE_COLOR_MAX} /></div>
         <FieldError message={color.error} />
       </label>
       <label className="field">

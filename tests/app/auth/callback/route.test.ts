@@ -40,6 +40,12 @@ describe("GET /auth/callback", () => {
     expect((await callback("?code=abc")).location).toBe("/login");
   });
 
+  it("ignores a next page in the URL", async () => {
+    expect((await callback("?code=abc&next=/reset-password")).location).toBe("/");
+    expect((await callback("?code=abc&next=https://evil.example")).location).toBe("/");
+    expect((await callback("?code=abc&next=/admin/groups")).location).toBe("/");
+  });
+
   it("reports a failed code exchange", async () => {
     sb.client.auth.exchangeCodeForSession.mockResolvedValueOnce({ error: { message: "invalid grant" } });
     expect((await callback("?code=abc")).location).toBe("/login?error=invalid%20grant");

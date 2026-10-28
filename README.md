@@ -6,14 +6,19 @@ Ride-sharing and group transportation app. Next.js (App Router) + Supabase.
 
 1. **Supabase project** — create one at https://supabase.com.
 2. **Database** — open *SQL Editor*, paste the whole of `supabase/setup.sql` and run it
-   (it combines `supabase/migrations/0001–0010`; safe to run again). Optional demo rides: `supabase/seed_demo.sql`.
+   (it combines `supabase/migrations/0001–0015`; safe to run again). Optional demo rides: `supabase/seed_demo.sql`.
 3. **Google login** — *Authentication → Sign In / Providers → Google*: enable it and paste the
    Client ID / Secret from Google Cloud Console (OAuth client, type "Web application").
    In Google Cloud, add the redirect URI shown by Supabase (`https://<project>.supabase.co/auth/v1/callback`).
-   You can turn the **Email** provider off — the app only signs in with Google.
+   Google is the only sign-in method. The app has no email/password form, but the Supabase API
+   still accepts email sign-ups while the **Email** provider is on, so turn it off in production
+   (*Authentication → Sign In / Providers → Email*). Local Supabase (`supabase/config.toml`)
+   keeps it on with sign-ups disabled, because the RLS tests sign in test users with a password.
 4. **Redirect URLs** — *Authentication → URL Configuration*: add `http://localhost:3000/auth/callback`.
 5. **Env** — copy `.env.example` to `.env.local` and fill in the URL and publishable key
-   (*Project Settings → API*).
+   (*Project Settings → API*). In production also set `SITE_URL` to the site's public address
+   (e.g. `https://yourway.onrender.com`): redirects use it, never the request's Host headers.
+   The secret key for e2e tests goes in `.env.e2e.local`, which the app never loads.
 6. Run:
    ```bash
    npm install

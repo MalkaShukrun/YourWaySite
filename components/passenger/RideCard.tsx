@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, CalendarDays, Clock, MapPin, Users } from "lucide-react";
+import { ArrowLeft, CalendarDays, Clock, MapPin, MessageSquareText, Users } from "lucide-react";
 import { formatTime, weekdaysOf } from "@/lib/dates";
 import type { RideSummary } from "@/lib/ride-types";
 import { avatarColorFor, formatPrice, initialsOf, kindLabel, seatsText } from "@/lib/format";
@@ -41,6 +41,17 @@ export function RideCard({ rides }: { rides: RideSummary[] }) {
         {/* Every card shows its dates as chips — one for a single date — so all cards share one layout. */}
         <RideDateChips rides={rides} time={first.out_time} />
         <div><Clock {...iconProps} size={20} /><span>יציאה ב־<b>{formatTime(first.out_time)}</b></span></div>
+        {/* One line here; the full note, with its line breaks, in the bubble. */}
+        {first.notes && (
+          <p className="trip-notes is-clamped">
+            <MessageSquareText {...iconProps} size={18} />
+            <span className="trip-notes-text">{first.notes}</span>
+            <span className="hint notes-more" tabIndex={0}>
+              עוד פרטים
+              <span className="hint-bubble" role="tooltip">{first.notes}</span>
+            </span>
+          </p>
+        )}
         <div className="trip-price"><span>מחיר שקבעה הנהגת</span><b>{formatPrice(first.price)}</b></div>
       </div>
       <div className="trip-footer">

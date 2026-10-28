@@ -2,33 +2,31 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Car, Clock, Info, MapPin, Repeat, Search } from "lucide-react";
+import { Car, Info, MapPin, Repeat, RotateCcw, Search } from "lucide-react";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Select } from "@/components/ui/Select";
-import { TIME_WINDOWS, type RideGroup, type RideKind, type TimeWindow } from "@/lib/ride-types";
+import { TimePicker } from "@/components/ui/TimePicker";
+import type { RideGroup, RideKind } from "@/lib/ride-types";
 import { groupLabel } from "@/lib/format";
 import { carIconProps, iconProps } from "@/components/ui/icon";
 
 const ROUTE_HINT = "להוספת מסלולי נסיעה מעיר לעיר יש ליצור קשר";
 
-type Filters ={ groupId?: string; date?: string; kind?: RideKind; time?: TimeWindow };
+type Filters = { groupId?: string; date?: string; kind?: RideKind; from?: string; to?: string };
 
-const TIME_OPTIONS = [
-  { value: "", label: "הכל" },
-  ...Object.entries(TIME_WINDOWS).map(([key, w]) => ({ value: key, label: w.label })),
-];
 const KIND_OPTIONS = [
   { value: "", label: "כל הנסיעות" },
   { value: "recurring", label: "נסיעות קבועות" },
   { value: "one_time", label: "נסיעות חד־פעמיות" },
 ];
 
-// Smart filter bar (SRS §4.1): group, date, departure window, ride type.
+// Smart filter bar (SRS §4.1): group, date, departure time range, ride type.
 export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; initial: Filters; today: string }) {
   const router = useRouter();
   const [groupId, setGroupId] = useState(initial.groupId ?? "");
   const [date, setDate] = useState(initial.date ?? "");
-  const [time, setTime] = useState<string>(initial.time ?? "");
+  const [from, setFrom] = useState(initial.from ?? "");
+  const [to, setTo] = useState(initial.to ?? "");
   const [kind, setKind] = useState<string>(initial.kind ?? "");
   const groupOptions = [{ value: "", label: "כל המסלולים" }, ...groups.map((g) => ({ value: g.id, label: groupLabel(g.origin, g.destination) }))];
 
@@ -37,10 +35,24 @@ export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; i
     const params = new URLSearchParams();
     if (groupId) params.set("group", groupId);
     if (date) params.set("date", date);
-    if (time) params.set("time", time);
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
     if (kind) params.set("kind", kind);
     const query = params.toString();
     router.push(query ? `/?${query}` : "/");
+  }
+
+  const hasFilters = Boolean(
+    groupId || date || from || to || kind || initial.groupId || initial.date || initial.from || initial.to || initial.kind,
+  );
+
+  function clear() {
+    setGroupId("");
+    setDate("");
+    setFrom("");
+    setTo("");
+    setKind("");
+    router.push("/");
   }
 
   return (
@@ -71,18 +83,30 @@ export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; i
           <span>תאריך</span>
           <DatePicker label="תאריך" value={date} onChange={setDate} today={today} min={today} placeholder="כל השבוע" clearable />
         </div>
-        <div className="field">
-          <span>שעת יציאה</span>
-          <Select label="שעת יציאה" value={time} onChange={setTime} options={TIME_OPTIONS} icon={<Clock {...iconProps} size={20} />} />
+        <div className="field filter-time">
+          <span>יציאה משעה</span>
+          <TimePicker label="יציאה משעה" value={from} onChange={setFrom} placeholder="כל שעה" />
+        </div>
+        <div className="field filter-time">
+          <span>עד שעה</span>
+          <TimePicker label="עד שעה" value={to} onChange={setTo} placeholder="כל שעה" />
         </div>
         <div className="field">
           <span>סוג נסיעה</span>
           <Select label="סוג נסיעה" value={kind} onChange={setKind} options={KIND_OPTIONS} icon={<Repeat {...iconProps} size={20} />} />
         </div>
-        <button type="submit" className="btn btn-primary search-button">
-          <Search {...iconProps} size={20} />
-          חיפוש נסיעה
-        </button>
+        <div className="search-actions">
+          {hasFilters && (
+            <button type="button" className="btn btn-secondary search-clear" onClick={clear}>
+              <RotateCcw {...iconProps} size={18} />
+              ניקוי
+            </button>
+          )}
+          <button type="submit" className="btn btn-primary search-button">
+            <Search {...iconProps} size={20} />
+            חיפוש נסיעה
+          </button>
+        </div>
       </form>
     </section>
   );

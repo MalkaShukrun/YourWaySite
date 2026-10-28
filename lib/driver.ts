@@ -46,7 +46,7 @@ function flatten(row: RouteRow): DriverRoute {
 }
 
 const ROUTE_COLUMNS =
-  "id, kind, group_id, weekdays, ride_date, out_time, return_time, seats, price, ride_groups(origin, destination)";
+  "id, kind, group_id, weekdays, ride_date, out_time, return_time, seats, price, notes, ride_groups(origin, destination)";
 
 export async function getMyRoutes(driverId: string): Promise<DriverRoute[]> {
   const supabase = await createClient();

@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Car, Clock, MapPin, Plus, Users } from "lucide-react";
+import { CalendarDays, Car, MapPin, Plus, Users } from "lucide-react";
 import { requireUser } from "@/lib/auth";
-import { formatRideDate, formatTime, greetingFor, isIsoDate, israelHour, israelToday } from "@/lib/dates";
+import { formatRideDate, formatWeekRange, greetingFor, isIsoDate, israelHour, israelToday, rideWeekOf } from "@/lib/dates";
 import { getDriverDay } from "@/lib/driver";
 import { firstNameOf } from "@/lib/format";
 import { DashboardDatePicker } from "@/components/driver/DashboardDatePicker";
@@ -10,7 +10,7 @@ import { DriverRideCard } from "@/components/driver/DriverRideCard";
 import { StatCard } from "@/components/ui/StatCard";
 import { carIconProps, iconProps } from "@/components/ui/icon";
 
-// Driver daily dashboard (SRS §5.2).
+// Driver weekly dashboard (SRS §5.2): the rides of the week (Sunday–Friday) that holds the chosen date.
 export default function DriverDashboardPage({ searchParams }: PageProps<"/dashboard">) {
   return (
     <main className="page-content">
@@ -26,23 +26,24 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
   const query = await searchParams;
   const [today, hour] = await Promise.all([israelToday(), israelHour()]);
   const date = isIsoDate(query.date) ? query.date : today;
-  const { rides } = await getDriverDay(date);
+  const week = rideWeekOf(date);
+  const days = await Promise.all(week.map(async (day) => ({ day, rides: (await getDriverDay(day)).rides })));
 
-  const active = rides.filter((r) => !r.cancelled);
+  const active = days.flatMap((d) => d.rides).filter((r) => !r.cancelled);
   const booked = active.reduce((sum, r) => sum + r.booked, 0);
   const free = active.reduce((sum, r) => sum + Math.max(r.seats - r.booked, 0), 0);
   const pickupStops = new Set(active.flatMap((r) => r.passengers.map((p) => p.pickup_stop_id))).size;
-  const firstOut = active[0] ? formatTime(active[0].out_time) : "—";
+  const rideDays = days.filter((d) => d.rides.length > 0);
 
   return (
     <>
       <div className="welcome dashboard-welcome">
         <div>
           <p>{greetingFor(hour)}, {firstNameOf(user.fullName)}</p>
-          <h1>{date === today ? "הנסיעות שלך להיום" : `הנסיעות שלך ל${formatRideDate(date)}`}</h1>
+          <h1>{week.includes(today) ? "הנסיעות שלך השבוע" : `הנסיעות שלך לשבוע ${formatWeekRange(week)}`}</h1>
         </div>
         <div className="dashboard-actions">
-          <DashboardDatePicker value={date} display={formatRideDate(date)} today={today} />
+          <DashboardDatePicker value={date} display={formatWeekRange(week)} today={today} week={week} />
           <Link className="btn btn-primary" href="/routes/new"><Plus {...iconProps} size={20} /> נסיעה חדשה</Link>
         </div>
       </div>
@@ -51,20 +52,27 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
         <StatCard icon={<Users {...iconProps} size={20} />} value={booked} label="טרמפיסטיות רשומות" tone="peach" />
         <StatCard icon={<Car {...carIconProps} size={20} />} value={free} label="מקומות פנויים" tone="green" />
         <StatCard icon={<MapPin {...iconProps} size={20} />} value={pickupStops} label="תחנות איסוף" tone="purple" />
-        <StatCard icon={<Clock {...iconProps} size={20} />} value={firstOut} label="שעת יציאה" tone="blue" />
+        <StatCard icon={<CalendarDays {...iconProps} size={20} />} value={active.length} label="נסיעות השבוע" tone="blue" />
       </div>
 
-      {rides.length === 0 ? (
+      {rideDays.length === 0 ? (
         <section className="panel empty-state">
-          <strong>אין לך נסיעות בתאריך הזה</strong>
+          <strong>אין לך נסיעות בשבוע הזה</strong>
           <span>הגדירי מסלול קבוע או נסיעה חד־פעמית כדי שטרמפיסטיות יוכלו להירשם.</span>
         </section>
       ) : (
-        <div className="today-list">
-          {rides.map((ride) => (
-            <DriverRideCard key={ride.route_id} ride={ride} date={date} />
-          ))}
-        </div>
+        rideDays.map(({ day, rides }, dayIndex) => (
+          <section className="week-day" key={day}>
+            <h2 className={`week-day-head ${day === today ? "today" : ""}`}>
+              {formatRideDate(day)}{day === today && <span>היום</span>}
+            </h2>
+            <div className="today-list">
+              {rides.map((ride, i) => (
+                <DriverRideCard key={ride.route_id} ride={ride} date={day} open={dayIndex === 0 && i === 0} />
+              ))}
+            </div>
+          </section>
+        ))
       )}
     </>
   );

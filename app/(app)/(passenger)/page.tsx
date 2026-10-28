@@ -2,10 +2,10 @@ import { Suspense } from "react";
 import { requireUser } from "@/lib/auth";
 import { greetingFor, isIsoDate, israelHour, israelToday } from "@/lib/dates";
 import { getRideGroups, searchRides } from "@/lib/rides";
-import { TIME_WINDOWS, type RideKind, type TimeWindow } from "@/lib/ride-types";
+import type { RideKind } from "@/lib/ride-types";
 import { firstNameOf } from "@/lib/format";
 import { groupByRoute } from "@/lib/search-results";
-import { isUuid } from "@/lib/validation/patterns";
+import { isUuid, TIME_PATTERN } from "@/lib/validation/patterns";
 import { SearchPanel } from "@/components/passenger/SearchPanel";
 import { RideCard } from "@/components/passenger/RideCard";
 
@@ -34,12 +34,19 @@ async function readFilters(searchParams: SearchParams) {
   const group = one("group");
   const date = one("date");
   const kind = one("kind");
-  const time = one("time");
+  const time = (key: string) => {
+    const value = one(key);
+    return value && TIME_PATTERN.test(value) ? value : undefined;
+  };
+  let [from, to] = [time("from"), time("to")];
+  // "From 09:00 until 07:00" means the other way round.
+  if (from && to && from > to) [from, to] = [to, from];
   return {
     groupId: isUuid(group) ? group : undefined,
     date: isIsoDate(date) && date >= (await israelToday()) ? date : undefined,
     kind: kind === "recurring" || kind === "one_time" ? (kind as RideKind) : undefined,
-    time: time && time in TIME_WINDOWS ? (time as TimeWindow) : undefined,
+    from,
+    to,
   };
 }
 

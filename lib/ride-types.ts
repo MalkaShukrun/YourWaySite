@@ -17,6 +17,8 @@ export type RideSummary = {
   seats: number;
   seats_left: number;
   price: number;
+  // The driver's free-text note; null = none.
+  notes: string | null;
 };
 
 // The driver's phone and email are null unless the user is booked on the ride.
@@ -56,9 +58,3 @@ export type MyBooking = {
   driver_email: string | null;
 };
 
-export const TIME_WINDOWS = {
-  early: { label: "06:00–07:30", from: "06:00", to: "07:30" },
-  morning: { label: "07:30–09:00", from: "07:30", to: "09:00" },
-  later: { label: "אחרי 09:00", from: "09:00", to: null },
-} as const;
-export type TimeWindow = keyof typeof TIME_WINDOWS;

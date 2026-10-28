@@ -13,8 +13,8 @@ import { FieldError } from "@/components/ui/FieldError";
 
 const EMPTY: ContactValues = { name: "", email: "", message: "" };
 
-// "צרי קשר" in every header (app top bar and login page): a small modal
-// whose message is emailed to support.
+// "צרי קשר" in the app's top bar, after sign-in: a small modal whose message
+// is emailed to support.
 export function ContactButton() {
   const [open, setOpen] = useState(false);
   const [serverError, setServerError] = useState("");

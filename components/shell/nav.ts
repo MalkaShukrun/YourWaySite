@@ -10,7 +10,7 @@ export const passengerNavItems: NavItem[] = [
 ];
 
 export const driverNavItems: NavItem[] = [
-  { href: "/dashboard", label: "לוח נהגת יומי", shortLabel: "היום", icon: Home },
+  { href: "/dashboard", label: "לוח נהגת שבועי", shortLabel: "השבוע", icon: Home },
   { href: "/routes", label: "המסלולים שלי", shortLabel: "מסלולים", icon: Route },
 ];
 

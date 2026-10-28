@@ -1,5 +1,6 @@
 "use server";
 
+import { requireUser } from "@/lib/auth";
 import { firstIssue, GENERIC_ERROR } from "@/lib/action-errors";
 import { SUPPORT_EMAIL } from "@/lib/support";
 import { contactSchema, type ContactValues } from "@/lib/validation/contact";
@@ -8,7 +9,9 @@ import { contactSchema, type ContactValues } from "@/lib/validation/contact";
 // Reply-To is the sender, so answering the email reaches her directly.
 // CONTACT_FROM_EMAIL must be on a domain verified in Resend; without one,
 // Resend's test sender only delivers to the Resend account's own address.
+// Signed-in users only, so visitors can't use the form to flood the inbox.
 export async function sendContactMessage(values: ContactValues) {
+  await requireUser();
   const parsed = contactSchema.safeParse(values);
   if (!parsed.success) return { error: firstIssue(parsed.error) };
 

@@ -1,23 +1,29 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { publicOrigin } from "@/lib/public-origin";
 
 const internal = (headers: Record<string, string> = {}) => new NextRequest("https://localhost:10000/auth/callback", { headers });
 
+afterEach(() => vi.unstubAllEnvs());
+
 describe("publicOrigin", () => {
-  it("uses the request URL without a proxy", () => {
+  it("uses SITE_URL when set, without its path", () => {
+    vi.stubEnv("SITE_URL", "https://yourway.onrender.com/some/path");
+    expect(publicOrigin(internal())).toBe("https://yourway.onrender.com");
+  });
+
+  it("uses the request URL without SITE_URL (local dev)", () => {
+    vi.stubEnv("SITE_URL", "");
     expect(publicOrigin(internal())).toBe("https://localhost:10000");
   });
 
-  it("uses the forwarded host and protocol behind a proxy", () => {
-    expect(publicOrigin(internal({ "x-forwarded-host": "yourway.co.il", "x-forwarded-proto": "https" }))).toBe("https://yourway.co.il");
-  });
-
-  it("falls back to the Host header (Render)", () => {
-    expect(publicOrigin(internal({ host: "yourway.onrender.com", "x-forwarded-proto": "https" }))).toBe("https://yourway.onrender.com");
-  });
-
-  it("takes the first value of a forwarded list and keeps the request's protocol", () => {
-    expect(publicOrigin(internal({ "x-forwarded-host": "yourway.co.il, proxy.internal" }))).toBe("https://yourway.co.il");
+  it.each([
+    ["X-Forwarded-Host", { "x-forwarded-host": "evil.example", "x-forwarded-proto": "http" }],
+    ["Host", { host: "evil.example" }],
+  ])("ignores a spoofed %s header", (_name, headers) => {
+    vi.stubEnv("SITE_URL", "https://yourway.onrender.com");
+    expect(publicOrigin(internal(headers))).toBe("https://yourway.onrender.com");
+    vi.stubEnv("SITE_URL", "");
+    expect(publicOrigin(internal(headers))).toBe("https://localhost:10000");
   });
 });

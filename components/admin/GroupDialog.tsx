@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MapPin, Plus, Route } from "lucide-react";
 import { createGroup, updateGroup } from "@/app/(app)/admin/actions";
-import { groupSchema, type GroupValues } from "@/lib/validation/group";
+import { groupSchema, PLACE_MAX, type GroupValues } from "@/lib/validation/group";
 import { Toast } from "@/components/ui/Toast";
 import { iconProps } from "@/components/ui/icon";
 import { FieldError } from "@/components/ui/FieldError";
@@ -65,12 +65,12 @@ export function GroupDialog({ group }: Props) {
             <div className="form-grid compact group-dialog-fields">
               <label className="field">
                 <span>נקודת מוצא</span>
-                <div className="input-shell"><MapPin {...iconProps} size={20} /><input {...register("origin")} placeholder="לדוגמה: בית שמש" autoFocus /></div>
+                <div className="input-shell"><MapPin {...iconProps} size={20} /><input {...register("origin")} placeholder="לדוגמה: בית שמש" maxLength={PLACE_MAX} autoFocus /></div>
                 <FieldError message={errors.origin?.message} />
               </label>
               <label className="field">
                 <span>יעד</span>
-                <div className="input-shell"><MapPin {...iconProps} size={20} /><input {...register("destination")} placeholder="לדוגמה: ירושלים" /></div>
+                <div className="input-shell"><MapPin {...iconProps} size={20} /><input {...register("destination")} placeholder="לדוגמה: ירושלים" maxLength={PLACE_MAX} /></div>
                 <FieldError message={errors.destination?.message} />
               </label>
             </div>

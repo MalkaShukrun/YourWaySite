@@ -6,7 +6,7 @@ const sb = createSupabaseMock();
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => sb.client }));
 
 const ROUTE_COLUMNS =
-  "id, kind, group_id, weekdays, ride_date, out_time, return_time, seats, price, ride_groups(origin, destination)";
+  "id, kind, group_id, weekdays, ride_date, out_time, return_time, seats, price, notes, ride_groups(origin, destination)";
 
 beforeEach(() => sb.reset());
 

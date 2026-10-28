@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { TIME_WINDOWS, type MyBooking, type RideDetails, type RideGroup, type RideKind, type RideSummary, type Stop, type TimeWindow } from "@/lib/ride-types";
+import type { MyBooking, RideDetails, RideGroup, RideKind, RideSummary, Stop } from "@/lib/ride-types";
 
 // Data Access Layer for rides. All reads go through Postgres functions
 // (supabase/migrations/0002_rides.sql) that check auth.uid() themselves.
@@ -19,19 +19,26 @@ export async function searchRides(filters: {
   groupId?: string;
   date?: string;
   kind?: RideKind;
-  time?: TimeWindow;
+  from?: string; // "HH:MM": rides leaving at or after this time…
+  to?: string; //  …and at or before this one
 }): Promise<RideSummary[]> {
   const supabase = await createClient();
-  const window = filters.time ? TIME_WINDOWS[filters.time] : null;
   const { data, error } = await supabase.rpc("search_rides", {
     p_group_id: filters.groupId ?? null,
     p_date: filters.date ?? null,
     p_kind: filters.kind ?? null,
-    p_from_time: window?.from ?? null,
-    p_to_time: window?.to ?? null,
+    p_from_time: filters.from ?? null,
+    p_to_time: filters.to ? minuteAfter(filters.to) : null,
   });
   if (error) throw new Error(error.message);
   return (data ?? []) as RideSummary[];
+}
+
+// The minute after "HH:MM" (search_rides' upper bound is exclusive); null after 23:59.
+function minuteAfter(time: string) {
+  const minutes = Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5)) + 1;
+  if (minutes >= 24 * 60) return null;
+  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
 }
 
 // The dates a route runs in the coming week, as search lists them (departed

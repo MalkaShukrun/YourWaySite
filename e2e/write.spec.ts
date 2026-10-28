@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { choose, chooseTime, expectNotFound, hideDevTools, isAdmin, nextWeekday, openForm, toast } from "./helpers";
 
@@ -9,8 +10,12 @@ import { choose, chooseTime, expectNotFound, hideDevTools, isAdmin, nextWeekday,
 //     can't be deleted), so neither shows up for anyone.
 //   - a second group, created and deleted.
 //   - your profile is saved with its existing values.
+//   - one of your payments is marked paid/unpaid and set back.
 // Booking is tested against the test route itself (drivers can't book their
-// own ride), so no other driver's ride is touched.
+// own ride), so no other driver's ride is touched. A real booking needs a
+// second account: npm run test:e2e:login:passenger.
+
+const PASSENGER_AUTH_FILE = "e2e/.auth/passenger.json";
 
 test.describe.configure({ mode: "serial" });
 test.beforeEach(({ page }) => hideDevTools(page));
@@ -203,6 +208,39 @@ test.describe("driver: route lifecycle", () => {
     await expect(page.locator(".auth-error")).toHaveText("אי אפשר להירשם לנסיעה שאת נוהגת בה.");
   });
 
+  test("a passenger books the route, sees it in my rides and cancels", async ({ browser }) => {
+    test.skip(!existsSync(PASSENGER_AUTH_FILE), "Needs a second account: npm run test:e2e:login:passenger");
+    const context = await browser.newContext({ storageState: PASSENGER_AUTH_FILE });
+    const page = await context.newPage();
+    await hideDevTools(page);
+    const date = nextWeekday();
+
+    await page.goto(`/ride/${routeId}?date=${date}`);
+    test.skip(page.url().includes("/login"), "The passenger account hasn't finished sign-up");
+    await expect(page.getByRole("heading", { name: "בחרי תחנת איסוף" })).toBeVisible();
+    await page.getByRole("button", { name: "אישור הרשמה לנסיעה" }).click();
+
+    await expect(page).toHaveURL(/\/my-rides\?booked=1$/);
+    await expect(toast(page, "הנסיעה נוספה בהצלחה")).toBeVisible();
+    const row = page.locator(".activity-row").filter({ hasText: label() });
+    await expect(row).toHaveCount(1);
+    await expect(row).toContainText("06:40"); // that date's changed time, not the route's 06:10
+    await expect(row).toContainText("₪9");
+    await expect(row).toContainText("איסוף: תחנת בדיקה א");
+    await expect(row).toContainText("הורדה: תחנת בדיקה ג");
+
+    // The booked day can't be picked again.
+    await page.goto(`/ride/${routeId}?date=${date}`);
+    await expect(page.locator('.trip-dates .is-full[aria-label$="את רשומה"]')).toHaveCount(1);
+
+    await page.goto("/my-rides");
+    await row.getByRole("button", { name: "ביטול" }).click();
+    await expect(row).toHaveCount(0);
+    await page.reload();
+    await expect(row).toHaveCount(0);
+    await context.close();
+  });
+
   test("cancels the route, then adds a new one in its place", async ({ page }) => {
     await page.goto("/routes");
     await routeCard(page).getByRole("button", { name: "הסרת המסלול" }).click();
@@ -254,6 +292,26 @@ test.describe("profile", () => {
     await page.reload();
     await expect(page.getByLabel("שם מלא")).toHaveValue(name);
     await expect(page.getByLabel("מספר טלפון")).toHaveValue(phone);
+  });
+});
+
+test.describe("payments", () => {
+  test("marking a ride paid is saved, and can be undone", async ({ page }) => {
+    await page.goto("/payments");
+    const pill = page.locator(".paid-pill").first();
+    test.skip((await pill.count()) === 0, "No payments this month");
+    const before = await pill.getAttribute("aria-pressed");
+    const after = before === "true" ? "false" : "true";
+
+    await pill.click();
+    await expect(pill).toHaveAttribute("aria-pressed", after);
+    await page.reload();
+    await expect(pill).toHaveAttribute("aria-pressed", after);
+
+    await pill.click(); // set it back
+    await expect(pill).toHaveAttribute("aria-pressed", before!);
+    await page.reload();
+    await expect(pill).toHaveAttribute("aria-pressed", before!);
   });
 });
 

@@ -23,8 +23,10 @@ function newId() {
 
 const supabase = {
   rpc: vi.fn(async (fn: string, args: { p_route_id: string | null; p_route: Record<string, unknown>; p_stops: { kind: string }[] }) => {
-    if (fn !== "save_route") throw new Error(`unexpected rpc ${fn}`);
     if (db.failNext) return { data: null, error: { message: db.failNext } };
+    // Checked by the database itself (rls/guests.test.ts); here only the call matters.
+    if (fn === "add_passenger" || fn === "remove_passenger") return { data: null, error: null };
+    if (fn !== "save_route") throw new Error(`unexpected rpc ${fn}`);
     let id = args.p_route_id;
     if (id === null) {
       id = newId();
@@ -77,7 +79,7 @@ vi.mock("next/cache", () => ({ refresh: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn(async () => supabase) }));
 vi.mock("@/lib/auth", () => ({ requireUser: vi.fn(async () => ({ id: db.currentUser })) }));
 
-const { saveRoute, archiveRoute, updateRideTime, setRideCancelled } = await import("@/app/(app)/(driver)/actions");
+const { saveRoute, archiveRoute, updateRideTime, setRideCancelled, addPassenger, removePassenger } = await import("@/app/(app)/(driver)/actions");
 const { refresh } = await import("next/cache");
 
 function routeValues(overrides: Partial<RouteValues> = {}): RouteValues {
@@ -89,6 +91,7 @@ function routeValues(overrides: Partial<RouteValues> = {}): RouteValues {
     outTime: "07:30",
     seats: "4",
     price: "15",
+    notes: "",
     stops: [
       { id: "", kind: "pickup", label: "קניון עזריאלי", lat: 32.074, lng: 34.792 },
       { id: "", kind: "dropoff", label: "תחנה מרכזית", lat: 31.789, lng: 35.203 },
@@ -136,6 +139,7 @@ describe("add route", () => {
       out_time: "07:30",
       seats: "4",
       price: "15",
+      notes: "",
     });
     expect(supabase.rpc).toHaveBeenCalledWith("save_route", expect.objectContaining({ p_route_id: null }));
   });
@@ -327,5 +331,66 @@ describe("per-date ride changes", () => {
 
   it("rejects cancelling with an invalid date", async () => {
     expect(await setRideCancelled(routeId, "tomorrow", true)).toEqual({ error: "המסלול לא נמצא." });
+  });
+});
+
+describe("passengers the driver adds", () => {
+  const routeId = "aaaaaaaa-aaaa-4aaa-8aaa-000000000001";
+  const pickupStopId = "bbbbbbbb-bbbb-4bbb-8bbb-000000000001";
+  const dropoffStopId = "bbbbbbbb-bbbb-4bbb-8bbb-000000000002";
+  const passenger = { name: " רחל לוי ", phone: " 050-123-4567 ", pickupStopId, dropoffStopId };
+
+  it("adds a passenger with trimmed details", async () => {
+    expect(await addPassenger(routeId, "2026-11-02", passenger)).toEqual({});
+    expect(supabase.rpc).toHaveBeenCalledWith("add_passenger", {
+      p_route_id: routeId,
+      p_date: "2026-11-02",
+      p_name: "רחל לוי",
+      p_phone: "050-123-4567",
+      p_pickup_stop_id: pickupStopId,
+      p_dropoff_stop_id: dropoffStopId,
+    });
+    expect(refresh).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    ["no name", { name: "" }, "יש להזין שם מלא"],
+    ["a name that is too long", { name: "א".repeat(61) }, "עד 60 תווים בשם"],
+    ["no phone", { phone: "" }, "מספר טלפון לא תקין (לדוגמה 050-000-0000)"],
+    ["an invalid phone", { phone: "123" }, "מספר טלפון לא תקין (לדוגמה 050-000-0000)"],
+    ["a name with control characters", { name: "רחל\nלוי" }, "השם מכיל תווים לא חוקיים"],
+    ["an invalid dropoff stop", { dropoffStopId: "x" }, "יש לבחור תחנת הורדה"],
+    ["no pickup stop", { pickupStopId: "" }, "יש לבחור תחנת איסוף"],
+  ])("rejects %s without calling the database", async (_name, overrides, message) => {
+    expect(await addPassenger(routeId, "2026-11-02", { ...passenger, ...overrides })).toEqual({ error: message });
+    expect(supabase.rpc).not.toHaveBeenCalled();
+  });
+
+  it("rejects a malformed ride", async () => {
+    expect(await addPassenger("x", "2026-11-02", passenger)).toEqual({ error: "המסלול לא נמצא." });
+    expect(supabase.rpc).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["RIDE_FULL", "אין מקומות פנויים בנסיעה הזו."],
+    ["ALREADY_BOOKED", "הטרמפיסטית כבר רשומה לנסיעה הזו."],
+    ["RIDE_UNAVAILABLE", "הנסיעה בוטלה או לא מתקיימת בתאריך הזה."],
+    ["OWN_RIDE", "אי אפשר להוסיף את עצמך כטרמפיסטית."],
+  ])("maps %s to a friendly message", async (code, message) => {
+    db.failNext = `P0001: ${code}`;
+    expect(await addPassenger(routeId, "2026-11-02", passenger)).toEqual({ error: message });
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it("removes a passenger", async () => {
+    const bookingId = "cccccccc-cccc-4ccc-8ccc-000000000001";
+    expect(await removePassenger(bookingId)).toEqual({});
+    expect(supabase.rpc).toHaveBeenCalledWith("remove_passenger", { p_booking_id: bookingId });
+    expect(refresh).toHaveBeenCalledOnce();
+  });
+
+  it("rejects removing a malformed booking id", async () => {
+    expect(await removePassenger("x")).toEqual({ error: "ההרשמה לא נמצאה." });
+    expect(supabase.rpc).not.toHaveBeenCalled();
   });
 });

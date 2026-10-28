@@ -3,34 +3,41 @@ import { formatTime } from "@/lib/dates";
 import type { Stop } from "@/lib/ride-types";
 import type { DriverPassenger, DriverRide } from "@/lib/driver-types";
 import { avatarColorFor, groupLabel, initialsOf, routeKindLabel } from "@/lib/format";
+import { CollapsibleRideCard } from "@/components/driver/CollapsibleRideCard";
+import { AddPassengerForm, RemovePassengerButton } from "@/components/driver/PassengerControls";
 import { CancelForDateButton, TimeUpdateForm } from "@/components/driver/RideDayControls";
 import { LazyRouteMap } from "@/components/map/LazyMaps";
 import { iconProps } from "@/components/ui/icon";
 
 // One ride on the driver's dashboard for the chosen date: its passengers, a
-// time change or cancellation for that date, and the day's stops.
-export function DriverRideCard({ ride, date }: { ride: DriverRide & { passengers: DriverPassenger[]; stops: Stop[] }; date: string }) {
+// time change or cancellation for that date, and the day's stops. Collapsed
+// unless `open`.
+export function DriverRideCard({ ride, date, open = false }: { ride: DriverRide & { passengers: DriverPassenger[]; stops: Stop[] }; date: string; open?: boolean }) {
   const bookedStopIds = ride.passengers.flatMap((p) => [p.pickup_stop_id, p.dropoff_stop_id]);
   const byPickup = [...ride.passengers].sort((a, b) => a.pickup_position - b.pickup_position);
   const byDropoff = [...ride.passengers].sort((a, b) => a.dropoff_position - b.dropoff_position);
 
   return (
-    <section className={`today-card ${ride.cancelled ? "cancelled" : ""}`}>
-      <div className="today-header">
+    <CollapsibleRideCard
+      cancelled={ride.cancelled}
+      defaultOpen={open}
+      summary={
         <div className="today-route">
           <div className="route-badge"><Route {...iconProps} size={20} /></div>
           <div>
             <span>{routeKindLabel(ride.kind)}</span>
             <h2>{groupLabel(ride.origin, ride.destination)}</h2>
-            <p>{ride.seats} מקומות</p>
+            <p>{formatTime(ride.out_time)} · {ride.booked} מתוך {ride.seats} מקומות</p>
           </div>
         </div>
-        <div className="today-status-actions">
+      }
+      actions={
+        <>
           {ride.cancelled && <span className="status-pill danger"><i></i>בוטלה לתאריך זה</span>}
           <CancelForDateButton routeId={ride.route_id} date={date} cancelled={ride.cancelled} />
-        </div>
-      </div>
-
+        </>
+      }
+    >
       <TimeUpdateForm
         key={ride.out_time}
         routeId={ride.route_id}
@@ -40,7 +47,11 @@ export function DriverRideCard({ ride, date }: { ride: DriverRide & { passengers
       />
 
       <div className="passengers-head">
-        <div><h3>טרמפיסטיות רשומות ופרטי קשר</h3><span>{ride.booked} מתוך {ride.seats} מקומות</span></div>      </div>
+        <div><h3>טרמפיסטיות רשומות ופרטי קשר</h3><span>{ride.booked} מתוך {ride.seats} מקומות</span></div>
+        {!ride.cancelled && ride.booked < ride.seats && (
+          <AddPassengerForm routeId={ride.route_id} date={date} stops={ride.stops} />
+        )}
+      </div>
       <div className="passenger-list">
         {ride.passengers.length === 0 ? (
           <p className="passenger-empty">עדיין אין טרמפיסטיות רשומות לנסיעה הזו.</p>
@@ -48,15 +59,21 @@ export function DriverRideCard({ ride, date }: { ride: DriverRide & { passengers
           ride.passengers.map((p, index) => (
             <div className="passenger-row" key={p.booking_id}>
               <div className="passenger-number">{index + 1}</div>
-              <div className={`avatar avatar-${avatarColorFor(p.passenger_id)}`}>{initialsOf(p.passenger_name)}</div>
-              <div className="passenger-name"><strong>{p.passenger_name}</strong></div>
+              <div className={`avatar avatar-${avatarColorFor(p.passenger_id ?? p.booking_id)}`}>{initialsOf(p.passenger_name)}</div>
+              <div className="passenger-name">
+                <strong>{p.passenger_name}</strong>
+                {p.added_by_driver && <small>נוספה על ידך</small>}
+              </div>
               <div className="row-actions">
                 {p.passenger_phone && (
                   <a className="btn btn-secondary passenger-call" aria-label={`חיוג אל ${p.passenger_name}`} href={`tel:${p.passenger_phone}`}>
                     <Phone {...iconProps} size={20} /><span>{p.passenger_phone}</span>
                   </a>
                 )}
-                <a className="btn btn-secondary passenger-email" href={`mailto:${p.passenger_email}`}>{p.passenger_email}</a>
+                {p.passenger_email && (
+                  <a className="btn btn-secondary passenger-email" href={`mailto:${p.passenger_email}`}>{p.passenger_email}</a>
+                )}
+                {p.added_by_driver && <RemovePassengerButton bookingId={p.booking_id} name={p.passenger_name} />}
               </div>
             </div>
           ))
@@ -78,7 +95,7 @@ export function DriverRideCard({ ride, date }: { ride: DriverRide & { passengers
         </div>
         <div className="daily-map"><LazyRouteMap stops={ride.stops} selectedIds={bookedStopIds} /></div>
       </div>
-    </section>
+    </CollapsibleRideCard>
   );
 }
 

@@ -17,7 +17,7 @@ export async function completeProfile(values: ProfileValues) {
   }
 
   const v = parsed.data;
-  // No email: the database copies it from the Google sign-in.
+  // No email: the database copies it from the sign-in (Google or email link).
   const details = {
     full_name: v.fullName,
     phone: v.phone,

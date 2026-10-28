@@ -15,7 +15,7 @@ import type { RideGroup } from "@/lib/ride-types";
 import type { EditableRoute } from "@/lib/driver-types";
 import { groupLabel, RIDE_WEEKDAYS } from "@/lib/format";
 import { groupArea } from "@/lib/places";
-import { routeSchema, type RouteValues } from "@/lib/validation/route";
+import { NOTES_MAX, routeSchema, STOP_LABEL_MAX, type RouteValues } from "@/lib/validation/route";
 import { useHydrated } from "@/components/ui/useHydrated";
 
 type Props = { groups: RideGroup[]; route: EditableRoute | null; today: string };
@@ -45,6 +45,7 @@ export function RouteEditor({ groups, route, today }: Props) {
       outTime: route ? route.out_time.slice(0, 5) : "07:15",
       seats: String(route?.seats ?? 4),
       price: String(route?.price ?? ""),
+      notes: route?.notes ?? "",
       stops: route?.stops.map((s) => ({ id: s.id, kind: s.kind, label: s.label, lat: s.lat, lng: s.lng })) ?? [],
     },
   });
@@ -56,6 +57,7 @@ export function RouteEditor({ groups, route, today }: Props) {
   const weekdays = useWatch({ control, name: "weekdays" });
   const dateLabel = kind === "recurring" ? "תאריך התחלה" : "תאריך הנסיעה";
   const stops = useWatch({ control, name: "stops" });
+  const notes = useWatch({ control, name: "notes" });
 
   const toggleDay = (day: number) =>
     setValue(
@@ -82,6 +84,7 @@ export function RouteEditor({ groups, route, today }: Props) {
               <input
                 {...register(`stops.${index}.label`)}
                 placeholder="שם התחנה (לדוגמה: צומת ביג)"
+                maxLength={STOP_LABEL_MAX}
                 autoFocus={!field.label}
                 aria-invalid={Boolean(errors.stops?.[index]?.label)}
               />
@@ -130,6 +133,7 @@ export function RouteEditor({ groups, route, today }: Props) {
     errors.outTime?.message ??
     errors.seats?.message ??
     errors.price?.message ??
+    errors.notes?.message ??
     errors.stops?.message ??
     errors.stops?.root?.message ??
     (Array.isArray(errors.stops) && errors.stops.some((s) => s?.label) ? "יש לתת שם לכל תחנה" : undefined);
@@ -210,6 +214,19 @@ export function RouteEditor({ groups, route, today }: Props) {
                 <div className="input-shell price-input"><span>₪</span><input inputMode="decimal" {...register("price")} placeholder="0" /></div>
               </label>
             </div>
+            <label className="field route-notes">
+              <span>הערות לטרמפיסטיות <small className="optional-tag">לא חובה</small></span>
+              <div className="input-shell textarea-shell">
+                <textarea
+                  {...register("notes")}
+                  rows={3}
+                  maxLength={NOTES_MAX}
+                  placeholder="לדוגמה: אפשר לעלות עם עגלה, אני מחכה עד 5 דקות"
+                  aria-invalid={Boolean(errors.notes)}
+                />
+              </div>
+              <small className="char-count" aria-live="polite">{notes.length}/{NOTES_MAX}</small>
+            </label>
           </div>
 
           <div className="editor-section">

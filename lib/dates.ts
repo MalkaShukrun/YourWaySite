@@ -1,4 +1,4 @@
-import { addMonths, format, getHours, parseISO } from "date-fns";
+import { addDays, addMonths, format, getHours, parseISO } from "date-fns";
 import { he } from "date-fns/locale";
 import { TZDate } from "@date-fns/tz";
 import { io } from "next/cache";
@@ -46,6 +46,18 @@ export function formatShortRideDate(isoDate: string) {
 export function weekdaysOf(isoDates: string[]) {
   const days = [...new Set(isoDates.map((d) => parseISO(d).getDay()))].sort((a, b) => a - b);
   return days.map((d) => WEEKDAY_LETTERS[d]).join(" · ");
+}
+
+// The ride week (Sunday … Friday) that holds a date: "2025-06-24" → ["2025-06-22", …, "2025-06-27"]
+export function rideWeekOf(isoDate: string) {
+  const date = parseISO(isoDate);
+  const sunday = addDays(date, -date.getDay());
+  return Array.from({ length: 6 }, (_, i) => format(addDays(sunday, i), "yyyy-MM-dd"));
+}
+
+// ["2025-06-22", …, "2025-06-27"] → "22.6 – 27.6"
+export function formatWeekRange(week: string[]) {
+  return `${format(parseISO(week[0]), "d.M")} – ${format(parseISO(week[week.length - 1]), "d.M")}`;
 }
 
 // "07:15:00" → "07:15"

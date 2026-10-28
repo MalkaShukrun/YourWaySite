@@ -5,7 +5,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Car, Mail, Phone, User } from "lucide-react";
 import { saveProfile } from "@/app/(app)/profile/actions";
-import { profileSchema, type ProfileValues } from "@/lib/validation/profile";
+import { FULL_NAME_MAX, profileSchema, type ProfileValues } from "@/lib/validation/profile";
 import { Toast } from "@/components/ui/Toast";
 import { VehicleFields } from "@/components/profile/VehicleFields";
 import { carIconProps, iconProps } from "@/components/ui/icon";
@@ -50,7 +50,7 @@ export function ProfileForm({ initials, email, defaults }: Props) {
       <div className="form-grid">
         <label className="field">
           <span>שם מלא</span>
-          <div className="input-shell"><User {...iconProps} size={20} /><input {...register("fullName")} autoComplete="name" /></div>
+          <div className="input-shell"><User {...iconProps} size={20} /><input {...register("fullName")} autoComplete="name" maxLength={FULL_NAME_MAX} /></div>
           <FieldError message={errors.fullName?.message} />
         </label>
         <label className="field">

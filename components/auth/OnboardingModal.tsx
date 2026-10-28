@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Car, Phone, User } from "lucide-react";
-import { profileSchema, type ProfileValues } from "@/lib/validation/profile";
+import { FULL_NAME_MAX, profileSchema, type ProfileValues } from "@/lib/validation/profile";
 import { completeProfile, signOut } from "@/app/(auth)/login/actions";
 import { VehicleFields } from "@/components/profile/VehicleFields";
 import { carIconProps, iconProps } from "@/components/ui/icon";
@@ -61,7 +61,7 @@ export function OnboardingModal({ defaultName }: Props) {
         <div className="form-grid">
           <label className="field">
             <span>שם מלא</span>
-            <div className="input-shell"><input {...register("fullName")} autoComplete="name" /></div>
+            <div className="input-shell"><input {...register("fullName")} autoComplete="name" maxLength={FULL_NAME_MAX} /></div>
             <FieldError message={errors.fullName?.message} />
           </label>
           <label className="field required">

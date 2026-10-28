@@ -4,10 +4,9 @@ import { redirect } from "next/navigation";
 import { Car, Check, Clock, MapPin, Search, Users } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { AuthRoadIllustration } from "@/components/auth/AuthRoadIllustration";
-import { GoogleButton } from "@/components/auth/GoogleButton";
+import { SignInOptions } from "@/components/auth/SignInOptions";
 import { OnboardingModal } from "@/components/auth/OnboardingModal";
 import { getCurrentUser, homePathFor, needsOnboarding } from "@/lib/auth";
-import { ContactButton } from "@/components/contact/ContactButton";
 import { carIconProps, iconProps } from "@/components/ui/icon";
 
 export const metadata: Metadata = { title: "התחברות · בדרך שלך" };
@@ -17,7 +16,6 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
     <div className="auth-page">
       <header className="landing-header">
         <Logo />
-        <ContactButton />
       </header>
 
       <section className="auth-brand" aria-label="על בדרך שלך">
@@ -59,7 +57,7 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
             <span><Search {...iconProps} size={17} /> אני מחפשת טרמפ</span>
             <span><Car {...carIconProps} size={17} /> אני מציעה נסיעה</span>
           </div>
-          <GoogleButton />
+          <SignInOptions />
           <Suspense fallback={null}>
             <LoginError searchParams={searchParams} />
           </Suspense>

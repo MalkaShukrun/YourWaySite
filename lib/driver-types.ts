@@ -18,10 +18,11 @@ export type DriverRide = {
 export type DriverPassenger = {
   booking_id: string;
   route_id: string;
-  passenger_id: string;
+  passenger_id: string | null; // null for passengers the driver added
   passenger_name: string;
   passenger_phone: string | null;
-  passenger_email: string;
+  passenger_email: string | null; // null for passengers the driver added
+  added_by_driver: boolean;
   pickup_stop_id: string;
   pickup_label: string;
   pickup_lat: number | null;
@@ -44,6 +45,7 @@ export type DriverRoute = {
   return_time: string | null;
   seats: number;
   price: number;
+  notes: string | null;
   origin: string;
   destination: string;
 };

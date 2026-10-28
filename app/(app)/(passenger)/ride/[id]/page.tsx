@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, Car, Phone, Users } from "lucide-react";
+import { ArrowLeft, CalendarDays, Car, MessageSquareText, Phone, Users } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { formatRideDate, formatTime, isIsoDate } from "@/lib/dates";
 import { getMyBookings, getRide, getRouteDates } from "@/lib/rides";
@@ -96,6 +96,9 @@ async function RideDetailsView({ params, searchParams }: PageProps<"/ride/[id]">
             <span><CalendarDays {...iconProps} size={20} /> {formatRideDate(ride.ride_date)}</span>
             <span><Users {...iconProps} size={20} /> {full ? "הנסיעה מלאה" : seatsText(ride.seats_left)}</span>
           </div>
+          {ride.notes && (
+            <p className="trip-notes detail-notes"><MessageSquareText {...iconProps} size={18} /><span>{ride.notes}</span></p>
+          )}
         </section>
       </aside>
     </div>

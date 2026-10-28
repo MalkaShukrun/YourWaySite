@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { routeSchema, type RouteValues } from "@/lib/validation/route";
+import { NOTES_MAX, routeSchema, STOP_LABEL_MAX, type RouteValues } from "@/lib/validation/route";
 
 const valid: RouteValues = {
   groupId: "11111111-1111-4111-8111-111111111111",
@@ -9,6 +9,7 @@ const valid: RouteValues = {
   outTime: "07:30",
   seats: "4",
   price: "15",
+  notes: "",
   stops: [
     { id: "", kind: "pickup", label: "צומת", lat: 31.7, lng: 35 },
     { id: "", kind: "dropoff", label: "תחנה", lat: 31.8, lng: 35.2 },
@@ -57,8 +58,32 @@ describe("routeSchema", () => {
     expect(issues({ price })).toEqual(["מחיר לא תקין"]);
   });
 
+  it("accepts notes up to the limit", () => {
+    expect(issues({ notes: "א".repeat(NOTES_MAX) })).toEqual([]);
+  });
+
+  it("rejects notes over the limit", () => {
+    expect(issues({ notes: "א".repeat(NOTES_MAX + 1) })).toEqual([`עד ${NOTES_MAX} תווים בהערות`]);
+  });
+
   it("rejects weekdays outside 0–6", () => {
     expect(issues({ weekdays: [7] })).toHaveLength(1);
+  });
+
+  it("rejects a weekday chosen twice", () => {
+    expect(issues({ weekdays: [1, 1] })).toEqual(["יום נבחר פעמיים"]);
+  });
+
+  it("accepts a stop label up to the limit, and rejects a longer one", () => {
+    const withLabel = (label: string) => ({ stops: [{ ...valid.stops[0], label }, valid.stops[1]] });
+    expect(issues(withLabel("א".repeat(STOP_LABEL_MAX)))).toEqual([]);
+    expect(issues(withLabel("א".repeat(STOP_LABEL_MAX + 1)))).toEqual([`עד ${STOP_LABEL_MAX} תווים בשם התחנה`]);
+  });
+
+  it("accepts a saved stop's uuid and rejects any other id", () => {
+    const withId = (id: string) => ({ stops: [{ ...valid.stops[0], id }, valid.stops[1]] });
+    expect(issues(withId("22222222-2222-4222-8222-222222222222"))).toEqual([]);
+    expect(issues(withId("s1"))).toHaveLength(1);
   });
 
   it("rejects a stop with a one-letter label", () => {

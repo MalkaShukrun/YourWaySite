@@ -3,6 +3,9 @@
 // "07:15"
 export const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 
+// Israeli phone numbers: 050-123-4567, 0501234567, 02-123-4567
+export const PHONE_PATTERN = /^0\d{1,2}-?\d{3}-?\d{4}$/;
+
 // "2025-06-22"
 export const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 

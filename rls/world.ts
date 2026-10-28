@@ -74,8 +74,8 @@ export async function createWorld(): Promise<World> {
     await service
       .from("stops")
       .insert([
-        { route_id: route.id, kind: "pickup", label: "A" },
-        { route_id: route.id, kind: "dropoff", label: "B" },
+        { route_id: route.id, kind: "pickup", label: "Stop A" },
+        { route_id: route.id, kind: "dropoff", label: "Stop B" },
       ])
       .select("id, kind"),
   );
