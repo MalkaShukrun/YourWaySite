@@ -1,63 +1,40 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Clock } from "lucide-react";
-import { setRideCancelled, updateRideTime } from "@/app/(app)/(driver)/actions";
-import { TimePicker } from "@/components/ui/TimePicker";
+import { cancelRideForDate } from "@/app/(app)/(driver)/actions";
+import { ConfirmInline } from "@/components/ui/ConfirmInline";
 import { Toast } from "@/components/ui/Toast";
-import { iconProps } from "@/components/ui/icon";
 
 type RideRef = { routeId: string; date: string };
 
-// Update today's departure time on the fly (SRS §5.2).
-export function TimeUpdateForm({ routeId, date, time, disabled }: RideRef & { time: string; disabled: boolean }) {
-  const [value, setValue] = useState(time);
+// "Cancel ride for this date only" (SRS §6.1). Passengers see it as
+// cancelled, so it asks first and can't be undone.
+export function CancelForDateButton({ routeId, date }: RideRef) {
+  const [confirming, setConfirming] = useState(false);
   const [toast, setToast] = useState({ message: "", id: 0 });
   const [pending, startTransition] = useTransition();
 
-  const save = () =>
+  const cancel = () =>
     startTransition(async () => {
-      const result = await updateRideTime(routeId, date, value);
-      setToast((t) => ({ id: t.id + 1, message: result.error ?? `שעת היציאה עודכנה ל־${value}` }));
-    });
-
-  return (
-    <div className="time-update">
-      <div>
-        <Clock {...iconProps} size={20} />
-        <div>
-          <strong>שעת יציאה מעודכנת</strong>
-          <span>שינוי השעה חל על התאריך הזה בלבד</span>
-        </div>
-      </div>
-      <div className="time-control">
-        <TimePicker label="שעת יציאה" value={value} onChange={setValue} disabled={disabled} />
-        <button className="btn btn-secondary" onClick={save} disabled={disabled || pending || value === time}>
-          {pending ? "מעדכן..." : "עדכון שעה"}
-        </button>
-      </div>
-      <Toast message={toast.message} id={toast.id} />
-    </div>
-  );
-}
-
-// "Cancel ride for this date only" and undo (SRS §6.1).
-export function CancelForDateButton({ routeId, date, cancelled }: RideRef & { cancelled: boolean }) {
-  const [toast, setToast] = useState({ message: "", id: 0 });
-  const [pending, startTransition] = useTransition();
-
-  const toggle = () =>
-    startTransition(async () => {
-      const result = await setRideCancelled(routeId, date, !cancelled);
-      const message = result.error ?? (cancelled ? "הנסיעה הוחזרה ללוח" : "הנסיעה בוטלה לתאריך הזה בלבד");
-      setToast((t) => ({ id: t.id + 1, message }));
+      const result = await cancelRideForDate(routeId, date);
+      setToast((t) => ({ id: t.id + 1, message: result.error ?? "הנסיעה בוטלה לתאריך הזה בלבד" }));
+      setConfirming(false);
     });
 
   return (
     <>
-      <button className="btn btn-ghost" onClick={toggle} disabled={pending}>
-        {cancelled ? "החזרת הנסיעה" : "ביטול הנסיעה לתאריך זה בלבד"}
-      </button>
+      {confirming ? (
+        <ConfirmInline
+          question="לבטל את הנסיעה? אי אפשר להחזיר אותה."
+          confirmLabel="כן, לבטל"
+          pendingLabel="מבטל..."
+          pending={pending}
+          onConfirm={cancel}
+          onCancel={() => setConfirming(false)}
+        />
+      ) : (
+        <button className="btn btn-ghost" onClick={() => setConfirming(true)}>ביטול הנסיעה לתאריך זה בלבד</button>
+      )}
       <Toast message={toast.message} id={toast.id} />
     </>
   );

@@ -1,8 +1,9 @@
 "use client";
 
-import { SUPPORT_EMAIL } from "@/lib/support";
+import { SUPPORT_EMAIL } from "@/lib/site/support";
 
-export default function AppError({ reset }: { error: Error; reset: () => void }) {
+// retry() fetches the page's data again; reset() would only re-render what failed.
+export default function AppError({ retry }: { error: unknown; retry: () => void }) {
   return (
     <main className="page-content">
       <section className="panel empty-state">
@@ -12,7 +13,7 @@ export default function AppError({ reset }: { error: Error; reset: () => void })
             ? "ייתכן שבסיס הנתונים עדיין לא הוגדר (הריצי את קבצי ה־SQL שב־supabase/migrations)."
             : <>משהו השתבש אצלנו. נסי שוב בעוד רגע, ואם זה חוזר כתבי לנו ל־<a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.</>}
         </span>
-        <button className="btn btn-secondary" onClick={reset}>ניסיון חוזר</button>
+        <button className="btn btn-secondary" onClick={() => retry()}>ניסיון חוזר</button>
       </section>
     </main>
   );

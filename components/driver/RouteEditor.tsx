@@ -5,24 +5,35 @@ import Link from "next/link";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarDays, MapPin, Plus, Repeat, Route, Users } from "lucide-react";
-import { saveRoute } from "@/app/(app)/(driver)/actions";
+import { saveRoute, updateRoute } from "@/app/(app)/(driver)/actions";
 import { LazyRouteEditorMap } from "@/components/map/LazyMaps";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Select } from "@/components/ui/Select";
 import { TimePicker } from "@/components/ui/TimePicker";
 import { iconProps } from "@/components/ui/icon";
-import type { RideGroup } from "@/lib/ride-types";
-import type { EditableRoute } from "@/lib/driver-types";
-import { groupLabel, RIDE_WEEKDAYS } from "@/lib/format";
-import { groupArea } from "@/lib/places";
-import { NOTES_MAX, routeSchema, STOP_LABEL_MAX, type RouteValues } from "@/lib/validation/route";
+import type { RideGroup } from "@/lib/rides/types";
+import type { EditableRoute } from "@/lib/driver/types";
+import { groupLabel, RIDE_WEEKDAYS } from "@/lib/utils/format";
+import { groupArea } from "@/lib/utils/places";
+import { NOTES_MAX, routeSchema, STOP_LABEL_EMPTY, STOP_LABEL_MAX, type RouteValues } from "@/lib/validation/route";
 import { useHydrated } from "@/components/ui/useHydrated";
 
 type Props = { groups: RideGroup[]; route: EditableRoute | null; today: string };
 
-// Add / edit a route: details, days & times, and stops — marking them on the
-// map is optional (SRS §5.1).
+// One message for the stop list: missing names together, otherwise the first
+// stop's own problem (e.g. a one-letter name).
+function stopLabelError(stops: unknown) {
+  if (!Array.isArray(stops)) return undefined;
+  const messages = stops.map((s: { label?: { message?: string } } | undefined) => s?.label?.message).filter(Boolean);
+  if (messages.length === 0) return undefined;
+  return messages.includes(STOP_LABEL_EMPTY) ? "יש לתת שם לכל תחנה" : messages[0];
+}
+
+// Add a route: details, days & times, and stops — marking them on the map is
+// optional (SRS §5.1). A published route (`route`) is shown read-only; the
+// only changes it takes are its note and new stops.
 export function RouteEditor({ groups, route, today }: Props) {
+  const locked = route !== null;
   // The stop (by index) waiting for a click on the map.
   const [placing, setPlacing] = useState<number | null>(null);
   const [serverError, setServerError] = useState("");
@@ -69,7 +80,9 @@ export function RouteEditor({ groups, route, today }: Props) {
   const onSubmit = (values: RouteValues) =>
     startTransition(async () => {
       setServerError("");
-      const result = await saveRoute(values, route?.id ?? null);
+      const result = route
+        ? await updateRoute(route.id, { notes: values.notes, stops: values.stops.filter((s) => !s.id) })
+        : await saveRoute(values);
       if (result?.error) setServerError(result.error);
     });
 
@@ -86,28 +99,34 @@ export function RouteEditor({ groups, route, today }: Props) {
                 placeholder="שם התחנה (לדוגמה: צומת ביג)"
                 maxLength={STOP_LABEL_MAX}
                 autoFocus={!field.label}
+                readOnly={Boolean(field.id)}
                 aria-invalid={Boolean(errors.stops?.[index]?.label)}
               />
-              <button
-                type="button"
-                className={`stop-place ${stops[index]?.lat != null ? "is-placed" : ""} ${placing === index ? "is-armed" : ""}`}
-                onClick={() => setPlacing(placing === index ? null : index)}
-                aria-pressed={placing === index}
-                aria-label={stops[index]?.lat != null ? "שינוי המיקום על המפה" : "סימון על המפה"}
-                title={stops[index]?.lat != null ? "מסומנת על המפה — לחצי לשינוי" : "סימון על המפה (לא חובה)"}
-              >
-                <MapPin {...iconProps} size={16} />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setPlacing(null);
-                  remove(index);
-                }}
-                aria-label="מחיקת התחנה"
-              >
-                ×
-              </button>
+              {/* Saved stops are fixed; only new ones can be placed or removed. */}
+              {!field.id && (
+                <>
+                  <button
+                    type="button"
+                    className={`stop-place ${stops[index]?.lat != null ? "is-placed" : ""} ${placing === index ? "is-armed" : ""}`}
+                    onClick={() => setPlacing(placing === index ? null : index)}
+                    aria-pressed={placing === index}
+                    aria-label={stops[index]?.lat != null ? "שינוי המיקום על המפה" : "סימון על המפה"}
+                    title={stops[index]?.lat != null ? "מסומנת על המפה — לחצי לשינוי" : "סימון על המפה (לא חובה)"}
+                  >
+                    <MapPin {...iconProps} size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPlacing(null);
+                      remove(index);
+                    }}
+                    aria-label="מחיקת התחנה"
+                  >
+                    ×
+                  </button>
+                </>
+              )}
             </div>
           ),
         )}
@@ -136,17 +155,22 @@ export function RouteEditor({ groups, route, today }: Props) {
     errors.notes?.message ??
     errors.stops?.message ??
     errors.stops?.root?.message ??
-    (Array.isArray(errors.stops) && errors.stops.some((s) => s?.label) ? "יש לתת שם לכל תחנה" : undefined);
+    stopLabelError(errors.stops);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
       <div className="welcome">
-        <div><p>הגדרת נסיעה</p><h1>{route ? "עריכת מסלול" : "מסלול חדש"}</h1></div>
+        <div><p>הגדרת נסיעה</p><h1>{locked ? "עריכת מסלול" : "מסלול חדש"}</h1></div>
       </div>
 
       <div className="editor-layout">
         <section className="panel editor-form">
-          <div className="editor-section">
+          {locked && (
+            <p className="editor-locked-note">
+              מסלול שפורסם אי אפשר לשנות — אפשר רק לערוך את ההערה ולהוסיף תחנות. כדי לשנות פרטים אחרים, הסירי את המסלול והוסיפי מסלול חדש.
+            </p>
+          )}
+          <fieldset className="editor-section" disabled={locked}>
             <div className="section-heading"><span>1</span><div><h2>פרטי הנסיעה</h2><p>בחרי מסלול וסוג נסיעה</p></div></div>
             <div className="field">
               <span>מסלול נסיעה</span>
@@ -172,48 +196,51 @@ export function RouteEditor({ groups, route, today }: Props) {
                 <CalendarDays {...iconProps} size={20} /> נסיעה חד־פעמית
               </button>
             </div>
-          </div>
+          </fieldset>
 
           <div className="editor-section">
-            <div className="section-heading"><span>2</span><div><h2>ימים ושעות</h2><p>מתי את יוצאת וחוזרת?</p></div></div>
-            {kind === "recurring" && (
-              <div className="day-picker" role="group" aria-label="ימים בשבוע">
-                {RIDE_WEEKDAYS.map((day, index) => (
-                  <button type="button" key={day} className={weekdays.includes(index) ? "active" : ""} aria-pressed={weekdays.includes(index)} onClick={() => toggleDay(index)}>
-                    {day}
-                  </button>
-                ))}
-              </div>
-            )}
-            {/* One-time: the ride's date. Recurring: the first date it runs. */}
-            <div className="field one-time-date">
-              <span>{dateLabel}</span>
-              <Controller
-                control={control}
-                name="rideDate"
-                render={({ field }) => (
-                  <DatePicker label={dateLabel} value={field.value} onChange={field.onChange} today={today} min={today} />
-                )}
-              />
-            </div>
-            <div className="form-grid compact">
-              <div className="field">
-                <span>שעת יציאה</span>
+            {/* The note stays editable on a published route; the rest is fixed. */}
+            <fieldset className="editor-fields" disabled={locked}>
+              <div className="section-heading"><span>2</span><div><h2>ימים ושעות</h2><p>מתי את יוצאת וחוזרת?</p></div></div>
+              {kind === "recurring" && (
+                <div className="day-picker" role="group" aria-label="ימים בשבוע">
+                  {RIDE_WEEKDAYS.map((day, index) => (
+                    <button type="button" key={day} className={weekdays.includes(index) ? "active" : ""} aria-pressed={weekdays.includes(index)} onClick={() => toggleDay(index)}>
+                      {day}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {/* One-time: the ride's date. Recurring: the first date it runs. */}
+              <div className="field one-time-date">
+                <span>{dateLabel}</span>
                 <Controller
                   control={control}
-                  name="outTime"
-                  render={({ field }) => <TimePicker label="שעת יציאה" value={field.value} onChange={field.onChange} />}
+                  name="rideDate"
+                  render={({ field }) => (
+                    <DatePicker label={dateLabel} value={field.value} onChange={field.onChange} today={today} min={today} />
+                  )}
                 />
               </div>
-              <label className="field">
-                <span>מקומות פנויים</span>
-                <div className="input-shell"><Users {...iconProps} size={20} /><input inputMode="numeric" {...register("seats")} /></div>
-              </label>
-              <label className="field">
-                <span>מחיר לכל טרמפיסטית</span>
-                <div className="input-shell price-input"><span>₪</span><input inputMode="decimal" {...register("price")} placeholder="0" /></div>
-              </label>
-            </div>
+              <div className="form-grid compact">
+                <div className="field">
+                  <span>שעת יציאה</span>
+                  <Controller
+                    control={control}
+                    name="outTime"
+                    render={({ field }) => <TimePicker label="שעת יציאה" value={field.value} onChange={field.onChange} />}
+                  />
+                </div>
+                <label className="field">
+                  <span>מקומות פנויים</span>
+                  <div className="input-shell"><Users {...iconProps} size={20} /><input inputMode="numeric" {...register("seats")} /></div>
+                </label>
+                <label className="field">
+                  <span>מחיר לכל טרמפיסטית</span>
+                  <div className="input-shell price-input"><span>₪</span><input inputMode="decimal" {...register("price")} placeholder="0" /></div>
+                </label>
+              </div>
+            </fieldset>
             <label className="field route-notes">
               <span>הערות לטרמפיסטיות <small className="optional-tag">לא חובה</small></span>
               <div className="input-shell textarea-shell">
@@ -240,7 +267,7 @@ export function RouteEditor({ groups, route, today }: Props) {
             <div className="editor-actions">
               <Link className="btn btn-secondary" href="/routes">ביטול</Link>
               <button type="submit" className="btn btn-primary" disabled={!hydrated || pending}>
-                {pending ? "שומר..." : "שמירת המסלול"}
+                {pending ? "שומר..." : locked ? "שמירת השינויים" : "שמירת המסלול"}
               </button>
             </div>
           </div>

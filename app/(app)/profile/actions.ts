@@ -2,9 +2,9 @@
 
 import { refresh } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireUser } from "@/lib/auth";
-import { firstIssue } from "@/lib/action-errors";
-import { vehicleColumns } from "@/lib/profile";
+import { requireUser } from "@/lib/auth/session";
+import { firstIssue } from "@/lib/utils/action-errors";
+import { vehicleColumns } from "@/lib/profile/data";
 import { profileSchema, type ProfileValues } from "@/lib/validation/profile";
 
 // Save the profile screen (SRS §1.3). The email comes from Google and isn't

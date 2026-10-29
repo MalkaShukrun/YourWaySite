@@ -4,9 +4,9 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { CalendarDays, Check } from "lucide-react";
 import { bookRide } from "@/app/(app)/(passenger)/actions";
-import { isPlaced, type RideSummary, type Stop } from "@/lib/ride-types";
-import { formatRideDate, formatShortRideDate, formatTime } from "@/lib/dates";
-import { formatPrice, seatsText } from "@/lib/format";
+import { isPlaced, type RideSummary, type Stop } from "@/lib/rides/types";
+import { formatRideDate, formatShortRideDate } from "@/lib/utils/dates";
+import { formatPrice, seatsText } from "@/lib/utils/format";
 import { LazyRouteMap } from "@/components/map/LazyMaps";
 import { iconProps } from "@/components/ui/icon";
 
@@ -61,7 +61,7 @@ export function BookingForm({ routeId, date, price, stops, canBook, blockedReaso
             <span className="step-number"><CalendarDays {...iconProps} size={16} /></span>
             <div><h2>בחרי ימים</h2><p>נסיעה קבועה — אפשר לסמן כמה ימים ולהירשם לכולם יחד</p></div>
           </div>
-          <DayOptions days={days} time={days[0].out_time} selected={dates} booked={bookedDates} onToggle={toggleDate} disabled={ownRide} />
+          <DayOptions days={days} selected={dates} booked={bookedDates} onToggle={toggleDate} disabled={ownRide} />
         </section>
       )}
       <section className="booking-card station-booking-card">
@@ -125,14 +125,12 @@ export function BookingForm({ routeId, date, price, stops, canBook, blockedReaso
 // The route's dates as toggles. Full days and days already booked can't be picked.
 function DayOptions({
   days,
-  time,
   selected,
   booked,
   onToggle,
   disabled = false,
 }: {
   days: RideSummary[];
-  time: string; // the route's usual departure; a date that differs shows its own
   selected: string[];
   booked: string[];
   onToggle: (date: string) => void;
@@ -153,7 +151,7 @@ function DayOptions({
           );
         }
         const isSelected = selected.includes(day.ride_date);
-        const detail = day.out_time !== time ? formatTime(day.out_time) : `${day.seats_left} פנויים`;
+        const detail = `${day.seats_left} פנויים`;
         return (
           <button
             key={day.ride_date}

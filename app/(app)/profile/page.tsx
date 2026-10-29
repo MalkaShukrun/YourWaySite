@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { requireUser } from "@/lib/auth";
-import { getProfileValues } from "@/lib/profile";
-import { initialsOf } from "@/lib/format";
+import { requireUser } from "@/lib/auth/session";
+import { getProfileValues } from "@/lib/profile/data";
+import { initialsOf } from "@/lib/utils/format";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 
-export const metadata: Metadata = { title: "הפרופיל שלי · בדרך שלך" };
+export const metadata: Metadata = { title: "הפרופיל שלי" };
 
 // Personal profile (SRS §1.3): details, vehicle and payment account.
 export default function ProfilePage() {

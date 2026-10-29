@@ -3,7 +3,7 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { MapContainer, Marker, Tooltip } from "react-leaflet";
-import { isPlaced, type Stop } from "@/lib/ride-types";
+import { isPlaced, type Stop } from "@/lib/rides/types";
 import { MapLegend, MapTiles, RoutePath, stopPinIcon, useMapKey } from "./mapParts";
 
 // Interactive map (React Leaflet + OpenStreetMap) showing only the driver's

@@ -1,15 +1,19 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { CalendarDays, Car, ChevronDown, MapPin, Plus, Users } from "lucide-react";
-import { requireUser } from "@/lib/auth";
-import { formatRideDate, formatWeekRange, greetingFor, isIsoDate, israelHour, israelToday, rideWeekOf } from "@/lib/dates";
-import { getDriverDay } from "@/lib/driver";
-import { firstNameOf } from "@/lib/format";
+import { format } from "date-fns";
+import { requireUser } from "@/lib/auth/session";
+import { formatRideDate, formatTime, formatWeekRange, greetingFor, isIsoDate, israelHour, israelNow, israelToday, rideWeekOf } from "@/lib/utils/dates";
+import { getDriverDay } from "@/lib/driver/data";
+import { firstNameOf } from "@/lib/utils/format";
 import { DashboardDatePicker } from "@/components/driver/DashboardDatePicker";
 import { DriverRideCard } from "@/components/driver/DriverRideCard";
 import { WeekDays } from "@/components/driver/WeekDays";
 import { StatCard } from "@/components/ui/StatCard";
 import { carIconProps, iconProps } from "@/components/ui/icon";
+
+export const metadata: Metadata = { title: "הנסיעות שלי השבוע" };
 
 // Driver weekly dashboard (SRS §5.2): the rides of the week (Sunday–Saturday) that holds the chosen date.
 // Days without rides are left out, so Saturday shows only when a ride falls on it.
@@ -26,7 +30,8 @@ export default function DriverDashboardPage({ searchParams }: PageProps<"/dashbo
 async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "searchParams">) {
   const user = await requireUser();
   const query = await searchParams;
-  const [today, hour] = await Promise.all([israelToday(), israelHour()]);
+  const [today, hour, now] = await Promise.all([israelToday(), israelHour(), israelNow()]);
+  const nowTime = format(now, "HH:mm");
   const date = isIsoDate(query.date) ? query.date : today;
   const week = rideWeekOf(date);
   const days = await Promise.all(week.map(async (day) => ({ day, rides: (await getDriverDay(day)).rides })));
@@ -38,6 +43,14 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
   const rideDays = days.filter((d) => d.rides.length > 0);
   // Only today's rides start expanded; in a week without rides today, the chosen date (or the first ride day) opens instead.
   const openDay = [today, date].find((d) => rideDays.some((r) => r.day === d)) ?? rideDays[0]?.day;
+  // A ride has left once its departure time on that date has passed.
+  // Today is marked once every ride still on for it has left.
+  const rideDeparted = (day: string, ride: { out_time: string }) =>
+    day < today || (day === today && formatTime(ride.out_time) <= nowTime);
+  const departed = (day: string, rides: (typeof days)[number]["rides"]) => {
+    const active = rides.filter((r) => !r.cancelled);
+    return active.length > 0 && active.every((r) => rideDeparted(day, r));
+  };
   const actions = (
     <div className="dashboard-actions">
       <DashboardDatePicker value={date} display={formatWeekRange(week)} today={today} week={week} />
@@ -74,11 +87,12 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
           <details className="week-day" key={day} open={day === openDay}>
             <summary className={`week-day-head ${day === today ? "today" : ""}`}>
               {formatRideDate(day)}{day === today && <span>היום</span>}
+              {day === today && departed(day, rides) && <span className="departed">שעת היציאה עברה</span>}
               <ChevronDown {...iconProps} size={20} className="week-day-chevron" />
             </summary>
             <div className="today-list">
               {rides.map((ride, i) => (
-                <DriverRideCard key={ride.route_id} ride={ride} date={day} open={day === openDay && i === 0} />
+                <DriverRideCard key={ride.route_id} ride={ride} date={day} departed={rideDeparted(day, ride)} open={day === openDay && i === 0} />
               ))}
             </div>
           </details>

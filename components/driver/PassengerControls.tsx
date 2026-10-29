@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { Phone, Plus, User } from "lucide-react";
 import { addPassenger, removePassenger } from "@/app/(app)/(driver)/actions";
-import type { Stop } from "@/lib/ride-types";
+import type { Stop } from "@/lib/rides/types";
 import { GUEST_NAME_MAX } from "@/lib/validation/passenger";
 import { ConfirmInline } from "@/components/ui/ConfirmInline";
 import { Select } from "@/components/ui/Select";
@@ -21,17 +21,26 @@ export function AddPassengerForm({ routeId, date, stops }: RideRef & { stops: St
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState(empty);
   const [error, setError] = useState("");
+  // The guest already holding this phone's seat, while the driver is asked
+  // whether to replace her booking.
+  const [existingGuest, setExistingGuest] = useState<string | null>(null);
   const [toast, setToast] = useState({ message: "", id: 0 });
   const [pending, startTransition] = useTransition();
 
-  const set = (field: keyof typeof empty) => (value: string) => setValues((v) => ({ ...v, [field]: value }));
+  const set = (field: keyof typeof empty) => (value: string) => {
+    setExistingGuest(null);
+    setValues((v) => ({ ...v, [field]: value }));
+  };
 
-  const submit = () =>
+  const submit = (replace = false) =>
     startTransition(async () => {
       setError("");
-      const result = await addPassenger(routeId, date, values);
+      const result = await addPassenger(routeId, date, values, replace);
+      if ("existingGuest" in result) return setExistingGuest(result.existingGuest ?? "");
+      setExistingGuest(null);
       if (result.error) return setError(result.error);
-      setToast((t) => ({ id: t.id + 1, message: `${values.name.trim()} נוספה לנסיעה` }));
+      const name = values.name.trim();
+      setToast((t) => ({ id: t.id + 1, message: replace ? `ההרשמה של ${name} עודכנה` : `${name} נוספה לנסיעה` }));
       setValues(empty);
       setOpen(false);
     });
@@ -72,10 +81,23 @@ export function AddPassengerForm({ routeId, date, stops }: RideRef & { stops: St
         </div>
       </div>
       {error && <small className="field-error" role="alert">{error}</small>}
-      <div className="add-passenger-actions">
-        <button type="submit" className="btn btn-primary" disabled={pending}>{pending ? "מוסיף..." : "הוספה לנסיעה"}</button>
-        <button type="button" className="btn btn-ghost" onClick={() => { setOpen(false); setError(""); }}>ביטול</button>
-      </div>
+      {existingGuest !== null ? (
+        <div role="alert">
+          <ConfirmInline
+            question={`כבר יש הרשמה עם מספר הטלפון הזה${existingGuest ? ` (${existingGuest})` : ""}. להחליף אותה?`}
+            confirmLabel="כן, להחליף"
+            pendingLabel="מחליף..."
+            pending={pending}
+            onConfirm={() => submit(true)}
+            onCancel={() => setExistingGuest(null)}
+          />
+        </div>
+      ) : (
+        <div className="add-passenger-actions">
+          <button type="submit" className="btn btn-primary" disabled={pending}>{pending ? "מוסיף..." : "הוספה לנסיעה"}</button>
+          <button type="button" className="btn btn-ghost" onClick={() => { setOpen(false); setError(""); }}>ביטול</button>
+        </div>
+      )}
     </form>
   );
 }

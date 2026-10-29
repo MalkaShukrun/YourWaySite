@@ -4,11 +4,10 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { requireUser } from "@/lib/auth";
-import { firstIssue, messageForCode } from "@/lib/action-errors";
+import { requireUser } from "@/lib/auth/session";
+import { firstIssue, messageForCode } from "@/lib/utils/action-errors";
 import { addPassengerSchema, type AddPassengerValues } from "@/lib/validation/passenger";
-import { TIME_PATTERN } from "@/lib/validation/patterns";
-import { routeSchema, type RouteValues } from "@/lib/validation/route";
+import { routeSchema, routeUpdateSchema, type RouteUpdateValues, type RouteValues } from "@/lib/validation/route";
 
 const ERRORS: Record<string, string> = {
   STOPS_REQUIRED: "יש להגדיר לפחות תחנת איסוף אחת ותחנת הורדה אחת.",
@@ -20,23 +19,27 @@ const ERRORS: Record<string, string> = {
   INVALID_PASSENGER: "יש להזין שם וטלפון.",
   INVALID_STOP: "התחנה שנבחרה אינה חלק מהמסלול.",
   BOOKING_NOT_FOUND: "ההרשמה לא נמצאה.",
+  ROUTE_LOCKED: "אי אפשר לשנות מסלול שפורסם — אפשר רק לערוך את ההערה ולהוסיף תחנות.",
+  RIDE_CANCELLED: "הנסיעה בוטלה לתאריך הזה, ואי אפשר להחזיר אותה.",
+  RIDE_DEPARTED: "הנסיעה כבר יצאה ולא ניתן לבטל אותה.",
+  RIDE_PAST: "הנסיעה כבר התקיימה ונשמרת בהיסטוריה — אי אפשר להסיר אותה.",
 };
 
 const messageFor = (error: { message: string }) => messageForCode(error, ERRORS);
 
 const rideRef = z.object({ routeId: z.uuid(), date: z.iso.date() });
 
-// Create or edit a route with its stops (SRS §5.1).
-export async function saveRoute(values: RouteValues, routeId: string | null) {
+// Create a route with its stops (SRS §5.1). Once published it can't be
+// changed, only given a new note and more stops (updateRoute) or removed.
+export async function saveRoute(values: RouteValues) {
   await requireUser();
   const parsed = routeSchema.safeParse(values);
   if (!parsed.success) return { error: firstIssue(parsed.error) };
-  if (routeId !== null && !z.uuid().safeParse(routeId).success) return { error: ERRORS.ROUTE_NOT_FOUND };
 
   const v = parsed.data;
   const supabase = await createClient();
   const { error } = await supabase.rpc("save_route", {
-    p_route_id: routeId,
+    p_route_id: null,
     p_route: {
       group_id: v.groupId,
       kind: v.kind,
@@ -49,12 +52,26 @@ export async function saveRoute(values: RouteValues, routeId: string | null) {
     },
     p_stops: v.stops.map((s) => ({ id: s.id, kind: s.kind, label: s.label, lat: s.lat, lng: s.lng })),
   });
-  if (error) {
-    // Seats lowered below the passengers already booked on an upcoming date.
-    const booked = /SEATS_BELOW_BOOKINGS:(\d+)/.exec(error.message)?.[1];
-    if (booked) return { error: `כבר רשומות ${booked} טרמפיסטיות לאחד התאריכים הקרובים, אז אי אפשר להגדיר פחות מ־${booked} מקומות.` };
-    return { error: messageFor(error) };
-  }
+  if (error) return { error: messageFor(error) };
+
+  redirect("/routes?saved=1");
+}
+
+// The only changes a published route takes: its note, and more stops after its
+// existing ones (0022_lock_routes.sql, 0028_editable_route_notes.sql).
+export async function updateRoute(routeId: string, values: RouteUpdateValues) {
+  await requireUser();
+  if (!z.uuid().safeParse(routeId).success) return { error: ERRORS.ROUTE_NOT_FOUND };
+  const parsed = routeUpdateSchema.safeParse(values);
+  if (!parsed.success) return { error: firstIssue(parsed.error) };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_route", {
+    p_route_id: routeId,
+    p_notes: parsed.data.notes,
+    p_stops: parsed.data.stops.map((s) => ({ kind: s.kind, label: s.label, lat: s.lat, lng: s.lng })),
+  });
+  if (error) return { error: messageFor(error) };
 
   redirect("/routes?saved=1");
 }
@@ -77,33 +94,17 @@ export async function archiveRoute(routeId: string) {
   return {};
 }
 
-// Real-time departure update for one date (SRS §5.2).
-export async function updateRideTime(routeId: string, date: string, time: string) {
-  await requireUser();
-  if (!rideRef.safeParse({ routeId, date }).success || !TIME_PATTERN.test(time)) {
-    return { error: "שעה לא תקינה" };
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("ride_exceptions")
-    .upsert({ route_id: routeId, ride_date: date, out_time: time }, { onConflict: "route_id,ride_date" });
-  if (error) return { error: messageFor(error) };
-
-  refresh();
-  return {};
-}
-
-// "Cancel ride for this date only" — and undo (SRS §6.1). The recurring
+// "Cancel ride for this date only" (SRS §6.1). Passengers see the ride as
+// cancelled, and it can't be restored (0022_lock_routes.sql). The recurring
 // schedule for other dates is untouched.
-export async function setRideCancelled(routeId: string, date: string, cancelled: boolean) {
+export async function cancelRideForDate(routeId: string, date: string) {
   await requireUser();
   if (!rideRef.safeParse({ routeId, date }).success) return { error: ERRORS.ROUTE_NOT_FOUND };
 
   const supabase = await createClient();
   const { error } = await supabase
     .from("ride_exceptions")
-    .upsert({ route_id: routeId, ride_date: date, cancelled }, { onConflict: "route_id,ride_date" });
+    .upsert({ route_id: routeId, ride_date: date, cancelled: true }, { onConflict: "route_id,ride_date" });
   if (error) return { error: messageFor(error) };
 
   refresh();
@@ -111,8 +112,11 @@ export async function setRideCancelled(routeId: string, date: string, cancelled:
 }
 
 // Add a passenger to a ride by hand. The booking keeps her name and phone and
-// isn't linked to any user account (supabase/migrations/0013).
-export async function addPassenger(routeId: string, date: string, values: AddPassengerValues) {
+// isn't linked to any user account (supabase/migrations/0013). A phone that
+// already holds a guest seat on this ride is replaced only with `replace`;
+// without it the answer is `existingGuest`, her name, so the driver can be
+// asked first (0029_confirm_guest_replace.sql).
+export async function addPassenger(routeId: string, date: string, values: AddPassengerValues, replace = false) {
   await requireUser();
   if (!rideRef.safeParse({ routeId, date }).success) return { error: ERRORS.ROUTE_NOT_FOUND };
   const parsed = addPassengerSchema.safeParse(values);
@@ -127,7 +131,9 @@ export async function addPassenger(routeId: string, date: string, values: AddPas
     p_phone: v.phone,
     p_pickup_stop_id: v.pickupStopId,
     p_dropoff_stop_id: v.dropoffStopId,
+    p_replace: replace,
   });
+  if (error?.message.includes("GUEST_EXISTS")) return { existingGuest: error.details ?? "" };
   if (error) return { error: messageFor(error) };
 
   refresh();

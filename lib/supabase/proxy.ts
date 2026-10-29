@@ -1,12 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { publicOrigin } from "@/lib/public-origin";
+import { publicOrigin } from "@/lib/auth/public-origin";
 
 const PUBLIC_PATHS = ["/login", "/auth", "/privacy"];
 
 // Refreshes the Supabase session cookie on every request and sends
 // signed-out visitors to /login. Role checks (admin) happen on the server
-// in lib/auth.ts — this is only an optimistic check.
+// in lib/auth/session.ts — this is only an optimistic check.
 export async function updateSession(request: NextRequest) {
   // Supabase falls back to the Site URL (e.g. "/?code=…") when /auth/callback
   // isn't in its Redirect URLs list — hand the code to the callback anyway.

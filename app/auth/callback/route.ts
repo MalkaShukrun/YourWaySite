@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentUser, homePathFor, needsOnboarding } from "@/lib/auth";
+import { getCurrentUser, homePathFor, needsOnboarding } from "@/lib/auth/session";
 
 // A relative Location: the browser resolves it against the address it is on,
 // so the hosting proxy's internal one (https://localhost:10000) never leaks.

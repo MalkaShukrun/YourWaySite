@@ -1,15 +1,18 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
-import { requireUser } from "@/lib/auth";
-import { greetingFor, isIsoDate, israelHour, israelToday } from "@/lib/dates";
-import { getRideGroups, searchRides } from "@/lib/rides";
-import type { RideKind } from "@/lib/ride-types";
-import { firstNameOf } from "@/lib/format";
-import { groupByRoute, groupIdsFrom } from "@/lib/search-results";
+import { requireUser } from "@/lib/auth/session";
+import { greetingFor, isIsoDate, israelHour, israelToday } from "@/lib/utils/dates";
+import { getRideGroups, searchRides } from "@/lib/rides/data";
+import type { RideKind } from "@/lib/rides/types";
+import { firstNameOf } from "@/lib/utils/format";
+import { groupByRoute, groupIdsFrom } from "@/lib/rides/search";
 import { TIME_PATTERN } from "@/lib/validation/patterns";
 import { SearchPanel } from "@/components/passenger/SearchPanel";
 import { RideCard } from "@/components/passenger/RideCard";
 
 type SearchParams = PageProps<"/">["searchParams"];
+
+export const metadata: Metadata = { title: "חיפוש נסיעה" };
 
 // Passenger home — ride search (SRS §4.1).
 export default function FindRidePage({ searchParams }: PageProps<"/">) {

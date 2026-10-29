@@ -41,13 +41,13 @@ a.nav-item { text-decoration: none; }
 @media (max-width: 780px) { .search-actions .btn { flex: 1; } }
 .btn.is-disabled { color: #8a958f; cursor: not-allowed; }
 
-/* A recurring route's dates, on its search card and its ride page
-   (components/passenger/RideDateChips.tsx) */
+/* A route's dates, on its search card (components/passenger/RideDateChips.tsx)
+   and its booking form (components/passenger/BookingForm.tsx) */
 .trip-dates { display: flex; flex-wrap: wrap; gap: 6px; }
 .trip-info .trip-dates { gap: 6px; }
 .ride-days .trip-dates { margin-top: 14px; gap: 8px; }
 .ride-days .trip-dates a, .ride-days .trip-dates button, .ride-days .trip-dates span { min-width: 76px; padding: 7px 10px; font-size: 16px; }
-.trip-dates a.selected, .trip-dates a.selected:hover, .trip-dates button.selected, .trip-dates button.selected:hover { border-color: var(--green); background: var(--lime); color: var(--green-dark); }
+.trip-dates button.selected, .trip-dates button.selected:hover { border-color: var(--green); background: var(--lime); color: var(--green-dark); }
 .trip-dates a, .trip-dates button, .trip-dates span { min-width: 62px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 9px; display: inline-flex; flex-direction: column; align-items: center; color: #3b4842; font-size: 15px; font-weight: 700; line-height: 1.35; text-decoration: none; transition: .2s ease; }
 .trip-dates a:hover, .trip-dates button:hover { border-color: #9DB2C0; color: var(--green); background: var(--green-soft); }
 .trip-dates small { color: #66736C; font-size: 13px; font-weight: 500; }
@@ -60,7 +60,6 @@ a.nav-item { text-decoration: none; }
 .balance-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; border-bottom: 1px solid var(--line); }
 .balance-row:last-child { border: 0; }
 .balance-row > span { color: var(--ink); font-weight: 800; font-size: 17px; }
-.late-call { margin-top: 18px; }
 
 /* Leaflet map (replaces the design's static map illustration) */
 .route-map { isolation: isolate; }
@@ -97,9 +96,7 @@ a.nav-item { text-decoration: none; }
 .week-day-chevron { color: #66736C; transition: transform .2s; }
 .week-day[open] .week-day-chevron { transform: rotate(180deg); }
 .week-day-head span { color: var(--green-dark); background: var(--lime); border-radius: 999px; padding: 2px 10px; font-size: 14px; }
-.time-control { display: flex; gap: 8px; }
-.time-control .time-picker { width: 168px; }
-@media (max-width: 780px) { .time-control .time-picker { flex: 1; width: auto; } }
+.week-day-head span.departed { color: #59665F; background: #EEF1EF; }
 .passenger-empty { margin: 0; padding: 18px 25px; color: #59665F; }
 .today-card .daily-route-preview { margin-bottom: 22px; }
 .confirm-inline { display: inline-flex; align-items: center; gap: 6px; color: #59665F; font-size: 16px; }
@@ -115,8 +112,6 @@ a.nav-item { text-decoration: none; }
 @media (max-width: 780px) { .editor-map .large-map.route-map { height: 320px; } }
 
 /* Privacy policy (public page, linked from the login screen) */
-.auth-card > .privacy-link { max-width: none; margin: 12px 0 0; text-align: center; color: #66736C; font-size: 16px; line-height: 1.4; }
-.privacy-link a { color: var(--green); font-weight: 700; text-decoration: underline; }
 .privacy-consent { display: flex; align-items: center; gap: 9px; margin: 4px 0 6px; color: #48554f; font-size: 16px; cursor: pointer; }
 .privacy-consent input { width: 18px; height: 18px; flex: 0 0 auto; accent-color: var(--green); }
 .privacy-consent a { color: var(--green); font-weight: 700; text-decoration: underline; }

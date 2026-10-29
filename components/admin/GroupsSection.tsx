@@ -1,6 +1,6 @@
 import { Car, Route, Users } from "lucide-react";
-import { getAdminGroups } from "@/lib/admin";
-import { groupLabel } from "@/lib/format";
+import { getAdminGroups } from "@/lib/admin/data";
+import { groupLabel } from "@/lib/utils/format";
 import { StatCard } from "@/components/ui/StatCard";
 import { GroupActions } from "@/components/admin/GroupActions";
 import { carIconProps, iconProps } from "@/components/ui/icon";

@@ -1,8 +1,8 @@
 "use server";
 
-import { requireUser } from "@/lib/auth";
-import { firstIssue, GENERIC_ERROR } from "@/lib/action-errors";
-import { SUPPORT_EMAIL } from "@/lib/support";
+import { requireUser } from "@/lib/auth/session";
+import { firstIssue, GENERIC_ERROR } from "@/lib/utils/action-errors";
+import { SUPPORT_EMAIL } from "@/lib/site/support";
 import { contactSchema, type ContactValues } from "@/lib/validation/contact";
 
 // Sends the contact form to CONTACT_TO_EMAIL (default: SUPPORT_EMAIL) through Resend's REST API.

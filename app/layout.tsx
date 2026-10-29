@@ -9,7 +9,7 @@ const assistant = Assistant({
 });
 
 export const metadata: Metadata = {
-  title: "בדרך שלך",
+  title: { default: "בדרך שלך", template: "%s · בדרך שלך" },
   description: "ניהול טרמפים ונסיעות קבוצתיות — נוסעות יחד, מגיעות רחוק",
 };
 

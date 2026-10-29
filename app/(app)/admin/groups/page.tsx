@@ -1,10 +1,10 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth/session";
 import { GroupsSection } from "@/components/admin/GroupsSection";
 import { GroupDialog } from "@/components/admin/GroupDialog";
 
-export const metadata: Metadata = { title: "ניהול קבוצות · בדרך שלך" };
+export const metadata: Metadata = { title: "ניהול קבוצות" };
 
 // Group management (SRS §8): only admins add, edit, hide or delete ride
 // groups, so drivers pick from one consistent list.

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Route, Users } from "lucide-react";
-import { getSiteStats, type SiteStats as Stats } from "@/lib/stats";
+import { getSiteStats, type SiteStats as Stats } from "@/lib/site/stats";
 import { CountUp } from "./CountUp";
 import { iconProps } from "@/components/ui/icon";
 

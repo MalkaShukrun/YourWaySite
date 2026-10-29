@@ -3,8 +3,8 @@
 import { refresh } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth";
-import { firstIssue, GENERIC_ERROR } from "@/lib/action-errors";
+import { requireAdmin } from "@/lib/auth/session";
+import { firstIssue, GENERIC_ERROR } from "@/lib/utils/action-errors";
 import { groupSchema, type GroupValues } from "@/lib/validation/group";
 
 // Group management (SRS §8). RLS also limits ride_groups writes to admins.
@@ -51,7 +51,9 @@ export async function updateGroup(groupId: string, values: GroupValues) {
 // existing routes and bookings stay.
 export async function setGroupActive(groupId: string, active: boolean) {
   await requireAdmin();
-  if (!z.uuid().safeParse(groupId).success) return { error: GROUP_NOT_FOUND };
+  if (!z.uuid().safeParse(groupId).success || !z.boolean().safeParse(active).success) {
+    return { error: GROUP_NOT_FOUND };
+  }
 
   const supabase = await createClient();
   const { error } = await supabase.from("ride_groups").update({ is_active: active }).eq("id", groupId);

@@ -5,12 +5,13 @@ import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import { MapContainer, Marker, Tooltip, useMap, useMapEvents } from "react-leaflet";
 import { MapPin } from "lucide-react";
-import type { Area } from "@/lib/places";
+import type { Area } from "@/lib/utils/places";
 import { iconProps } from "@/components/ui/icon";
-import { isPlaced } from "@/lib/ride-types";
+import { isPlaced } from "@/lib/rides/types";
 import { MapLegend, MapTiles, RoutePath, stopPinIcon, useMapKey } from "./mapParts";
 
-type EditorStop = { kind: "pickup" | "dropoff"; label: string; lat: number | null; lng: number | null };
+// `id` is set for a stop already saved on a published route; those stay put.
+type EditorStop = { id?: string; kind: "pickup" | "dropoff"; label: string; lat: number | null; lng: number | null };
 
 type Props = {
   stops: EditorStop[];
@@ -52,7 +53,7 @@ export default function RouteEditorMap({ stops, area, placing, onPlace, onMove }
           <Marker
             key={index}
             position={[stop.lat, stop.lng]}
-            draggable
+            draggable={!stop.id}
             icon={stopPinIcon(stop.kind, numberOf(index))}
             eventHandlers={{
               dragend: (e) => {

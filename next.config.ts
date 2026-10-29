@@ -28,7 +28,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // The e2e tests run their own server in .next-e2e (playwright.config.ts), so
+  // they never share a build with `npm run dev` or `npm start`.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {

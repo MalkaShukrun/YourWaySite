@@ -1,11 +1,14 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { requireUser } from "@/lib/auth";
-import { israelToday } from "@/lib/dates";
-import { getRideGroups } from "@/lib/rides";
+import { requireUser } from "@/lib/auth/session";
+import { israelToday } from "@/lib/utils/dates";
+import { getRideGroups } from "@/lib/rides/data";
 import { RouteEditor } from "@/components/driver/RouteEditor";
 import { iconProps } from "@/components/ui/icon";
+
+export const metadata: Metadata = { title: "מסלול חדש" };
 
 export default function NewRoutePage() {
   return (

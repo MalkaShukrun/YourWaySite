@@ -7,10 +7,10 @@ import { AuthRoadIllustration } from "@/components/auth/AuthRoadIllustration";
 import { SignInOptions } from "@/components/auth/SignInOptions";
 import { OnboardingModal } from "@/components/auth/OnboardingModal";
 import { SiteStats } from "@/components/auth/SiteStats";
-import { getCurrentUser, homePathFor, needsOnboarding } from "@/lib/auth";
+import { getCurrentUser, homePathFor, needsOnboarding } from "@/lib/auth/session";
 import { carIconProps, iconProps } from "@/components/ui/icon";
 
-export const metadata: Metadata = { title: "התחברות · בדרך שלך" };
+export const metadata: Metadata = { title: "התחברות" };
 
 export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (

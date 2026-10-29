@@ -14,10 +14,10 @@ export function ConfirmInline({ question, confirmLabel, pendingLabel, pending, o
   return (
     <span className="confirm-inline">
       <span>{question}</span>
-      <button className="btn btn-ghost" disabled={pending} onClick={onConfirm}>
+      <button type="button" className="btn btn-ghost" disabled={pending} onClick={onConfirm}>
         {pending ? pendingLabel : confirmLabel}
       </button>
-      <button className="btn btn-secondary" onClick={onCancel}>ביטול</button>
+      <button type="button" className="btn btn-secondary" onClick={onCancel}>ביטול</button>
     </span>
   );
 }

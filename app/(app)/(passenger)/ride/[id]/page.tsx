@@ -1,14 +1,17 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, Car, MessageSquareText, Phone, Users } from "lucide-react";
-import { requireUser } from "@/lib/auth";
-import { formatRideDate, formatTime, isIsoDate } from "@/lib/dates";
-import { getMyBookings, getRide, getRouteDates } from "@/lib/rides";
-import { avatarColorFor, initialsOf, kindLabel, seatsText } from "@/lib/format";
+import { requireUser } from "@/lib/auth/session";
+import { formatRideDate, formatTime, isIsoDate } from "@/lib/utils/dates";
+import { getMyBookings, getRide, getRouteDates } from "@/lib/rides/data";
+import { avatarColorFor, initialsOf, kindLabel, seatsText } from "@/lib/utils/format";
 import { BookingForm } from "@/components/passenger/BookingForm";
 import { carIconProps, iconProps } from "@/components/ui/icon";
 import { isUuid } from "@/lib/validation/patterns";
+
+export const metadata: Metadata = { title: "פרטי נסיעה" };
 
 // Ride details & booking (SRS §4.2).
 export default function RidePage({ params, searchParams }: PageProps<"/ride/[id]">) {

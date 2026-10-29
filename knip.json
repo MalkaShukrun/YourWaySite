@@ -1,4 +1,3 @@
-
 {
   "$schema": "https://unpkg.com/knip@latest/schema.json",
   "next": true,
@@ -6,8 +5,9 @@
     "next.config.{js,mjs,cjs,ts}",
     "eslint.config.{js,mjs,cjs}",
     "playwright.config.{js,mjs,cjs,ts}",
-    "e2e/**/*.{js,mjs,cjs,ts}",
-    "rls/**/*.test.ts"
+    "tests/**/*.{test,spec}.ts",
+    "tests/integration/global-setup.ts",
+    "vitest.integration.config.mts"
   ],
   "project": [
     "**/*.{js,jsx,mjs,cjs,ts,tsx,css}",
@@ -15,6 +15,7 @@
     "!.next",
     "!coverage",
     "!playwright-report",
-    "!test-results"
+    "!test-results",
+    "!.next-e2e"
   ]
 }

@@ -1,5 +1,5 @@
 -- YourWay — a driver's phone and email only for passengers still on the ride.
--- Run after 0008_remove_bank_details.sql. Safe to run again.
+-- Run after 00081_remove_bank_details.sql. Safe to run again.
 --
 -- my_bookings returned the driver's contact details for every booking the
 -- passenger ever made, including ones cancelled in time. Now, like get_ride

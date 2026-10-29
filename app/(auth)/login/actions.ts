@@ -3,8 +3,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentUser, homePathFor } from "@/lib/auth";
-import { vehicleColumns } from "@/lib/profile";
+import { getCurrentUser, homePathFor } from "@/lib/auth/session";
+import { vehicleColumns } from "@/lib/profile/data";
 import { profileSchema, type ProfileValues } from "@/lib/validation/profile";
 
 export async function completeProfile(values: ProfileValues) {

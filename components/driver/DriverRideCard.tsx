@@ -1,18 +1,18 @@
 import { Phone, Route } from "lucide-react";
-import { formatTime } from "@/lib/dates";
-import { isPlaced, type Stop } from "@/lib/ride-types";
-import type { DriverPassenger, DriverRide } from "@/lib/driver-types";
-import { avatarColorFor, groupLabel, initialsOf, routeKindLabel } from "@/lib/format";
+import { formatTime } from "@/lib/utils/dates";
+import { isPlaced, type Stop } from "@/lib/rides/types";
+import type { DriverPassenger, DriverRide } from "@/lib/driver/types";
+import { avatarColorFor, groupLabel, initialsOf, routeKindLabel } from "@/lib/utils/format";
 import { CollapsibleRideCard } from "@/components/driver/CollapsibleRideCard";
 import { AddPassengerForm, RemovePassengerButton } from "@/components/driver/PassengerControls";
-import { CancelForDateButton, TimeUpdateForm } from "@/components/driver/RideDayControls";
+import { CancelForDateButton } from "@/components/driver/RideDayControls";
 import { LazyRouteMap } from "@/components/map/LazyMaps";
 import { iconProps } from "@/components/ui/icon";
 
 // One ride on the driver's dashboard for the chosen date: its passengers, a
-// time change or cancellation for that date, and the day's stops. Collapsed
-// unless `open`.
-export function DriverRideCard({ ride, date, open = false }: { ride: DriverRide & { passengers: DriverPassenger[]; stops: Stop[] }; date: string; open?: boolean }) {
+// cancellation for that date, and the day's stops. A ride that
+// has `departed` can't be cancelled. Collapsed unless `open`.
+export function DriverRideCard({ ride, date, departed = false, open = false }: { ride: DriverRide & { passengers: DriverPassenger[]; stops: Stop[] }; date: string; departed?: boolean; open?: boolean }) {
   const bookedStopIds = ride.passengers.flatMap((p) => [p.pickup_stop_id, p.dropoff_stop_id]);
   const pickups = stopsInOrder(ride.passengers, (p) => ({ id: p.pickup_stop_id, label: p.pickup_label, position: p.pickup_position }));
   const dropoffs = stopsInOrder(ride.passengers, (p) => ({ id: p.dropoff_stop_id, label: p.dropoff_label, position: p.dropoff_position }));
@@ -36,19 +36,12 @@ export function DriverRideCard({ ride, date, open = false }: { ride: DriverRide 
       }
       actions={
         <>
-          {ride.cancelled && <span className="status-pill danger"><i></i>בוטלה לתאריך זה</span>}
-          <CancelForDateButton routeId={ride.route_id} date={date} cancelled={ride.cancelled} />
+          {ride.cancelled
+            ? <span className="status-pill danger"><i></i>בוטלה לתאריך זה</span>
+            : !departed && <CancelForDateButton routeId={ride.route_id} date={date} />}
         </>
       }
     >
-      <TimeUpdateForm
-        key={ride.out_time}
-        routeId={ride.route_id}
-        date={date}
-        time={formatTime(ride.out_time)}
-        disabled={ride.cancelled}
-      />
-
       <div className="passengers-head">
         <h3>טרמפיסטיות רשומות ופרטי קשר</h3>
         {!ride.cancelled && ride.booked < ride.seats && (

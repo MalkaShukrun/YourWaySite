@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { formatMonth } from "@/lib/dates";
+import { formatMonth } from "@/lib/utils/dates";
 import { Select } from "@/components/ui/Select";
 
 export function MonthFilter({ months, value }: { months: string[]; value: string }) {

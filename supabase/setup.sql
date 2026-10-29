@@ -1,5 +1,5 @@
 -- YourWay — full database setup. Paste this whole file into Supabase → SQL Editor → Run.
--- Generated from supabase/migrations/0001–0021. Safe to run more than once.
+-- Generated from supabase/migrations/0001–0030. Safe to run more than once.
 
 
 -- ════════ supabase/migrations/0001_profiles.sql ════════
@@ -924,7 +924,7 @@ revoke execute on function public.get_ride, public.my_drivers_bank from anon, pu
 grant execute on function public.get_ride, public.my_drivers_bank to authenticated;
 
 
--- ════════ supabase/migrations/0008_enum_types.sql ════════
+-- ════════ supabase/migrations/00080_enum_types.sql ════════
 -- YourWay — enum types for route kinds, stop kinds and booking statuses.
 -- Run after 0007_privacy_fixes.sql. Safe to run again.
 --
@@ -1158,7 +1158,7 @@ revoke execute on function public.search_rides, public.cancel_booking, public.sa
 grant execute on function public.search_rides, public.cancel_booking, public.save_route to authenticated;
 
 
--- ════════ supabase/migrations/0008_remove_bank_details.sql ════════
+-- ════════ supabase/migrations/00081_remove_bank_details.sql ════════
 -- YourWay — drivers' bank details are no longer collected or shown.
 -- Run after 0007_privacy_fixes.sql, once the app without bank details is
 -- deployed (the old app reads these columns). Safe to run again.
@@ -1178,7 +1178,7 @@ alter table public.profiles
 
 -- ════════ supabase/migrations/0009_contact_privacy.sql ════════
 -- YourWay — a driver's phone and email only for passengers still on the ride.
--- Run after 0008_remove_bank_details.sql. Safe to run again.
+-- Run after 00081_remove_bank_details.sql. Safe to run again.
 --
 -- my_bookings returned the driver's contact details for every booking the
 -- passenger ever made, including ones cancelled in time. Now, like get_ride
@@ -2515,3 +2515,534 @@ create trigger routes_check_seats_not_below_bookings
   before update of seats on public.routes
   for each row when (new.seats < old.seats)
   execute function public.check_seats_not_below_bookings();
+
+
+-- ════════ supabase/migrations/0022_lock_routes.sql ════════
+-- YourWay — a published route can't be changed, only given more stops; and a
+-- date the driver cancelled stays cancelled.
+-- Run after 0021_seats_not_below_bookings.sql. Safe to run again.
+--
+-- Passengers book a route as it was published: its days, time, seats, price
+-- and stops. Changing any of them under a booking left passengers with a ride
+-- they never signed up for. Now, for signed-in users:
+--   • a route's details are fixed once it is created — it can only be taken
+--     off the schedule (is_active → false), never put back;
+--   • its stops can't be changed or removed — new ones are added with
+--     add_route_stops();
+--   • "cancel for this date only" can't be undone: passengers were already
+--     told the ride is off (my_bookings → ride_cancelled).
+-- The service role and the SQL editor (no signed-in user) are not limited,
+-- for maintenance.
+
+-- ─── Routes ──────────────────────────────────────────────────────────────────
+
+create or replace function public.lock_route()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if auth.uid() is null then return new; end if;
+  if to_jsonb(new) - 'is_active' is distinct from to_jsonb(old) - 'is_active'
+     or (new.is_active and not old.is_active) then
+    raise exception 'ROUTE_LOCKED';
+  end if;
+  return new;
+end;
+$$;
+
+revoke execute on function public.lock_route from anon, authenticated, public;
+
+drop trigger if exists routes_lock on public.routes;
+create trigger routes_lock
+  before update on public.routes
+  for each row execute function public.lock_route();
+
+-- ─── Stops ───────────────────────────────────────────────────────────────────
+
+-- Deleting a route still takes its stops with it (on delete cascade): by then
+-- the route row is gone.
+create or replace function public.lock_stop()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if auth.uid() is null then return coalesce(new, old); end if;
+  if tg_op = 'DELETE' and not exists (select 1 from public.routes where id = old.route_id) then
+    return old;
+  end if;
+  raise exception 'ROUTE_LOCKED';
+end;
+$$;
+
+revoke execute on function public.lock_stop from anon, authenticated, public;
+
+drop trigger if exists stops_lock on public.stops;
+create trigger stops_lock
+  before update or delete on public.stops
+  for each row execute function public.lock_stop();
+
+-- New stops go after the route's existing ones of the same kind.
+create or replace function public.add_route_stops(p_route_id uuid, p_stops jsonb)
+returns void
+language plpgsql
+security invoker set search_path = ''
+as $$
+declare
+  v_stop     jsonb;
+  v_kind     public.stop_kind;
+  v_position smallint;
+begin
+  if auth.uid() is null then raise exception 'NOT_SIGNED_IN'; end if;
+  if not exists (select 1 from public.routes where id = p_route_id and driver_id = auth.uid() and is_active) then
+    raise exception 'ROUTE_NOT_FOUND';
+  end if;
+  if jsonb_array_length(coalesce(p_stops, '[]')) = 0 then raise exception 'NO_NEW_STOPS'; end if;
+
+  for v_stop in select * from jsonb_array_elements(p_stops) loop
+    v_kind := (v_stop ->> 'kind')::public.stop_kind;
+    select coalesce(max(position), 0) + 1 into v_position
+    from public.stops where route_id = p_route_id and kind = v_kind;
+
+    insert into public.stops (route_id, kind, label, lat, lng, position)
+    values (p_route_id, v_kind, v_stop ->> 'label',
+            (v_stop ->> 'lat')::double precision, (v_stop ->> 'lng')::double precision, v_position);
+  end loop;
+end;
+$$;
+
+revoke execute on function public.add_route_stops from anon, public;
+grant execute on function public.add_route_stops to authenticated;
+
+-- ─── Per-date cancellation ───────────────────────────────────────────────────
+
+create or replace function public.lock_cancelled_ride()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if auth.uid() is null or not old.cancelled then return coalesce(new, old); end if;
+  if tg_op = 'UPDATE' and new.cancelled then return new; end if;
+  if tg_op = 'DELETE' and not exists (select 1 from public.routes where id = old.route_id) then
+    return old;
+  end if;
+  raise exception 'RIDE_CANCELLED';
+end;
+$$;
+
+revoke execute on function public.lock_cancelled_ride from anon, authenticated, public;
+
+drop trigger if exists ride_exceptions_lock_cancelled on public.ride_exceptions;
+create trigger ride_exceptions_lock_cancelled
+  before update or delete on public.ride_exceptions
+  for each row execute function public.lock_cancelled_ride();
+
+
+-- ════════ supabase/migrations/0023_no_cancel_after_departure.sql ════════
+-- YourWay — a ride can't be cancelled for a date once it has left.
+-- Run after 0022_lock_routes.sql. Safe to run again.
+--
+-- "Cancel for this date only" after the departure time told passengers a ride
+-- was off when it had already taken place. The service role and the SQL
+-- editor (no signed-in user) are not limited, for maintenance.
+
+create or replace function public.no_cancel_after_departure()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+declare
+  v_depart timestamptz;
+begin
+  if auth.uid() is null or not new.cancelled then return new; end if;
+  if tg_op = 'UPDATE' and old.cancelled then return new; end if;
+
+  select public.departure_at(new.ride_date, r.out_time) into v_depart
+  from public.routes r
+  where r.id = new.route_id;
+
+  if v_depart <= now() then raise exception 'RIDE_DEPARTED'; end if;
+  return new;
+end;
+$$;
+
+revoke execute on function public.no_cancel_after_departure from anon, authenticated, public;
+
+drop trigger if exists ride_exceptions_no_cancel_after_departure on public.ride_exceptions;
+create trigger ride_exceptions_no_cancel_after_departure
+  before insert or update on public.ride_exceptions
+  for each row execute function public.no_cancel_after_departure();
+
+
+-- ════════ supabase/migrations/0024_keep_past_rides.sql ════════
+-- YourWay — a one-time ride that has already left stays in the driver's history.
+-- Run after 0023_no_cancel_after_departure.sql. Safe to run again.
+--
+-- Removing a route takes it off the schedule (is_active → false), which also
+-- dropped a ride that already happened from the driver's history. A one-time
+-- ride can no longer be removed once its date and departure time have passed.
+-- The service role and the SQL editor (no signed-in user) are not limited,
+-- for maintenance.
+
+create or replace function public.keep_past_ride()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if auth.uid() is null or not (old.is_active and not new.is_active and old.kind = 'one_time') then
+    return new;
+  end if;
+  if public.departure_at(old.ride_date, old.out_time) <= now() then raise exception 'RIDE_PAST'; end if;
+  return new;
+end;
+$$;
+
+revoke execute on function public.keep_past_ride from anon, authenticated, public;
+
+drop trigger if exists routes_keep_past_ride on public.routes;
+create trigger routes_keep_past_ride
+  before update on public.routes
+  for each row execute function public.keep_past_ride();
+
+
+-- ════════ supabase/migrations/0025_no_per_date_times.sql ════════
+-- YourWay — a ride always leaves at its route's time.
+-- Run after 0024_keep_past_rides.sql. Safe to run again.
+--
+-- Drivers could once change the departure time for a single date
+-- (ride_exceptions.out_time). That feature is gone: the times saved with it
+-- are cleared, and no new ones can be set. The column stays, empty, so the
+-- functions that read coalesce(x.out_time, r.out_time) need no change — they
+-- now always get the route's time. A ride_exceptions row is left only for a
+-- date the driver cancelled.
+
+update public.ride_exceptions set out_time = null where out_time is not null;
+delete from public.ride_exceptions where not cancelled;
+
+alter table public.ride_exceptions drop constraint if exists ride_exceptions_no_out_time;
+alter table public.ride_exceptions add constraint ride_exceptions_no_out_time check (out_time is null);
+
+
+-- ════════ supabase/migrations/0026_no_late_cancellations.sql ════════
+-- YourWay — every passenger cancellation is a regular one.
+-- Run after 0025_no_per_date_times.sql. Safe to run again.
+--
+-- A booking cancelled less than two hours before departure used to be marked
+-- 'late_cancelled': it stayed in the payment journal and kept the driver's
+-- contact details visible. That rule is gone — a passenger can cancel until the
+-- ride leaves, and the seat simply frees up. Bookings already marked late become
+-- regular cancellations, so no charge is left behind, and the status can no
+-- longer be set. The enum value stays (Postgres can't drop one in use by older
+-- function bodies), but no row can hold it, so the checks for it in
+-- my_bookings and the other functions never match.
+
+create or replace function public.cancel_booking(p_booking_id uuid)
+returns text
+language plpgsql
+security definer set search_path = ''
+as $$
+declare
+  v_booking public.bookings;
+  v_depart  timestamptz;
+begin
+  select * into v_booking from public.bookings
+  where id = p_booking_id and passenger_id = auth.uid() and status = 'active'
+  for update;
+  if not found then raise exception 'BOOKING_NOT_FOUND'; end if;
+
+  select public.departure_at(v_booking.ride_date, r.out_time) into v_depart
+  from public.routes r
+  where r.id = v_booking.route_id;
+
+  if v_depart <= now() then raise exception 'RIDE_DEPARTED'; end if;
+
+  update public.bookings set status = 'cancelled', cancelled_at = now() where id = p_booking_id;
+  return 'cancelled';
+end;
+$$;
+
+-- create or replace keeps the existing grants; repeated so this file stands alone.
+revoke execute on function public.cancel_booking from anon, public;
+grant execute on function public.cancel_booking to authenticated;
+
+update public.bookings set status = 'cancelled' where status = 'late_cancelled';
+
+alter table public.bookings drop constraint if exists bookings_no_late_cancelled;
+alter table public.bookings add constraint bookings_no_late_cancelled check (status <> 'late_cancelled');
+
+
+-- ════════ supabase/migrations/0027_hidden_groups_closed.sql ════════
+-- YourWay — rides in a hidden group can't be booked.
+-- Run after 0026_no_late_cancellations.sql. Safe to run again.
+--
+-- Hiding a group took its rides out of search, but a ride page opened from a
+-- saved link still offered booking, and book_ride accepted it. Now get_ride
+-- reports such a ride as unavailable and book_ride refuses it with
+-- RIDE_UNAVAILABLE. What hiding leaves alone is unchanged: existing bookings
+-- stay, the driver's routes keep running on her dashboard, and she can still
+-- add passengers by hand (add_passenger).
+
+create or replace function public.book_ride(
+  p_route_id uuid, p_date date, p_pickup_stop_id uuid, p_dropoff_stop_id uuid
+)
+returns uuid
+language plpgsql
+security definer set search_path = ''
+as $$
+declare
+  v_uid   uuid := auth.uid();
+  v_route public.routes;
+  v_taken integer;
+  v_id    uuid;
+begin
+  if v_uid is null then raise exception 'NOT_SIGNED_IN'; end if;
+  select * into v_route from public.routes where id = p_route_id for update;
+  if not found or not v_route.is_active or not public.route_runs_on(v_route, p_date)
+     or not exists (select 1 from public.ride_groups where id = v_route.group_id and is_active) then
+    raise exception 'RIDE_UNAVAILABLE';
+  end if;
+  if v_route.driver_id = v_uid then raise exception 'OWN_RIDE'; end if;
+  if exists (select 1 from public.ride_exceptions
+             where route_id = p_route_id and ride_date = p_date and cancelled)
+     or public.departure_at(p_date, v_route.out_time) <= now() then
+    raise exception 'RIDE_UNAVAILABLE';
+  end if;
+  if not exists (select 1 from public.stops where id = p_pickup_stop_id and route_id = p_route_id
+                 and kind = 'pickup' and is_active)
+     or not exists (select 1 from public.stops where id = p_dropoff_stop_id and route_id = p_route_id
+                    and kind = 'dropoff' and is_active) then
+    raise exception 'INVALID_STOP';
+  end if;
+  if exists (select 1 from public.bookings where route_id = p_route_id and ride_date = p_date
+             and passenger_id = v_uid and status = 'active') then
+    raise exception 'ALREADY_BOOKED';
+  end if;
+  select count(*) into v_taken from public.bookings
+  where route_id = p_route_id and ride_date = p_date and status = 'active';
+  if v_taken >= v_route.seats then raise exception 'RIDE_FULL'; end if;
+  insert into public.bookings (route_id, ride_date, passenger_id, pickup_stop_id, dropoff_stop_id)
+  values (p_route_id, p_date, v_uid, p_pickup_stop_id, p_dropoff_stop_id)
+  returning id into v_id;
+  return v_id;
+end;
+$$;
+
+-- Same as in 0011, with the group's is_active in is_available.
+create or replace function public.get_ride(p_route_id uuid, p_date date)
+returns table (
+  route_id        uuid,
+  ride_date       date,
+  kind            text,
+  driver_id       uuid,
+  driver_name     text,
+  driver_phone    text,
+  driver_email    text,
+  vehicle_model   text,
+  vehicle_color   text,
+  origin          text,
+  destination     text,
+  out_time        time,
+  return_time     time,
+  seats           smallint,
+  seats_left      integer,
+  price           numeric,
+  notes           text,
+  is_available    boolean,
+  my_booking_id   uuid
+)
+language sql stable
+security definer set search_path = ''
+as $$
+  with mine as (
+    select b.id from public.bookings b
+    where b.route_id = p_route_id and b.ride_date = p_date
+      and b.passenger_id = auth.uid() and b.status = 'active'
+  )
+  select r.id, p_date, r.kind, r.driver_id, p.full_name,
+         case when exists (select 1 from mine) then p.phone end,
+         case when exists (select 1 from mine) then p.email end,
+         p.vehicle_model, p.vehicle_color, g.origin, g.destination,
+         r.out_time, r.return_time, r.seats,
+         r.seats - (select count(*) from public.bookings b
+                    where b.route_id = r.id and b.ride_date = p_date and b.status = 'active')::integer,
+         r.price, r.notes,
+         r.is_active and g.is_active and public.route_runs_on(r, p_date) and coalesce(x.cancelled, false) = false
+           and public.departure_at(p_date, r.out_time) > now(),
+         (select id from mine)
+  from public.routes r
+  join public.ride_groups g on g.id = r.group_id
+  join public.profiles p on p.id = r.driver_id
+  left join public.ride_exceptions x on x.route_id = r.id and x.ride_date = p_date
+  where auth.uid() is not null and r.id = p_route_id
+$$;
+
+-- create or replace keeps the existing grants; repeated so this file stands alone.
+revoke execute on function public.book_ride, public.get_ride from anon, public;
+grant execute on function public.book_ride, public.get_ride to authenticated;
+
+
+-- ════════ supabase/migrations/0028_editable_route_notes.sql ════════
+-- YourWay — a published route's note can be changed.
+-- Run after 0027_hidden_groups_closed.sql. Safe to run again.
+--
+-- The note is free text for passengers ("I wait up to 5 minutes"), not part of
+-- what they booked, so the driver can now change or clear it after publishing
+-- (until the route is removed).
+-- Everything else stays as 0022_lock_routes.sql left it: the route's other
+-- details are fixed and its stops can only be added to. update_route() saves
+-- the note and any new stops together.
+
+create or replace function public.lock_route()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if auth.uid() is null then return new; end if;
+  if to_jsonb(new) - 'is_active' - 'notes' is distinct from to_jsonb(old) - 'is_active' - 'notes'
+     or (new.is_active and not old.is_active)
+     or (new.notes is distinct from old.notes and not old.is_active) then
+    raise exception 'ROUTE_LOCKED';
+  end if;
+  return new;
+end;
+$$;
+
+revoke execute on function public.lock_route from anon, authenticated, public;
+
+create or replace function public.update_route(p_route_id uuid, p_notes text, p_stops jsonb)
+returns void
+language plpgsql
+security invoker set search_path = ''
+as $$
+begin
+  if auth.uid() is null then raise exception 'NOT_SIGNED_IN'; end if;
+  update public.routes set notes = nullif(btrim(p_notes), '')
+  where id = p_route_id and driver_id = auth.uid() and is_active;
+  if not found then raise exception 'ROUTE_NOT_FOUND'; end if;
+
+  if jsonb_array_length(coalesce(p_stops, '[]')) > 0 then
+    perform public.add_route_stops(p_route_id, p_stops);
+  end if;
+end;
+$$;
+
+revoke execute on function public.update_route from anon, public;
+grant execute on function public.update_route to authenticated;
+
+
+-- ════════ supabase/migrations/0029_confirm_guest_replace.sql ════════
+-- YourWay — replacing a guest booking needs the driver's confirmation.
+-- Run after 0028_editable_route_notes.sql. Safe to run again.
+--
+-- Adding a phone that already holds a guest seat on the same ride and date
+-- used to replace that booking silently (0014). Now add_passenger refuses with
+-- GUEST_EXISTS — the existing guest's name in the error's detail, for the
+-- question the driver is asked — unless it is called again with
+-- p_replace => true. A form left open on an old page can't overwrite a
+-- booking without asking. Everything else is as in 0014.
+
+drop function if exists public.add_passenger(uuid, date, text, text, uuid, uuid);
+
+create or replace function public.add_passenger(
+  p_route_id uuid, p_date date, p_name text, p_phone text,
+  p_pickup_stop_id uuid, p_dropoff_stop_id uuid, p_replace boolean default false
+)
+returns uuid
+language plpgsql
+security definer set search_path = ''
+as $$
+declare
+  v_uid      uuid := auth.uid();
+  v_name     text := btrim(p_name);
+  v_phone    text := btrim(p_phone);
+  v_digits   text := public.phone_digits(p_phone);
+  v_route    public.routes;
+  v_old      uuid;
+  v_old_name text;
+  v_taken    integer;
+  v_id       uuid;
+begin
+  if v_uid is null then raise exception 'NOT_SIGNED_IN'; end if;
+  if coalesce(char_length(v_name), 0) not between 2 and 60 or v_name ~ '[[:cntrl:]]'
+     or coalesce(v_phone, '') !~ '^0\d{1,2}-?\d{3}-?\d{4}$' then
+    raise exception 'INVALID_PASSENGER';
+  end if;
+
+  -- Locking the route also serializes adds to it, so two at once can't both
+  -- replace the same booking or take the last seat.
+  select * into v_route from public.routes where id = p_route_id for update;
+  if not found or v_route.driver_id <> v_uid then raise exception 'ROUTE_NOT_FOUND'; end if;
+  if not v_route.is_active or not public.route_runs_on(v_route, p_date)
+     or exists (select 1 from public.ride_exceptions
+                where route_id = p_route_id and ride_date = p_date and cancelled) then
+    raise exception 'RIDE_UNAVAILABLE';
+  end if;
+
+  if not exists (select 1 from public.stops where id = p_pickup_stop_id and route_id = p_route_id
+                 and kind = 'pickup' and is_active)
+     or not exists (select 1 from public.stops where id = p_dropoff_stop_id and route_id = p_route_id
+                    and kind = 'dropoff' and is_active) then
+    raise exception 'INVALID_STOP';
+  end if;
+
+  if exists (select 1 from public.profiles where id = v_uid and public.phone_digits(phone) = v_digits) then
+    raise exception 'OWN_RIDE';
+  end if;
+
+  -- A passenger who booked herself (the driver already sees her phone in
+  -- driver_passengers).
+  if exists (select 1 from public.bookings b
+             join public.profiles p on p.id = b.passenger_id
+             where b.route_id = p_route_id and b.ride_date = p_date and b.status = 'active'
+               and public.phone_digits(p.phone) = v_digits) then
+    raise exception 'ALREADY_BOOKED';
+  end if;
+
+  -- The guest booking this one replaces, if any — only once the driver agreed.
+  select id, guest_name into v_old, v_old_name from public.bookings
+  where route_id = p_route_id and ride_date = p_date and status = 'active'
+    and passenger_id is null and public.phone_digits(guest_phone) = v_digits;
+  if v_old is not null and not coalesce(p_replace, false) then
+    raise exception 'GUEST_EXISTS' using detail = v_old_name;
+  end if;
+
+  -- The replaced booking's seat is free for the new one.
+  select count(*) into v_taken from public.bookings
+  where route_id = p_route_id and ride_date = p_date and status = 'active'
+    and id is distinct from v_old;
+  if v_taken >= v_route.seats then raise exception 'RIDE_FULL'; end if;
+
+  if v_old is not null then
+    update public.bookings set status = 'cancelled', cancelled_at = now() where id = v_old;
+  end if;
+
+  insert into public.bookings (route_id, ride_date, passenger_id, pickup_stop_id, dropoff_stop_id,
+                               added_by_driver, guest_name, guest_phone)
+  values (p_route_id, p_date, null, p_pickup_stop_id, p_dropoff_stop_id, true, v_name, v_phone)
+  returning id into v_id;
+  return v_id;
+end;
+$$;
+
+revoke execute on function public.add_passenger(uuid, date, text, text, uuid, uuid, boolean) from anon, public;
+grant execute on function public.add_passenger(uuid, date, text, text, uuid, uuid, boolean) to authenticated;
+
+
+-- ════════ supabase/migrations/0030_paid_mark_private.sql ════════
+-- YourWay — a passenger's paid / unpaid mark is hers alone.
+-- Run after 0029_confirm_guest_replace.sql. Safe to run again.
+--
+-- Drivers may read the bookings on their rides, and that read included
+-- is_paid, though only the passenger may see it (SRS "who sees what"). Now
+-- signed-in users can read every column of bookings except is_paid. The
+-- passenger still sees her own mark through my_bookings(), and still sets it
+-- (the update grant on is_paid is unchanged).
+
+revoke select on public.bookings from authenticated;
+grant select (id, route_id, ride_date, passenger_id, pickup_stop_id, dropoff_stop_id, status,
+              created_at, cancelled_at, added_by_driver, guest_name, guest_phone, price)
+  on public.bookings to authenticated;

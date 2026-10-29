@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
-import { SUPPORT_EMAIL } from "@/lib/support";
+import { SUPPORT_EMAIL } from "@/lib/site/support";
 import { iconProps } from "@/components/ui/icon";
 
-export const metadata: Metadata = { title: "מדיניות פרטיות · בדרך שלך" };
+export const metadata: Metadata = { title: "מדיניות פרטיות" };
 
 // Public page (no sign-in needed) — linked from the login screen.
 export default function PrivacyPolicyPage() {

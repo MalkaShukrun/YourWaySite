@@ -1,6 +1,6 @@
-// Unit tests: every *.test.ts under tests/, mirroring the source layout.
-// Browser tests live in e2e/ and run separately with Playwright; database
-// (RLS) tests live in rls/ and run with npm run test:rls.
+// Unit tests (npm test): tests/unit/**/*.test.ts. Pure logic and server code
+// with Next and Supabase replaced by stand-ins — no database, no browser.
+// Integration tests: vitest.integration.config.mts. E2E: playwright.config.ts.
 import { defineConfig } from "vitest/config";
 import tsconfigPaths from "vite-tsconfig-paths";
 
@@ -8,8 +8,7 @@ export default defineConfig({
   plugins: [tsconfigPaths()],
   test: {
     environment: "node",
-    include: ["**/*.test.ts"],
-    setupFiles: ["./tests/setup.ts"],
-    exclude: ["node_modules", ".next", "rls"],
+    include: ["tests/unit/**/*.test.ts"],
+    setupFiles: ["./tests/unit/setup.ts"],
   },
 });

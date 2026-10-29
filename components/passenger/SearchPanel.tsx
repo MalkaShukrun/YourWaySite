@@ -6,8 +6,8 @@ import { Car, Info, MapPin, Repeat, RotateCcw, Search } from "lucide-react";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { MultiSelect, Select } from "@/components/ui/Select";
 import { TimePicker } from "@/components/ui/TimePicker";
-import type { RideGroup, RideKind } from "@/lib/ride-types";
-import { groupLabel } from "@/lib/format";
+import type { RideGroup, RideKind } from "@/lib/rides/types";
+import { groupLabel } from "@/lib/utils/format";
 import { carIconProps, iconProps } from "@/components/ui/icon";
 
 const ROUTE_HINT = "להוספת מסלולי נסיעה מעיר לעיר יש ליצור קשר";

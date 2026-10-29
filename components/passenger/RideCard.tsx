@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ArrowLeft, CalendarDays, Clock, MapPin, MessageSquareText, Users } from "lucide-react";
-import { formatTime, weekdaysOf } from "@/lib/dates";
-import type { RideSummary } from "@/lib/ride-types";
-import { avatarColorFor, formatPrice, initialsOf, kindLabel, seatsText } from "@/lib/format";
+import { formatTime, weekdaysOf } from "@/lib/utils/dates";
+import type { RideSummary } from "@/lib/rides/types";
+import { avatarColorFor, formatPrice, initialsOf, kindLabel } from "@/lib/utils/format";
 import { iconProps } from "@/components/ui/icon";
 import { RideDateChips } from "@/components/passenger/RideDateChips";
 
@@ -40,7 +40,7 @@ export function RideCard({ rides, own = false }: { rides: RideSummary[]; own?: b
           <span>{severalDates ? "בימים" : "ביום"} <b>{weekdaysOf(rides.map((r) => r.ride_date))}</b></span>
         </div>
         {/* Every card shows its dates as chips — one for a single date — so all cards share one layout. */}
-        <RideDateChips rides={rides} time={first.out_time} />
+        <RideDateChips rides={rides} />
         <div><Clock {...iconProps} size={20} /><span>יציאה ב־<b>{formatTime(first.out_time)}</b></span></div>
         {/* One line here; the full note, with its line breaks, in the bubble. */}
         {first.notes && (
@@ -58,10 +58,8 @@ export function RideCard({ rides, own = false }: { rides: RideSummary[]; own?: b
       <div className="trip-footer">
         <div className="seats">
           <span className="seat-icon"><Users {...iconProps} size={18} /></span>
-          <div>
-            <strong>{next ? seatsText(next.seats_left) : "הנסיעה מלאה"}</strong>
-            <span>מתוך {first.seats} מקומות</span>
-          </div>
+          {/* The ride's size only; each date's free seats are on its chip. */}
+          <div><strong>{first.seats === 1 ? "נוסעת אחת" : `עד ${first.seats} נוסעות`}</strong></div>
         </div>
         {own ? (
           <Link className="btn btn-secondary" href={rideHref(next ?? first)}>

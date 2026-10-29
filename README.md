@@ -13,12 +13,11 @@ Ride-sharing and group transportation app. Next.js (App Router) + Supabase.
    Google is the only sign-in method. The app has no email/password form, but the Supabase API
    still accepts email sign-ups while the **Email** provider is on, so turn it off in production
    (*Authentication → Sign In / Providers → Email*). Local Supabase (`supabase/config.toml`)
-   keeps it on with sign-ups disabled, because the RLS tests sign in test users with a password.
+   keeps it on, because the integration and e2e tests sign in test users with a password.
 4. **Redirect URLs** — *Authentication → URL Configuration*: add `http://localhost:3000/auth/callback`.
 5. **Env** — copy `.env.example` to `.env.local` and fill in the URL and publishable key
    (*Project Settings → API*). In production also set `SITE_URL` to the site's public address
    (e.g. `https://yourway.onrender.com`): redirects use it, never the request's Host headers.
-   The secret key for e2e tests goes in `.env.e2e.local`, which the app never loads.
 6. Run:
    ```bash
    npm install
@@ -44,3 +43,20 @@ update public.profiles set is_admin = true where email = 'someone@gmail.com';
 ```
 
 Users can't change their own `is_admin` flag (enforced by column grants + RLS).
+
+## Tests
+
+The tests follow the scenarios in `docs/SPECIFICATION.md` and live under `tests/`:
+
+| Folder | What it checks | Tools | Run |
+|---|---|---|---|
+| `tests/unit` | Dates, formatting, validation, business rules and the server actions, with Next and Supabase replaced by stand-ins | Vitest | `npm test` |
+| `tests/integration` | The database itself: permissions, functions, triggers and constraints, signed in as real test users | Vitest + local Supabase | `npm run test:integration` |
+| `tests/e2e` | Whole scenarios in a browser, as passengers, drivers and admins | Playwright + local Supabase | `npm run test:e2e` |
+
+Integration and e2e tests need the local Supabase: install Docker Desktop, then run
+`npx supabase start` in this folder (the first start downloads the images). They create their
+own users and data and remove them afterwards; they refuse to run against anything but localhost.
+
+The e2e tests start their own copy of the app on port 3100 (build folder `.next-e2e`), so
+`npm run dev` can stay open. The first run needs a browser: `npx playwright install chromium`.

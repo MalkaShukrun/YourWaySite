@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import L from "leaflet";
 import { Polyline, TileLayer } from "react-leaflet";
-import type { Stop } from "@/lib/ride-types";
+import type { Stop } from "@/lib/rides/types";
 
 // Pieces shared by the route map and the route editor's map.
 

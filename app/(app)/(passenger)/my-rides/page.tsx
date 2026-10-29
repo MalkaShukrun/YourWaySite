@@ -1,16 +1,19 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { Route } from "lucide-react";
-import { requireUser } from "@/lib/auth";
-import { formatRideDate, formatTime, israelNow } from "@/lib/dates";
-import { getMyBookings } from "@/lib/rides";
-import type { MyBooking } from "@/lib/ride-types";
-import { splitByDeparture } from "@/lib/bookings";
-import { formatPrice, groupLabel } from "@/lib/format";
+import { requireUser } from "@/lib/auth/session";
+import { formatRideDate, formatTime, israelNow } from "@/lib/utils/dates";
+import { getMyBookings } from "@/lib/rides/data";
+import type { MyBooking } from "@/lib/rides/types";
+import { splitByDeparture } from "@/lib/rides/bookings";
+import { formatPrice, groupLabel } from "@/lib/utils/format";
 import { CancelBookingButton } from "@/components/passenger/CancelBookingButton";
 import { DriverContact } from "@/components/passenger/DriverContact";
 import { Toast } from "@/components/ui/Toast";
 import { iconProps } from "@/components/ui/icon";
+
+export const metadata: Metadata = { title: "הנסיעות שלי" };
 
 // "My Rides" — upcoming bookings and ride history (SRS §4.3).
 export default function MyRidesPage({ searchParams }: PageProps<"/my-rides">) {
@@ -55,7 +58,9 @@ async function MyRides({ searchParams }: Pick<PageProps<"/my-rides">, "searchPar
           rows.map((booking) => <BookingRow key={booking.booking_id} booking={booking} upcoming={tab === "upcoming"} />)
         )}
       </section>
-      <Toast message={query.booked === "1" ? "הנסיעה נוספה בהצלחה לנסיעות שלי" : ""} />
+      <Toast
+        message={query.booked === "1" ? "הנסיעה נוספה בהצלחה לנסיעות שלי" : query.cancelled === "1" ? "ההרשמה בוטלה והמקום התפנה" : ""}
+      />
     </>
   );
 }
@@ -84,11 +89,7 @@ function BookingRow({ booking, upcoming }: { booking: MyBooking; upcoming: boole
       <div className="row-actions">
         <DriverContact name={booking.driver_name} phone={booking.driver_phone} email={booking.driver_email} />
         {upcoming && !booking.ride_cancelled && (
-          <CancelBookingButton
-            bookingId={booking.booking_id}
-            driverName={booking.driver_name}
-            driverPhone={booking.driver_phone}
-          />
+          <CancelBookingButton bookingId={booking.booking_id} />
         )}
       </div>
     </div>
