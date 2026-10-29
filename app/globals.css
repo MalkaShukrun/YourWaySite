@@ -34,7 +34,8 @@ a.nav-item { text-decoration: none; }
 .empty-state .btn { margin-top: 6px; }
 .search-placeholder { min-height: 200px; }
 /* Search panel: the fields fill the first row; search + clear sit on a row below them */
-@media (min-width: 1101px) { .filters { grid-template-columns: 1.15fr 1fr .8fr .8fr; } }
+.page-content.page-wide { max-width: 1520px; }
+@media (min-width: 1101px) { .filters { grid-template-columns: minmax(0, 1.48fr) minmax(0, 1fr) minmax(0, .7fr) minmax(0, .7fr) minmax(0, .87fr); } }
 .search-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px; }
 .search-clear { min-height: 45px; }
 @media (max-width: 780px) { .search-actions .btn { flex: 1; } }
@@ -68,7 +69,6 @@ a.nav-item { text-decoration: none; }
 .leaflet-stop-pin { width: 32px; height: 32px; color: #fff; background: var(--green); border: 3px solid #fff; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 5px 10px rgba(30,55,71,.25); font-size: 16px; }
 .leaflet-stop-pin.drop { background: #C2703D; }
 .leaflet-stop-pin.selected { outline: 3px solid var(--lime); transform: scale(1.12); }
-.map-empty { height: 160px; display: grid; place-items: center; color: #59665F; background: #F3F5F4; }
 .stop-options-empty { margin: 12px 0; }
 
 /* Driver Hub */
@@ -77,14 +77,30 @@ a.nav-item { text-decoration: none; }
 .today-chevron { color: #66736C; transition: transform .2s; }
 .today-card.open .today-chevron { transform: rotate(180deg); }
 .today-card.collapsed .today-header { border-bottom: 0; }
-.week-day + .week-day { margin-top: 28px; }
-.week-day-head { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; color: var(--ink); font-size: 19px; font-weight: 800; }
+/* Each day is one card holding its rides' cards. */
+.week-day { background: #fff; border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 4px 18px rgba(40,65,56,.035); padding: 18px 20px; }
+.week-day .today-list { gap: 14px; }
+.week-day .today-card { box-shadow: none; }
+@media (max-width: 780px) { .week-day { padding: 14px 12px; } }
+.week-day + .week-day { margin-top: 20px; }
+.week-days-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; margin-bottom: 14px; }
+.week-days-actions > .btn { min-height: 36px; padding: 0 12px; font-size: 15px; }
+/* The week picker and "נסיעה חדשה" sit at the end of the row, after "open / collapse all". */
+.week-days-actions .dashboard-actions { margin-inline-start: 8px; }
+.week-days-actions .date-picker:has(.date-picker-button) .dropdown-options.calendar { left: 0; right: auto; }
+@media (max-width: 780px) {
+  .week-days-actions .dashboard-actions { order: -1; margin-inline-start: 0; }
+}
+.week-day-head { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--ink); font-size: 19px; font-weight: 800; cursor: pointer; list-style: none; user-select: none; }
+.week-day-head::-webkit-details-marker { display: none; }
+.week-day[open] > .week-day-head { margin-bottom: 12px; }
+.week-day-chevron { color: #66736C; transition: transform .2s; }
+.week-day[open] .week-day-chevron { transform: rotate(180deg); }
 .week-day-head span { color: var(--green-dark); background: var(--lime); border-radius: 999px; padding: 2px 10px; font-size: 14px; }
 .time-control { display: flex; gap: 8px; }
 .time-control .time-picker { width: 168px; }
 @media (max-width: 780px) { .time-control .time-picker { flex: 1; width: auto; } }
 .passenger-empty { margin: 0; padding: 18px 25px; color: #59665F; }
-.daily-stops-empty { color: #66736C; }
 .today-card .daily-route-preview { margin-bottom: 22px; }
 .confirm-inline { display: inline-flex; align-items: center; gap: 6px; color: #59665F; font-size: 16px; }
 .form-alert { margin: -12px 0 18px; padding: 11px 14px; border-radius: 10px; background: #f9ebe8; color: #a8584e; font-weight: 700; }
@@ -126,6 +142,12 @@ a.nav-item { text-decoration: none; }
    their content, so let an open list spill out. */
 .panel:has(.dropdown.open) { overflow: visible; }
 .dropdown-options { max-height: 288px; overflow-y: auto; }
+/* Searchable select (Select searchable) — a text box in the dropdown shell */
+.combobox .dropdown-trigger { cursor: text; }
+.combobox .dropdown-trigger input { flex: 1; cursor: text; }
+.combobox .dropdown-chevron { flex: 0 0 auto; cursor: pointer; }
+.dropdown-options button.active:not(.selected) { background: #EEF3F6; color: var(--green); }
+.dropdown-empty { margin: 0; padding: 10px 11px; color: #8A968F; font-size: 15px; text-align: right; }
 .dropdown.compact .dropdown-trigger { width: auto; min-height: 37px; display: flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: #fff; border-radius: 9px; padding: 0 10px; color: #59665F; }
 .dropdown.compact .dropdown-trigger > small { font-size: 16px; }
 .dropdown.compact .dropdown-trigger > span { color: var(--ink); font-weight: 700; white-space: nowrap; }
@@ -142,6 +164,8 @@ a.nav-item { text-decoration: none; }
 /* Time picker — hour and minute columns */
 .time-picker .dropdown-trigger > span { text-align: right; }
 .dropdown-options.time-panel { left: auto; width: 168px; max-height: none; padding: 8px; display: flex; gap: 6px; }
+/* In the search filters the panel lines up with its field. */
+.filters .dropdown-options.time-panel { left: 0; width: auto; }
 .time-column { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .time-column small { text-align: center; color: #8A968F; font-size: 14px; font-weight: 700; }
 .time-column [role="listbox"] { position: relative; height: 216px; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 2px; }

@@ -6,6 +6,7 @@ import { Logo } from "@/components/brand/Logo";
 import { AuthRoadIllustration } from "@/components/auth/AuthRoadIllustration";
 import { SignInOptions } from "@/components/auth/SignInOptions";
 import { OnboardingModal } from "@/components/auth/OnboardingModal";
+import { SiteStats } from "@/components/auth/SiteStats";
 import { getCurrentUser, homePathFor, needsOnboarding } from "@/lib/auth";
 import { carIconProps, iconProps } from "@/components/ui/icon";
 
@@ -14,6 +15,7 @@ export const metadata: Metadata = { title: "התחברות · בדרך שלך" }
 export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <div className="auth-page">
+      <span className="bsd">בס&quot;ד</span>
       <header className="landing-header">
         <Logo />
       </header>
@@ -62,6 +64,9 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
             <LoginError searchParams={searchParams} />
           </Suspense>
         </div>
+        <Suspense fallback={null}>
+          <SiteStats />
+        </Suspense>
       </div>
 
       <footer className="landing-footer">

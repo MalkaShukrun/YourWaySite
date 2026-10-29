@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { RideSummary } from "@/lib/ride-types";
-import { groupByRoute } from "@/lib/search-results";
+import { groupByRoute, groupIdsFrom } from "@/lib/search-results";
 
 const ride = (route_id: string, ride_date: string) => ({ route_id, ride_date }) as RideSummary;
 
@@ -15,5 +15,27 @@ describe("groupByRoute", () => {
 
   it("returns nothing for no rides", () => {
     expect(groupByRoute([])).toEqual([]);
+  });
+});
+
+describe("groupIdsFrom", () => {
+  const a = "11111111-1111-4111-8111-111111111111";
+  const b = "22222222-2222-4222-8222-222222222222";
+
+  it("reads one route or several", () => {
+    expect(groupIdsFrom(a)).toEqual([a]);
+    expect(groupIdsFrom([a, b])).toEqual([a, b]);
+  });
+
+  it("drops repeats and anything that isn't a group id", () => {
+    expect(groupIdsFrom([a, "nope", a, b, ""])).toEqual([a, b]);
+  });
+
+  it.each([
+    ["no param", undefined],
+    ["an empty list", []],
+    ["only bad values", ["nope", "123"]],
+  ])("means every route for %s", (_name, param) => {
+    expect(groupIdsFrom(param)).toBeUndefined();
   });
 });

@@ -48,11 +48,12 @@ export function weekdaysOf(isoDates: string[]) {
   return days.map((d) => WEEKDAY_LETTERS[d]).join(" · ");
 }
 
-// The ride week (Sunday … Friday) that holds a date: "2025-06-24" → ["2025-06-22", …, "2025-06-27"]
+// The ride week (Sunday … Saturday) that holds a date: "2025-06-24" → ["2025-06-22", …, "2025-06-28"].
+// Saturday is in it for one-time rides, which can fall on any day.
 export function rideWeekOf(isoDate: string) {
   const date = parseISO(isoDate);
   const sunday = addDays(date, -date.getDay());
-  return Array.from({ length: 6 }, (_, i) => format(addDays(sunday, i), "yyyy-MM-dd"));
+  return Array.from({ length: 7 }, (_, i) => format(addDays(sunday, i), "yyyy-MM-dd"));
 }
 
 // ["2025-06-22", …, "2025-06-27"] → "22.6 – 27.6"

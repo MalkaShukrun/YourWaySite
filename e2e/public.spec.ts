@@ -20,6 +20,16 @@ test.describe("login page", () => {
     await expect(page.getByRole("button", { name: "צרי קשר" })).toHaveCount(0);
   });
 
+  // Needs public_stats (supabase/migrations/0017_public_stats_routes.sql).
+  test("shows the site's stats, counted up to whole numbers", async ({ page }) => {
+    await page.goto("/login");
+    const stats = page.getByRole("region", { name: "בדרך שלך במספרים" });
+    await expect(stats).toBeVisible();
+    for (const label of ["משתמשות במערכת", "מסלולים פעילים"]) {
+      await expect(stats.getByRole("listitem").filter({ hasText: label }).locator("strong")).toHaveText(/^[\d,]+$/);
+    }
+  });
+
   test("shows a sign-in error, but not the text from the URL", async ({ page }) => {
     await page.goto("/login?error=invalid%20grant");
 

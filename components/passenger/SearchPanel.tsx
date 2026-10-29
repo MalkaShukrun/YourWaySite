@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Car, Info, MapPin, Repeat, RotateCcw, Search } from "lucide-react";
 import { DatePicker } from "@/components/ui/DatePicker";
-import { Select } from "@/components/ui/Select";
+import { MultiSelect, Select } from "@/components/ui/Select";
 import { TimePicker } from "@/components/ui/TimePicker";
 import type { RideGroup, RideKind } from "@/lib/ride-types";
 import { groupLabel } from "@/lib/format";
@@ -12,7 +12,7 @@ import { carIconProps, iconProps } from "@/components/ui/icon";
 
 const ROUTE_HINT = "להוספת מסלולי נסיעה מעיר לעיר יש ליצור קשר";
 
-type Filters = { groupId?: string; date?: string; kind?: RideKind; from?: string; to?: string };
+type Filters = { groupIds?: string[]; date?: string; kind?: RideKind; from?: string; to?: string };
 
 const KIND_OPTIONS = [
   { value: "", label: "כל הנסיעות" },
@@ -23,17 +23,17 @@ const KIND_OPTIONS = [
 // Smart filter bar (SRS §4.1): group, date, departure time range, ride type.
 export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; initial: Filters; today: string }) {
   const router = useRouter();
-  const [groupId, setGroupId] = useState(initial.groupId ?? "");
+  const [groupIds, setGroupIds] = useState(initial.groupIds ?? []);
   const [date, setDate] = useState(initial.date ?? "");
   const [from, setFrom] = useState(initial.from ?? "");
   const [to, setTo] = useState(initial.to ?? "");
   const [kind, setKind] = useState<string>(initial.kind ?? "");
-  const groupOptions = [{ value: "", label: "כל המסלולים" }, ...groups.map((g) => ({ value: g.id, label: groupLabel(g.origin, g.destination) }))];
+  const groupOptions = groups.map((g) => ({ value: g.id, label: groupLabel(g.origin, g.destination) }));
 
   function submit(event: FormEvent) {
     event.preventDefault();
     const params = new URLSearchParams();
-    if (groupId) params.set("group", groupId);
+    for (const id of groupIds) params.append("group", id);
     if (date) params.set("date", date);
     if (from) params.set("from", from);
     if (to) params.set("to", to);
@@ -43,11 +43,11 @@ export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; i
   }
 
   const hasFilters = Boolean(
-    groupId || date || from || to || kind || initial.groupId || initial.date || initial.from || initial.to || initial.kind,
+    groupIds.length || date || from || to || kind || initial.groupIds?.length || initial.date || initial.from || initial.to || initial.kind,
   );
 
   function clear() {
-    setGroupId("");
+    setGroupIds([]);
     setDate("");
     setFrom("");
     setTo("");
@@ -77,7 +77,7 @@ export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; i
               <span className="hint-bubble" role="tooltip">{ROUTE_HINT}</span>
             </span>
           </span>
-          <Select label="מסלול" value={groupId} onChange={setGroupId} options={groupOptions} icon={<MapPin {...iconProps} size={20} />} />
+          <MultiSelect label="מסלול" values={groupIds} onChange={setGroupIds} options={groupOptions} allLabel="כל המסלולים" icon={<MapPin {...iconProps} size={20} />} />
         </div>
         <div className="field">
           <span>תאריך</span>
@@ -93,7 +93,7 @@ export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; i
         </div>
         <div className="field">
           <span>סוג נסיעה</span>
-          <Select label="סוג נסיעה" value={kind} onChange={setKind} options={KIND_OPTIONS} icon={<Repeat {...iconProps} size={20} />} />
+          <Select label="סוג נסיעה" value={kind} onChange={setKind} options={KIND_OPTIONS} icon={<Repeat {...iconProps} size={20} />} searchable />
         </div>
         <div className="search-actions">
           {hasFilters && (

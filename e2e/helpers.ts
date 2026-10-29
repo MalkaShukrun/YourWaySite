@@ -14,9 +14,15 @@ export function nextWeekday() {
   }
 }
 
+// The trigger of the app's own <Select>: a button named "label: value", or the
+// text box of a searchable one.
+function selectTrigger(page: Page, label: string) {
+  return page.getByRole("button", { name: new RegExp(`^${label}:`) }).or(page.getByRole("combobox", { name: label, exact: true }));
+}
+
 // The app's own <Select>: open it by its label, then pick an option.
 export async function choose(page: Page, label: string, option: string | RegExp) {
-  await page.getByRole("button", { name: new RegExp(`^${label}:`) }).click();
+  await selectTrigger(page, label).click();
   await page.getByRole("listbox", { name: label }).getByRole("option", { name: option }).click();
 }
 
@@ -31,10 +37,9 @@ export async function chooseTime(page: Page | Locator, label: string, time: stri
 
 // Options of a <Select>, read by opening and closing it.
 export async function optionsOf(page: Page, label: string) {
-  const trigger = page.getByRole("button", { name: new RegExp(`^${label}:`) });
-  await trigger.click();
+  await selectTrigger(page, label).click();
   const options = await page.getByRole("listbox", { name: label }).getByRole("option").allInnerTexts();
-  await trigger.click();
+  await page.keyboard.press("Escape");
   return options.map((o) => o.trim());
 }
 

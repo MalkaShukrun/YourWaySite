@@ -7,7 +7,8 @@ import { MapContainer, Marker, Tooltip, useMap, useMapEvents } from "react-leafl
 import { MapPin } from "lucide-react";
 import type { Area } from "@/lib/places";
 import { iconProps } from "@/components/ui/icon";
-import { isPlaced, MapLegend, MapTiles, RoutePath, stopPinIcon, useMapKey } from "./mapParts";
+import { isPlaced } from "@/lib/ride-types";
+import { MapLegend, MapTiles, RoutePath, stopPinIcon, useMapKey } from "./mapParts";
 
 type EditorStop = { kind: "pickup" | "dropoff"; label: string; lat: number | null; lng: number | null };
 

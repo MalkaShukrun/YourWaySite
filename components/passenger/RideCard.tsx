@@ -9,8 +9,9 @@ import { RideDateChips } from "@/components/passenger/RideDateChips";
 const rideHref = (ride: RideSummary) => `/ride/${ride.route_id}?date=${ride.ride_date}`;
 
 // A search result (SRS §4.1): one route, with every date it runs in the
-// results — a recurring route shows its dates together on one card.
-export function RideCard({ rides }: { rides: RideSummary[] }) {
+// results — a recurring route shows its dates together on one card. The
+// driver sees her `own` rides too, to check how they look, but can't book them.
+export function RideCard({ rides, own = false }: { rides: RideSummary[]; own?: boolean }) {
   const [first] = rides;
   const next = rides.find((r) => r.seats_left > 0);
   const severalDates = rides.length > 1;
@@ -20,7 +21,7 @@ export function RideCard({ rides }: { rides: RideSummary[] }) {
       <div className="trip-top">
         <div className="driver">
           <div className={`avatar avatar-${avatarColorFor(first.driver_id)}`}>{initialsOf(first.driver_name)}</div>
-          <div><span>הנהגת שלך</span><strong>{first.driver_name}</strong></div>
+          <div><span>{own ? "הנסיעה שלך" : "הנהגת שלך"}</span><strong>{first.driver_name}</strong></div>
         </div>
         <span className={`trip-type ${first.kind === "one_time" ? "special" : ""}`}>{kindLabel(first.kind)}</span>
       </div>
@@ -62,7 +63,11 @@ export function RideCard({ rides }: { rides: RideSummary[] }) {
             <span>מתוך {first.seats} מקומות</span>
           </div>
         </div>
-        {next ? (
+        {own ? (
+          <Link className="btn btn-secondary" href={rideHref(next ?? first)}>
+            צפייה בנסיעה <ArrowLeft {...iconProps} size={18} />
+          </Link>
+        ) : next ? (
           <Link className="btn btn-primary" href={rideHref(next)}>
             לפרטים והרשמה <ArrowLeft {...iconProps} size={18} />
           </Link>

@@ -34,6 +34,11 @@ export type RideDetails = RideSummary & {
 // lat/lng are null when the driver didn't mark the stop on the map.
 export type Stop = { id: string; kind: "pickup" | "dropoff"; label: string; lat: number | null; lng: number | null };
 
+// Marking a stop on the map is optional; stops without a location aren't drawn.
+export function isPlaced<T extends { lat: number | null; lng: number | null }>(stop: T): stop is T & { lat: number; lng: number } {
+  return stop.lat !== null && stop.lng !== null;
+}
+
 type BookingStatus = "active" | "cancelled" | "late_cancelled";
 
 export type MyBooking = {

@@ -3,13 +3,14 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { MapContainer, Marker, Tooltip } from "react-leaflet";
-import type { Stop } from "@/lib/ride-types";
-import { isPlaced, MapLegend, MapTiles, RoutePath, stopPinIcon, useMapKey } from "./mapParts";
+import { isPlaced, type Stop } from "@/lib/ride-types";
+import { MapLegend, MapTiles, RoutePath, stopPinIcon, useMapKey } from "./mapParts";
 
 // Interactive map (React Leaflet + OpenStreetMap) showing only the driver's
 // route and her designated pickup / drop-off pins (SRS §4.2). Marking stops
 // on the map is optional, so stops without a location are left out — their
-// numbers still match the stop list.
+// numbers still match the stop list. Callers leave the map out when no stop
+// is marked.
 export default function RouteMap({ stops, selectedIds = [] }: { stops: Stop[]; selectedIds?: string[] }) {
   const mapKey = useMapKey();
   const pickups = stops.filter((s) => s.kind === "pickup");
@@ -17,7 +18,7 @@ export default function RouteMap({ stops, selectedIds = [] }: { stops: Stop[]; s
   const path = [...pickups, ...dropoffs].filter(isPlaced).map((s) => [s.lat, s.lng] as [number, number]);
   const bounds = path.length ? L.latLngBounds(path).pad(0.15) : undefined;
 
-  if (!bounds) return <div className="map-empty">הנהגת לא סימנה את התחנות על המפה.</div>;
+  if (!bounds) return null;
 
   const markers = (list: Stop[]) =>
     list.map((stop, i) =>

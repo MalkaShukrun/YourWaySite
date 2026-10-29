@@ -25,7 +25,7 @@ export default function RidePage({ params, searchParams }: PageProps<"/ride/[id]
 }
 
 async function RideDetailsView({ params, searchParams }: PageProps<"/ride/[id]">) {
-  await requireUser();
+  const user = await requireUser();
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const date = query.date;
   if (!isUuid(id) || !isIsoDate(date)) notFound();
@@ -36,7 +36,9 @@ async function RideDetailsView({ params, searchParams }: PageProps<"/ride/[id]">
   const bookedDates = bookings.filter((b) => b.route_id === id && b.status === "active").map((b) => b.ride_date);
 
   const full = ride.seats_left <= 0;
-  const blockedReason = !ride.is_available ? "הנסיעה אינה זמינה" : full ? "הנסיעה מלאה" : null;
+  // The driver can open her own ride to see it as passengers do, but not book it.
+  const ownRide = ride.driver_id === user.id;
+  const blockedReason = ownRide ? "זו הנסיעה שלך" : !ride.is_available ? "הנסיעה אינה זמינה" : full ? "הנסיעה מלאה" : null;
   const vehicle = [ride.vehicle_model, ride.vehicle_color].filter(Boolean).join(" ");
 
   return (
@@ -50,6 +52,7 @@ async function RideDetailsView({ params, searchParams }: PageProps<"/ride/[id]">
           canBook={!blockedReason}
           blockedReason={blockedReason}
           alreadyBooked={Boolean(ride.my_booking_id)}
+          ownRide={ownRide}
           days={dates}
           bookedDates={bookedDates}
         />

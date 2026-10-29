@@ -1,6 +1,6 @@
 import { Phone, Route } from "lucide-react";
 import { formatTime } from "@/lib/dates";
-import type { Stop } from "@/lib/ride-types";
+import { isPlaced, type Stop } from "@/lib/ride-types";
 import type { DriverPassenger, DriverRide } from "@/lib/driver-types";
 import { avatarColorFor, groupLabel, initialsOf, routeKindLabel } from "@/lib/format";
 import { CollapsibleRideCard } from "@/components/driver/CollapsibleRideCard";
@@ -14,8 +14,11 @@ import { iconProps } from "@/components/ui/icon";
 // unless `open`.
 export function DriverRideCard({ ride, date, open = false }: { ride: DriverRide & { passengers: DriverPassenger[]; stops: Stop[] }; date: string; open?: boolean }) {
   const bookedStopIds = ride.passengers.flatMap((p) => [p.pickup_stop_id, p.dropoff_stop_id]);
-  const byPickup = [...ride.passengers].sort((a, b) => a.pickup_position - b.pickup_position);
-  const byDropoff = [...ride.passengers].sort((a, b) => a.dropoff_position - b.dropoff_position);
+  const pickups = stopsInOrder(ride.passengers, (p) => ({ id: p.pickup_stop_id, label: p.pickup_label, position: p.pickup_position }));
+  const dropoffs = stopsInOrder(ride.passengers, (p) => ({ id: p.dropoff_stop_id, label: p.dropoff_label, position: p.dropoff_position }));
+  // The stops box shows only once someone has booked; the map only when stops are marked on it.
+  const hasPassengers = ride.passengers.length > 0;
+  const hasMap = ride.stops.some(isPlaced);
 
   return (
     <CollapsibleRideCard
@@ -47,7 +50,7 @@ export function DriverRideCard({ ride, date, open = false }: { ride: DriverRide 
       />
 
       <div className="passengers-head">
-        <div><h3>טרמפיסטיות רשומות ופרטי קשר</h3><span>{ride.booked} מתוך {ride.seats} מקומות</span></div>
+        <h3>טרמפיסטיות רשומות ופרטי קשר</h3>
         {!ride.cancelled && ride.booked < ride.seats && (
           <AddPassengerForm routeId={ride.route_id} date={date} stops={ride.stops} />
         )}
@@ -80,30 +83,54 @@ export function DriverRideCard({ ride, date, open = false }: { ride: DriverRide 
         )}
       </div>
 
-      <div className="daily-route-preview">
-        <div className="daily-stops">
-          <div><h3>התחנות של היום</h3><span>מחולקות לאיסוף ולהורדה</span></div>
-          <div className="stop-group-label pickup-label"><i></i>תחנות איסוף</div>
-          {byPickup.map((p, i) => (
-            <DailyStop key={`p-${p.booking_id}`} n={i + 1} label={p.pickup_label} who={`${p.passenger_name} · איסוף`} />
-          ))}
-          <div className="stop-group-label dropoff-label"><i></i>תחנות הורדה</div>
-          {byDropoff.map((p, i) => (
-            <DailyStop key={`d-${p.booking_id}`} n={i + 1} label={p.dropoff_label} who={`${p.passenger_name} · הורדה`} dropoff />
-          ))}
-          {ride.passengers.length === 0 && <small className="daily-stops-empty">התחנות יופיעו כאן אחרי ההרשמה.</small>}
+      {(hasPassengers || hasMap) && (
+        <div className="daily-route-preview">
+          {hasPassengers && (
+            <div className="daily-stops">
+              <div><h3>התחנות של היום</h3></div>
+              <div className="daily-stop-groups">
+                <div>
+                  <div className="stop-group-label pickup-label"><i></i>תחנות איסוף</div>
+                  {pickups.map((s, i) => (
+                    <DailyStop key={`p-${s.id}`} n={i + 1} label={s.label} names={s.names} />
+                  ))}
+                </div>
+                <div>
+                  <div className="stop-group-label dropoff-label"><i></i>תחנות הורדה</div>
+                  {dropoffs.map((s, i) => (
+                    <DailyStop key={`d-${s.id}`} n={i + 1} label={s.label} names={s.names} dropoff />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          {hasMap && <div className="daily-map"><LazyRouteMap stops={ride.stops} selectedIds={bookedStopIds} /></div>}
         </div>
-        <div className="daily-map"><LazyRouteMap stops={ride.stops} selectedIds={bookedStopIds} /></div>
-      </div>
+      )}
     </CollapsibleRideCard>
   );
 }
 
-function DailyStop({ n, label, who, dropoff = false }: { n: number; label: string; who: string; dropoff?: boolean }) {
+// The booked stops in route order, each listed once with everyone getting on or off there.
+// Stops are matched by name, since the same place can be saved as more than one stop.
+function stopsInOrder(passengers: DriverPassenger[], stopOf: (p: DriverPassenger) => { id: string; label: string; position: number }) {
+  const stops = new Map<string, { id: string; label: string; position: number; names: string[] }>();
+  for (const p of passengers) {
+    const stop = stopOf(p);
+    const key = stop.label.trim();
+    const entry = stops.get(key) ?? { ...stop, names: [] };
+    entry.position = Math.min(entry.position, stop.position);
+    entry.names.push(p.passenger_name);
+    stops.set(key, entry);
+  }
+  return [...stops.values()].sort((a, b) => a.position - b.position);
+}
+
+function DailyStop({ n, label, names, dropoff = false }: { n: number; label: string; names: string[]; dropoff?: boolean }) {
   return (
     <div className={`daily-stop ${dropoff ? "dropoff-stop" : ""}`}>
       <span>{n}</span>
-      <div><strong>{label}</strong><small>{who}</small></div>
+      <div><strong>{label}</strong>{names.map((name, i) => <small key={i}>{name}</small>)}</div>
     </div>
   );
 }

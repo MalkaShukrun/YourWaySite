@@ -4,8 +4,8 @@ import { greetingFor, isIsoDate, israelHour, israelToday } from "@/lib/dates";
 import { getRideGroups, searchRides } from "@/lib/rides";
 import type { RideKind } from "@/lib/ride-types";
 import { firstNameOf } from "@/lib/format";
-import { groupByRoute } from "@/lib/search-results";
-import { isUuid, TIME_PATTERN } from "@/lib/validation/patterns";
+import { groupByRoute, groupIdsFrom } from "@/lib/search-results";
+import { TIME_PATTERN } from "@/lib/validation/patterns";
 import { SearchPanel } from "@/components/passenger/SearchPanel";
 import { RideCard } from "@/components/passenger/RideCard";
 
@@ -14,7 +14,7 @@ type SearchParams = PageProps<"/">["searchParams"];
 // Passenger home — ride search (SRS §4.1).
 export default function FindRidePage({ searchParams }: PageProps<"/">) {
   return (
-    <main className="page-content">
+    <main className="page-content page-wide">
       <Suspense fallback={<div className="welcome"><div><p>&nbsp;</p><h1>בואי נמצא לך טרמפ</h1></div></div>}>
         <Welcome />
       </Suspense>
@@ -31,7 +31,6 @@ export default function FindRidePage({ searchParams }: PageProps<"/">) {
 async function readFilters(searchParams: SearchParams) {
   const params = await searchParams;
   const one = (key: string) => (typeof params[key] === "string" ? (params[key] as string) : undefined);
-  const group = one("group");
   const date = one("date");
   const kind = one("kind");
   const time = (key: string) => {
@@ -42,7 +41,7 @@ async function readFilters(searchParams: SearchParams) {
   // "From 09:00 until 07:00" means the other way round.
   if (from && to && from > to) [from, to] = [to, from];
   return {
-    groupId: isUuid(group) ? group : undefined,
+    groupIds: groupIdsFrom(params.group),
     date: isIsoDate(date) && date >= (await israelToday()) ? date : undefined,
     kind: kind === "recurring" || kind === "one_time" ? (kind as RideKind) : undefined,
     from,
@@ -70,7 +69,7 @@ async function Search({ searchParams }: { searchParams: SearchParams }) {
 }
 
 async function Results({ searchParams }: { searchParams: SearchParams }) {
-  const filters = await readFilters(searchParams);
+  const [user, filters] = await Promise.all([requireUser(), readFilters(searchParams)]);
   const rides = await searchRides(filters);
   const routes = groupByRoute(rides);
   const filtered = Object.values(filters).some(Boolean);
@@ -86,7 +85,7 @@ async function Results({ searchParams }: { searchParams: SearchParams }) {
       ) : (
         <div className="trip-grid">
           {routes.map((dates) => (
-            <RideCard key={dates[0].route_id} rides={dates} />
+            <RideCard key={dates[0].route_id} rides={dates} own={dates[0].driver_id === user.id} />
           ))}
         </div>
       )}

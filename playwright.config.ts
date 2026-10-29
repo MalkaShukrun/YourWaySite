@@ -23,7 +23,7 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   projects: [
-    { name: "signed-out", testMatch: /public\.spec\.ts/, use: { ...devices["Desktop Chrome"] } },
+    { name: "signed-out", testMatch: /(public|database)\.spec\.ts/, use: { ...devices["Desktop Chrome"] } },
     { name: "mobile", testMatch: /public\.spec\.ts/, use: { ...devices["Pixel 7"] } },
     ...(signedIn
       ? [

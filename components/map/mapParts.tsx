@@ -7,13 +7,6 @@ import type { Stop } from "@/lib/ride-types";
 
 // Pieces shared by the route map and the route editor's map.
 
-type Located = { lat: number | null; lng: number | null };
-
-// Marking a stop on the map is optional; stops without a location aren't drawn.
-export function isPlaced<T extends Located>(stop: T): stop is T & { lat: number; lng: number } {
-  return stop.lat !== null && stop.lng !== null;
-}
-
 // Next keeps visited pages alive in <Activity>, so React can clean up a map's
 // effects and run them again without unmounting it. react-leaflet removes the
 // Leaflet map on that cleanup and never makes a new one, and its layers then

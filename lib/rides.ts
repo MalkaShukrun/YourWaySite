@@ -15,16 +15,27 @@ export async function getRideGroups(): Promise<RideGroup[]> {
   return data ?? [];
 }
 
-export async function searchRides(filters: {
-  groupId?: string;
+type SearchFilters = {
+  groupIds?: string[]; // any of these groups; none = all
   date?: string;
   kind?: RideKind;
   from?: string; // "HH:MM": rides leaving at or after this time…
   to?: string; //  …and at or before this one
-}): Promise<RideSummary[]> {
+};
+
+export async function searchRides({ groupIds = [], ...filters }: SearchFilters): Promise<RideSummary[]> {
+  if (groupIds.length <= 1) return searchGroup(groupIds[0] ?? null, filters);
+  // search_rides takes one group, so search each and merge in its order (date, then time).
+  const results = await Promise.all(groupIds.map((id) => searchGroup(id, filters)));
+  return results
+    .flat()
+    .sort((a, b) => a.ride_date.localeCompare(b.ride_date) || a.out_time.localeCompare(b.out_time));
+}
+
+async function searchGroup(groupId: string | null, filters: Omit<SearchFilters, "groupIds">): Promise<RideSummary[]> {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("search_rides", {
-    p_group_id: filters.groupId ?? null,
+    p_group_id: groupId,
     p_date: filters.date ?? null,
     p_kind: filters.kind ?? null,
     p_from_time: filters.from ?? null,

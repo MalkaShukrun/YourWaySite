@@ -53,25 +53,26 @@ describe("weekdaysOf", () => {
 });
 
 describe("rideWeekOf", () => {
-  const week = ["2026-10-25", "2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30"];
+  const week = ["2026-10-25", "2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30", "2026-10-31"];
 
-  it.each(["2026-10-25", "2026-10-28", "2026-10-30"])("gives Sunday–Friday of the week that holds %s", (day) => {
+  it.each(["2026-10-25", "2026-10-28", "2026-10-30"])("gives Sunday–Saturday of the week that holds %s", (day) => {
     expect(rideWeekOf(day)).toEqual(week);
   });
 
-  it("puts Saturday in the week that just ended", () => {
+  it("ends the week with Saturday", () => {
     expect(rideWeekOf("2026-10-31")).toEqual(week);
+    expect(rideWeekOf("2026-11-01")[0]).toBe("2026-11-01");
   });
 
   it("crosses month and year boundaries", () => {
-    expect(rideWeekOf("2026-12-31")).toEqual(["2026-12-27", "2026-12-28", "2026-12-29", "2026-12-30", "2026-12-31", "2027-01-01"]);
+    expect(rideWeekOf("2026-12-31")).toEqual(["2026-12-27", "2026-12-28", "2026-12-29", "2026-12-30", "2026-12-31", "2027-01-01", "2027-01-02"]);
   });
 });
 
 describe("formatWeekRange", () => {
   it("shows the first and last day as day.month", () => {
-    expect(formatWeekRange(rideWeekOf("2026-10-28"))).toBe("25.10 – 30.10");
-    expect(formatWeekRange(rideWeekOf("2026-12-31"))).toBe("27.12 – 1.1");
+    expect(formatWeekRange(rideWeekOf("2026-10-28"))).toBe("25.10 – 31.10");
+    expect(formatWeekRange(rideWeekOf("2026-12-31"))).toBe("27.12 – 2.1");
   });
 });
 

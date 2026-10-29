@@ -49,12 +49,18 @@ export async function saveRoute(values: RouteValues, routeId: string | null) {
     },
     p_stops: v.stops.map((s) => ({ id: s.id, kind: s.kind, label: s.label, lat: s.lat, lng: s.lng })),
   });
-  if (error) return { error: messageFor(error) };
+  if (error) {
+    // Seats lowered below the passengers already booked on an upcoming date.
+    const booked = /SEATS_BELOW_BOOKINGS:(\d+)/.exec(error.message)?.[1];
+    if (booked) return { error: `כבר רשומות ${booked} טרמפיסטיות לאחד התאריכים הקרובים, אז אי אפשר להגדיר פחות מ־${booked} מקומות.` };
+    return { error: messageFor(error) };
+  }
 
   redirect("/routes?saved=1");
 }
 
-// Stop offering a route. Past bookings stay in passengers' history.
+// Stop offering a route. Past bookings stay in passengers' history; upcoming
+// ones are cancelled by the database (0018_cancel_off_schedule_bookings.sql).
 export async function archiveRoute(routeId: string) {
   const user = await requireUser();
   if (!z.uuid().safeParse(routeId).success) return { error: ERRORS.ROUTE_NOT_FOUND };

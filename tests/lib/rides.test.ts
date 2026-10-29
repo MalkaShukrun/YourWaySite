@@ -57,7 +57,7 @@ describe("searchRides", () => {
     ["from and until", { from: "06:00", to: "08:45" }, "06:00", "08:46"],
     ["until the last minute of the day", { to: "23:59" }, null, null],
   ])("searches by departure time: %s", async (_name, times, from, to) => {
-    await searchRides({ groupId: "g1", date: "2026-11-02", kind: "recurring", ...times });
+    await searchRides({ groupIds: ["g1"], date: "2026-11-02", kind: "recurring", ...times });
     expect(sb.client.rpc).toHaveBeenCalledWith("search_rides", {
       p_group_id: "g1",
       p_date: "2026-11-02",
@@ -65,6 +65,24 @@ describe("searchRides", () => {
       p_from_time: from,
       p_to_time: to,
     });
+  });
+
+  it("searches each of several groups and merges them by date, then time", async () => {
+    sb.client.rpc
+      .mockResolvedValueOnce({ data: [{ route_id: "r1", ride_date: "2026-11-02", out_time: "09:00" }], error: null })
+      .mockResolvedValueOnce({
+        data: [
+          { route_id: "r2", ride_date: "2026-11-02", out_time: "07:30" },
+          { route_id: "r3", ride_date: "2026-11-01", out_time: "18:00" },
+        ],
+        error: null,
+      });
+
+    const rides = await searchRides({ groupIds: ["g1", "g2"], kind: "one_time" });
+    expect(rides.map((r) => r.route_id)).toEqual(["r3", "r2", "r1"]);
+    for (const id of ["g1", "g2"]) {
+      expect(sb.client.rpc).toHaveBeenCalledWith("search_rides", expect.objectContaining({ p_group_id: id, p_kind: "one_time" }));
+    }
   });
 
   it("returns the rides", async () => {

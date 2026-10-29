@@ -1,5 +1,5 @@
 -- YourWay — full database setup. Paste this whole file into Supabase → SQL Editor → Run.
--- Generated from supabase/migrations/0001–0015. Safe to run more than once.
+-- Generated from supabase/migrations/0001–0021. Safe to run more than once.
 
 
 -- ════════ supabase/migrations/0001_profiles.sql ════════
@@ -2172,3 +2172,346 @@ begin
   end loop;
 end;
 $$;
+
+
+-- ════════ supabase/migrations/0016_public_stats.sql ════════
+-- YourWay — site-wide counts for the login page's stats row.
+-- Run after 0015_input_checks.sql. Safe to run again.
+--
+-- Visitors aren't signed in, and row level security hides the tables from
+-- them, so the counts come from one security definer function. It returns
+-- totals only — never a row, a name or an id.
+
+create or replace function public.public_stats()
+returns table (members bigint, drivers bigint, rides bigint, bookings bigint)
+language sql stable
+security definer set search_path = ''
+as $$
+  select
+    -- Members who finished sign-up (a phone is required to finish it).
+    (select count(*) from public.profiles where phone is not null),
+    -- Drivers with at least one active route.
+    (select count(distinct driver_id) from public.routes where is_active),
+    -- Rides still to come: active recurring routes and one-time rides from today on.
+    (select count(*) from public.routes r
+       join public.ride_groups g on g.id = r.group_id and g.is_active
+     where r.is_active and (r.kind = 'recurring' or r.ride_date >= public.israel_today())),
+    -- Seats booked so far, not counting cancellations.
+    (select count(*) from public.bookings where status = 'active')
+$$;
+
+revoke execute on function public.public_stats from public;
+grant execute on function public.public_stats to anon, authenticated;
+
+
+-- ════════ supabase/migrations/0017_public_stats_routes.sql ════════
+-- YourWay — the login page shows two totals: members and active routes.
+-- Run after 0016_public_stats.sql. Safe to run again.
+--
+-- The returned columns change, which create or replace can't do, so the
+-- function is dropped and created again.
+
+drop function if exists public.public_stats();
+
+create function public.public_stats()
+returns table (members bigint, routes bigint)
+language sql stable
+security definer set search_path = ''
+as $$
+  select
+    -- Members who finished sign-up (a phone is required to finish it).
+    (select count(*) from public.profiles where phone is not null),
+    -- Active ride groups ("בית שמש ← ירושלים") — the routes in the search filter.
+    (select count(*) from public.ride_groups where is_active)
+$$;
+
+revoke execute on function public.public_stats from public;
+grant execute on function public.public_stats to anon, authenticated;
+
+
+-- ════════ supabase/migrations/0018_cancel_off_schedule_bookings.sql ════════
+-- YourWay — bookings on dates a ride no longer runs are cancelled by the driver.
+-- Run after 0017_public_stats_routes.sql. Safe to run again.
+--
+-- A booking keeps the date it was made for. When the driver moved a one-time
+-- ride, dropped a weekday or a start date from a recurring one, or stopped
+-- offering the route, its upcoming bookings stayed active on dates the ride
+-- no longer ran: they moved to the passenger's history once the date passed
+-- and were charged in her payments.
+--
+-- Now those dates are marked cancelled for the ride (ride_exceptions), as if
+-- the driver had used "cancel for this date only": the passenger sees "הנהגת
+-- ביטלה את הנסיעה" and isn't charged. Rides that already departed are left
+-- as they were.
+
+create or replace function public.cancel_off_schedule_bookings(p_route_id uuid)
+returns void
+language sql
+security definer set search_path = ''
+as $$
+  insert into public.ride_exceptions (route_id, ride_date, cancelled)
+  select distinct b.route_id, b.ride_date, true
+  from public.bookings b
+  join public.routes r on r.id = b.route_id
+  where b.route_id = p_route_id
+    and b.status = 'active'
+    and public.departure_at(b.ride_date, coalesce(
+          (select x.out_time from public.ride_exceptions x
+           where x.route_id = b.route_id and x.ride_date = b.ride_date),
+          r.out_time)) > now()
+    and (not r.is_active or not public.route_runs_on(r, b.ride_date))
+  on conflict (route_id, ride_date) do update set cancelled = true
+$$;
+
+revoke execute on function public.cancel_off_schedule_bookings from anon, authenticated, public;
+
+-- Runs on every change to when a route runs, from the route editor
+-- (save_route) or when the driver stops offering it.
+create or replace function public.cancel_off_schedule_bookings_trigger()
+returns trigger
+language plpgsql
+security definer set search_path = ''
+as $$
+begin
+  perform public.cancel_off_schedule_bookings(new.id);
+  return null;
+end;
+$$;
+
+revoke execute on function public.cancel_off_schedule_bookings_trigger from anon, authenticated, public;
+
+drop trigger if exists routes_cancel_off_schedule_bookings on public.routes;
+create trigger routes_cancel_off_schedule_bookings
+  after update of kind, weekdays, ride_date, is_active on public.routes
+  for each row execute function public.cancel_off_schedule_bookings_trigger();
+
+-- Bookings already left on dates their ride no longer runs.
+select public.cancel_off_schedule_bookings(id) from public.routes;
+
+
+-- ════════ supabase/migrations/0019_booking_price.sql ════════
+-- YourWay — a ride's price is fixed once it has departed.
+-- Run after 0018_cancel_off_schedule_bookings.sql. Safe to run again.
+--
+-- Payments used the route's current price, so when the driver changed it,
+-- rides already taken changed amount too. Each booking now keeps its own
+-- price: set from the route when it's made, and kept in step with the route
+-- until the ride departs. After that a price change no longer reaches it.
+
+alter table public.bookings add column if not exists price numeric;
+
+-- Bookings made before this take the route's price now: the price they were
+-- charged at before wasn't saved.
+update public.bookings b set price = r.price
+from public.routes r
+where r.id = b.route_id and b.price is null;
+
+alter table public.bookings alter column price set not null;
+
+-- Whoever makes the booking, the price comes from the route.
+create or replace function public.set_booking_price()
+returns trigger
+language plpgsql
+security definer set search_path = ''
+as $$
+begin
+  select r.price into new.price from public.routes r where r.id = new.route_id;
+  return new;
+end;
+$$;
+
+revoke execute on function public.set_booking_price from anon, authenticated, public;
+
+drop trigger if exists bookings_set_price on public.bookings;
+create trigger bookings_set_price
+  before insert on public.bookings
+  for each row execute function public.set_booking_price();
+
+-- A new route price reaches the bookings whose ride hasn't departed yet.
+create or replace function public.update_upcoming_booking_prices()
+returns trigger
+language plpgsql
+security definer set search_path = ''
+as $$
+begin
+  update public.bookings b set price = new.price
+  where b.route_id = new.id
+    and public.departure_at(b.ride_date, coalesce(
+          (select x.out_time from public.ride_exceptions x
+           where x.route_id = b.route_id and x.ride_date = b.ride_date),
+          new.out_time)) > now();
+  return null;
+end;
+$$;
+
+revoke execute on function public.update_upcoming_booking_prices from anon, authenticated, public;
+
+drop trigger if exists routes_update_upcoming_booking_prices on public.routes;
+create trigger routes_update_upcoming_booking_prices
+  after update of price on public.routes
+  for each row when (old.price is distinct from new.price)
+  execute function public.update_upcoming_booking_prices();
+
+-- The payments journal reads the booking's own price.
+create or replace function public.my_bookings()
+returns table (
+  booking_id      uuid,
+  route_id        uuid,
+  ride_date       date,
+  status          text,
+  is_paid         boolean,
+  ride_cancelled  boolean,
+  kind            text,
+  origin          text,
+  destination     text,
+  out_time        time,
+  departure_at    timestamptz,
+  price           numeric,
+  pickup_label    text,
+  dropoff_label   text,
+  driver_id       uuid,
+  driver_name     text,
+  driver_phone    text,
+  driver_email    text
+)
+language sql stable
+security definer set search_path = ''
+as $$
+  select b.id, b.route_id, b.ride_date, b.status, b.is_paid, coalesce(x.cancelled, false),
+         r.kind, g.origin, g.destination,
+         coalesce(x.out_time, r.out_time),
+         public.departure_at(b.ride_date, coalesce(x.out_time, r.out_time)),
+         b.price, ps.label, ds.label,
+         r.driver_id, p.full_name,
+         case when b.status in ('active', 'late_cancelled') then p.phone end,
+         case when b.status in ('active', 'late_cancelled') then p.email end
+  from public.bookings b
+  join public.routes r on r.id = b.route_id
+  join public.ride_groups g on g.id = r.group_id
+  join public.profiles p on p.id = r.driver_id
+  join public.stops ps on ps.id = b.pickup_stop_id
+  join public.stops ds on ds.id = b.dropoff_stop_id
+  left join public.ride_exceptions x on x.route_id = r.id and x.ride_date = b.ride_date
+  where b.passenger_id = auth.uid()
+  order by b.ride_date, coalesce(x.out_time, r.out_time)
+$$;
+
+-- create or replace keeps the existing grants; repeated so this file stands alone.
+revoke execute on function public.my_bookings from anon, public;
+grant execute on function public.my_bookings to authenticated;
+
+
+-- ════════ supabase/migrations/0020_own_rides_in_search.sql ════════
+-- YourWay — a driver sees her own rides in the search, as passengers see them.
+-- Run after 0019_booking_price.sql. Safe to run again.
+--
+-- search_rides left out the signed-in driver's own rides. They're listed now,
+-- so she can check how they look to passengers. Booking stays closed to her:
+-- book_ride refuses it (OWN_RIDE, 0003_driver.sql) and the app shows the ride
+-- without the booking button.
+
+create or replace function public.search_rides(
+  p_group_id  uuid default null,
+  p_date      date default null,
+  p_kind      text default null,
+  p_from_time time default null,
+  p_to_time   time default null
+)
+returns table (
+  route_id     uuid,
+  ride_date    date,
+  kind         text,
+  driver_id    uuid,
+  driver_name  text,
+  origin       text,
+  destination  text,
+  out_time     time,
+  return_time  time,
+  seats        smallint,
+  seats_left   integer,
+  price        numeric,
+  notes        text
+)
+language sql stable
+security definer set search_path = ''
+as $$
+  with days as (
+    select d::date as ride_date
+    from generate_series(
+      coalesce(p_date, public.israel_today()),
+      coalesce(p_date, public.israel_today() + 6),
+      interval '1 day'
+    ) d
+  )
+  select r.id, days.ride_date, r.kind, r.driver_id, p.full_name, g.origin, g.destination,
+         coalesce(x.out_time, r.out_time), r.return_time, r.seats,
+         r.seats - (select count(*) from public.bookings b
+                    where b.route_id = r.id and b.ride_date = days.ride_date and b.status = 'active')::integer,
+         r.price, r.notes
+  from public.routes r
+  join days on public.route_runs_on(r, days.ride_date)
+  join public.ride_groups g on g.id = r.group_id and g.is_active
+  join public.profiles p on p.id = r.driver_id
+  left join public.ride_exceptions x on x.route_id = r.id and x.ride_date = days.ride_date
+  where auth.uid() is not null
+    and r.is_active
+    and coalesce(x.cancelled, false) = false
+    and public.departure_at(days.ride_date, coalesce(x.out_time, r.out_time)) > now()
+    and (p_group_id is null or r.group_id = p_group_id)
+    and (p_kind is null or r.kind = p_kind::public.route_kind)
+    and (p_from_time is null or coalesce(x.out_time, r.out_time) >= p_from_time)
+    and (p_to_time is null or coalesce(x.out_time, r.out_time) < p_to_time)
+  order by days.ride_date, coalesce(x.out_time, r.out_time)
+$$;
+
+-- create or replace keeps the existing grants; repeated so this file stands alone.
+revoke execute on function public.search_rides from anon, public;
+grant execute on function public.search_rides to authenticated;
+
+
+-- ════════ supabase/migrations/0021_seats_not_below_bookings.sql ════════
+-- YourWay — a ride's seats can't go below the passengers already booked.
+-- Run after 0020_own_rides_in_search.sql. Safe to run again.
+--
+-- The route editor let the driver lower the seats below the bookings on an
+-- upcoming date: nobody lost her seat, but the ride showed more passengers
+-- than seats ("3 מתוך 2 מקומות"). Now the change is refused with
+-- SEATS_BELOW_BOOKINGS:<n>, n being the most passengers booked on one
+-- upcoming date — the lowest the seats can go. Dates that have departed, are
+-- cancelled or no longer run (0018) don't count.
+
+create or replace function public.check_seats_not_below_bookings()
+returns trigger
+language plpgsql
+security definer set search_path = ''
+as $$
+declare
+  v_booked integer;
+begin
+  select coalesce(max(n), 0) into v_booked
+  from (
+    select count(*)::integer as n
+    from public.bookings b
+    left join public.ride_exceptions x on x.route_id = b.route_id and x.ride_date = b.ride_date
+    where b.route_id = new.id
+      and b.status = 'active'
+      and not coalesce(x.cancelled, false)
+      and public.route_runs_on(new, b.ride_date)
+      and public.departure_at(b.ride_date, coalesce(x.out_time, new.out_time)) > now()
+    group by b.ride_date
+  ) per_date;
+
+  if new.seats < v_booked then
+    raise exception 'SEATS_BELOW_BOOKINGS:%', v_booked;
+  end if;
+  return new;
+end;
+$$;
+
+revoke execute on function public.check_seats_not_below_bookings from anon, authenticated, public;
+
+drop trigger if exists routes_check_seats_not_below_bookings on public.routes;
+create trigger routes_check_seats_not_below_bookings
+  before update of seats on public.routes
+  for each row when (new.seats < old.seats)
+  execute function public.check_seats_not_below_bookings();

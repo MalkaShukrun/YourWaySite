@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { choose, chooseTime, expectNotFound, hideDevTools, isAdmin, israelToday, openForm, optionsOf, sideNav, trackPageErrors } from "./helpers";
 
 test.beforeEach(({ page }) => hideDevTools(page));
@@ -164,7 +164,56 @@ test.describe("ride search", () => {
 
     await expect(page).toHaveURL(/\?group=[0-9a-f-]{36}$/);
     await expect(page.locator(".results-head span")).toHaveText(/^\d+ תוצאות$/);
-    await expect(page.getByRole("button", { name: `מסלול: ${groups[0]}` })).toBeVisible();
+    await expect(page.getByRole("combobox", { name: "מסלול", exact: true })).toHaveValue(groups[0]);
+  });
+
+  test("several routes can be picked at once, and 'כל המסלולים' clears them", async ({ page }) => {
+    await page.goto("/");
+    const groups = (await optionsOf(page, "מסלול")).filter((o) => o !== "כל המסלולים");
+    test.skip(groups.length < 2, "Needs two ride groups");
+
+    const field = page.getByRole("combobox", { name: "מסלול", exact: true });
+    const list = page.getByRole("listbox", { name: "מסלול" });
+    await field.click();
+    await expect(list).toHaveAttribute("aria-multiselectable", "true");
+    // The list stays open between picks.
+    await list.getByRole("option", { name: groups[0], exact: true }).click();
+    await list.getByRole("option", { name: groups[1], exact: true }).click();
+    await expect(list.getByRole("option", { selected: true })).toHaveCount(2);
+    await expect(list.getByRole("option", { name: "כל המסלולים" })).toHaveAttribute("aria-selected", "false");
+
+    // Clicking a pick again removes it.
+    await list.getByRole("option", { name: groups[1], exact: true }).click();
+    await expect(list.getByRole("option", { selected: true })).toHaveCount(1);
+    await list.getByRole("option", { name: groups[1], exact: true }).click();
+
+    await page.getByRole("button", { name: "חיפוש נסיעה" }).click();
+    await expect(page).toHaveURL(/\?group=[0-9a-f-]{36}&group=[0-9a-f-]{36}$/);
+    await expect(page.locator(".results-head span")).toHaveText(/^\d+ תוצאות$/);
+    await expect(field).toHaveValue(`${groups[0]} +1`);
+
+    // "כל המסלולים" drops every pick.
+    await field.click();
+    await list.getByRole("option", { name: "כל המסלולים" }).click();
+    await expect(list.getByRole("option", { selected: true })).toHaveText(["כל המסלולים"]);
+    await page.getByRole("button", { name: "חיפוש נסיעה" }).click();
+    await expect(page).toHaveURL(/\/$/);
+  });
+
+  test("typing in the route field filters the list", async ({ page }) => {
+    await page.goto("/");
+    const groups = (await optionsOf(page, "מסלול")).filter((o) => o !== "כל המסלולים");
+    test.skip(groups.length === 0, "No ride groups");
+
+    const field = page.getByRole("combobox", { name: "מסלול", exact: true });
+    await field.click();
+    await field.fill(groups[0]);
+    const list = page.getByRole("listbox", { name: "מסלול" });
+    await expect(list.getByRole("option", { name: groups[0], exact: true })).toBeVisible();
+    await expect(list.getByRole("option", { name: "כל המסלולים" })).toHaveCount(0);
+
+    await field.fill("zzz-no-such-route");
+    await expect(list.getByText("לא נמצאו תוצאות")).toBeVisible();
   });
 
   test("departure time range and ride type filters", async ({ page }) => {
@@ -242,7 +291,8 @@ test.describe("ride search", () => {
     expect(calendar!.x + calendar!.width).toBeLessThanOrEqual(viewport.width);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
 
-    const route = await page.getByRole("button", { name: /^מסלול:/ }).boundingBox();
+    // The whole field, not just the text box inside it.
+    const route = await page.getByRole("combobox", { name: "מסלול", exact: true }).locator("xpath=..").boundingBox();
     const time = await page.getByRole("button", { name: /^יציאה משעה:/ }).boundingBox();
     expect(route!.width).toBeGreaterThan(time!.width); // the route field is the wide one
   });
@@ -261,7 +311,9 @@ test.describe("ride details", () => {
     await expect(page.getByRole("heading", { name: "בחרי תחנת איסוף" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "בחרי תחנת הורדה" })).toBeVisible();
     await expect(page.locator(".booking-summary strong")).toHaveText(price);
-    await expect(page.locator(".leaflet-container, .map-empty").first()).toBeVisible();
+    // The map panel is left out when the driver marked no stop on the map.
+    const mapPanel = page.locator(".map-panel");
+    if (await mapPanel.count()) await expect(mapPanel.locator(".leaflet-container")).toBeVisible();
     await expect(
       // A booked day of a recurring ride leaves the other days to pick.
       page.getByRole("button", { name: /אישור הרשמה לנסיעה|בחרי לפחות יום אחד/ }).or(page.locator(".booked-link").getByRole("link", { name: "לנסיעות שלי" })),
@@ -358,7 +410,31 @@ test.describe("my rides & payments", () => {
   });
 });
 
+// Only one day starts expanded on the dashboard; open them all so any ride card can be used.
+async function openAllDays(page: Page) {
+  const openAll = page.getByRole("button", { name: "פתיחת הכל" });
+  if (await openAll.count()) await openAll.click();
+}
+
 test.describe("driver hub", () => {
+  test("dashboard days collapse and 'פתיחת הכל' / 'סגירת הכל' toggle them all", async ({ page }) => {
+    await page.goto("/dashboard");
+    const days = page.locator("details.week-day");
+    const count = await days.count();
+    test.skip(count === 0, "No rides this week");
+    await expect(page.locator("details.week-day[open]")).toHaveCount(1); // only one day starts open
+
+    await page.getByRole("button", { name: "פתיחת הכל" }).click();
+    await expect(page.locator("details.week-day[open]")).toHaveCount(count);
+    await page.getByRole("button", { name: "סגירת הכל" }).click();
+    await expect(page.locator("details.week-day[open]")).toHaveCount(0);
+
+    // A day's heading opens just that day.
+    await days.first().locator("summary").click();
+    await expect(days.first()).toHaveAttribute("open", "");
+    await expect(page.locator("details.week-day[open]")).toHaveCount(1);
+  });
+
   test("dashboard shows the four stats and moves between dates", async ({ page }) => {
     await page.goto("/dashboard");
     await expect(page.getByRole("heading", { level: 1, name: "הנסיעות שלך השבוע" })).toBeVisible();
@@ -366,12 +442,12 @@ test.describe("driver hub", () => {
       await expect(page.locator(".stat-card").filter({ hasText: label })).toBeVisible();
     }
 
-    // The whole ride week (Sunday–Friday) is marked, not just one day.
+    // The whole ride week (Sunday–Saturday) is marked, not just one day.
     await page.getByRole("button", { name: /^בחירת תאריך:/ }).click();
     const week = page.locator(".calendar-grid button.selected");
-    await expect(week).toHaveCount(6);
+    await expect(week).toHaveCount(7);
     await expect(week.first()).toHaveAttribute("aria-label", /^יום ראשון/);
-    await expect(week.last()).toHaveAttribute("aria-label", /^יום שישי/);
+    await expect(week.last()).toHaveAttribute("aria-label", /^יום שבת/);
     await page.locator(".calendar-grid button:not(.outside):not(.today)").last().click();
     await expect(page).toHaveURL(/\/dashboard\?date=\d{4}-\d{2}-\d{2}$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(/^הנסיעות שלך (השבוע|לשבוע )/);
@@ -379,8 +455,10 @@ test.describe("driver hub", () => {
 
   test("dashboard ride cards have time and per-date controls", async ({ page }) => {
     await page.goto("/dashboard");
+    await openAllDays(page);
     const card = page.locator(".today-card").first();
     test.skip((await card.count()) === 0, "No rides today");
+    if (await card.locator(".today-toggle[aria-expanded=false]").count()) await card.locator(".today-toggle").click();
     await expect(card.getByLabel("שעת יציאה")).toBeVisible();
     await expect(card.getByRole("button", { name: "עדכון שעה" })).toBeDisabled(); // unchanged time
     await expect(card.getByRole("button", { name: /ביטול הנסיעה לתאריך זה בלבד|החזרת הנסיעה/ })).toBeVisible();
@@ -390,6 +468,7 @@ test.describe("driver hub", () => {
     await page.goto("/dashboard");
     const card = page.locator(".today-card").filter({ has: page.getByRole("button", { name: "הוספת טרמפיסטית", includeHidden: true }) }).first();
     test.skip((await card.count()) === 0, "No ride with free seats this week");
+    await openAllDays(page);
     if (await card.locator(".today-toggle[aria-expanded=false]").count()) await card.locator(".today-toggle").click();
 
     // The form takes the button's place, so it's found on the page, not in `card`.

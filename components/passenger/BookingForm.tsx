@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { CalendarDays, Check } from "lucide-react";
 import { bookRide } from "@/app/(app)/(passenger)/actions";
-import type { RideSummary, Stop } from "@/lib/ride-types";
+import { isPlaced, type RideSummary, type Stop } from "@/lib/ride-types";
 import { formatRideDate, formatShortRideDate, formatTime } from "@/lib/dates";
 import { formatPrice, seatsText } from "@/lib/format";
 import { LazyRouteMap } from "@/components/map/LazyMaps";
@@ -18,13 +18,14 @@ type Props = {
   canBook: boolean;
   blockedReason: string | null;
   alreadyBooked: boolean;
+  ownRide?: boolean; // the driver viewing her own ride: shown, but nothing can be booked
   days: RideSummary[]; // the route's upcoming dates; several for a recurring ride
   bookedDates: string[]; // dates of this route the user is already booked on
 };
 
 // Day selection (several days of a recurring ride at once), stop selection and
 // one-click booking (SRS §4.2), with the route map below.
-export function BookingForm({ routeId, date, price, stops, canBook, blockedReason, alreadyBooked, days, bookedDates }: Props) {
+export function BookingForm({ routeId, date, price, stops, canBook, blockedReason, alreadyBooked, ownRide = false, days, bookedDates }: Props) {
   const pickups = stops.filter((s) => s.kind === "pickup");
   const dropoffs = stops.filter((s) => s.kind === "dropoff");
   const pickDays = days.length > 1;
@@ -60,7 +61,7 @@ export function BookingForm({ routeId, date, price, stops, canBook, blockedReaso
             <span className="step-number"><CalendarDays {...iconProps} size={16} /></span>
             <div><h2>בחרי ימים</h2><p>נסיעה קבועה — אפשר לסמן כמה ימים ולהירשם לכולם יחד</p></div>
           </div>
-          <DayOptions days={days} time={days[0].out_time} selected={dates} booked={bookedDates} onToggle={toggleDate} />
+          <DayOptions days={days} time={days[0].out_time} selected={dates} booked={bookedDates} onToggle={toggleDate} disabled={ownRide} />
         </section>
       )}
       <section className="booking-card station-booking-card">
@@ -86,7 +87,12 @@ export function BookingForm({ routeId, date, price, stops, canBook, blockedReaso
             </div>
             <p className="booking-note">אם הנסיעה לא בוטלה יופיע במעקב תשלומים חיוב על הנסיעה.</p>
           </div>
-          {showBookedLink ? (
+          {ownRide ? (
+            <div className="booked-link">
+              <span>זו הנסיעה שלך · כך רואות אותה הטרמפיסטיות</span>
+              <Link className="btn btn-secondary" href="/routes">למסלולים שלי</Link>
+            </div>
+          ) : showBookedLink ? (
             <div className="booked-link">
               <span>את רשומה לנסיעה</span>
               <Link className="btn btn-secondary" href="/my-rides">לנסיעות שלי</Link>
@@ -104,12 +110,14 @@ export function BookingForm({ routeId, date, price, stops, canBook, blockedReaso
         {error && <p className="auth-error" role="alert">{error}</p>}
       </section>
 
-      <section className="panel map-panel">
-        <div className="panel-title">
-          <div><h2>המסלול והתחנות</h2><span>תחנות האיסוף וההורדה שסומנו על ידי הנהגת</span></div>
-        </div>
-        <LazyRouteMap stops={stops} selectedIds={[pickupId, dropoffId]} />
-      </section>
+      {stops.some(isPlaced) && (
+        <section className="panel map-panel">
+          <div className="panel-title">
+            <div><h2>המסלול והתחנות</h2><span>תחנות האיסוף וההורדה שסומנו על ידי הנהגת</span></div>
+          </div>
+          <LazyRouteMap stops={stops} selectedIds={[pickupId, dropoffId]} />
+        </section>
+      )}
     </>
   );
 }
@@ -121,12 +129,14 @@ function DayOptions({
   selected,
   booked,
   onToggle,
+  disabled = false,
 }: {
   days: RideSummary[];
   time: string; // the route's usual departure; a date that differs shows its own
   selected: string[];
   booked: string[];
   onToggle: (date: string) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="trip-dates" role="group" aria-label="ימי הנסיעה">
@@ -151,6 +161,7 @@ function DayOptions({
             className={isSelected ? "selected" : undefined}
             aria-pressed={isSelected}
             aria-label={`${formatRideDate(day.ride_date)}, ${seatsText(day.seats_left)}`}
+            disabled={disabled}
             onClick={() => onToggle(day.ride_date)}
           >
             {label}<small>{detail}</small>
