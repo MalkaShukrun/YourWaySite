@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Car, Check, Clock, MapPin, Search, Users } from "lucide-react";
+import { Car, Check, MapPin, Search } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
-import { AuthRoadIllustration } from "@/components/auth/AuthRoadIllustration";
+import { BrandTicket } from "@/components/auth/BrandTicket";
 import { SignInOptions } from "@/components/auth/SignInOptions";
 import { OnboardingModal } from "@/components/auth/OnboardingModal";
 import { SiteStats } from "@/components/auth/SiteStats";
@@ -27,19 +27,6 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
           <p>נהגות מפרסמות את הנסיעות שלהן, טרמפיסטיות נרשמות בלחיצה — והכול מתואם במקום אחד.</p>
         </div>
 
-        <div className="brand-ticket" aria-hidden="true">
-          <div className="ticket-route">
-            <div><small>יציאה</small><strong>בית שמש</strong></div>
-            <span className="ticket-line"><i></i><Car {...carIconProps} size={22} /><i></i></span>
-            <div><small>יעד</small><strong>ירושלים</strong></div>
-          </div>
-          <div className="ticket-meta">
-            <span><Clock {...iconProps} size={17} /> 07:15</span>
-            <span><Users {...iconProps} size={17} /> 2 מקומות פנויים</span>
-            <b>₪15</b>
-          </div>
-        </div>
-
         <ol className="brand-steps">
           <li><span><Search {...iconProps} size={19} /></span><div><strong>מוצאות נסיעה</strong><small>לפי מסלול, יום ושעה</small></div></li>
           <li><span><MapPin {...iconProps} size={19} /></span><div><strong>בוחרות תחנה</strong><small>איסוף והורדה מהמפה של הנהגת</small></div></li>
@@ -51,7 +38,7 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
         <div className="auth-card">
           <span className="mobile-auth-logo"><Logo /></span>
           <h1 className="mobile-auth-title">נוסעות יחד,<br />מגיעות רחוק</h1>
-          <AuthRoadIllustration mobile />
+          <div className="mobile-ticket-panel"><BrandTicket /></div>
           <span className="auth-form-eyebrow">קהילת הטרמפים לנשים</span>
           <h2>הדרך שלך.<br /><em>ביחד.</em></h2>
           <p>מוצאות טרמפ שמתאים בדיוק לדרך שלך, מתחברות לנהגות מהקהילה ומתאמות הכול בפשטות.</p>

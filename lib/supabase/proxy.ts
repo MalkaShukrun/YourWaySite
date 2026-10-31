@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { publicOrigin } from "@/lib/auth/public-origin";
 
-const PUBLIC_PATHS = ["/login", "/auth", "/privacy"];
+const PUBLIC_PATHS = ["/login", "/auth", "/privacy", "/terms"];
 
 // Refreshes the Supabase session cookie on every request and sends
 // signed-out visitors to /login. Role checks (admin) happen on the server

@@ -25,7 +25,7 @@ a.nav-item { text-decoration: none; }
   .bottom-nav a { color: #59665F; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 16px; text-decoration: none; }
   .bottom-nav a.active { color: var(--green-dark); font-weight: 800; }
   .bottom-nav a.active .icon { background: var(--lime); border-radius: 9px; padding: 3px; width: 27px; height: 27px; }
-  .role-switch a { min-width: 0; padding: 7px 12px; }
+  .role-switch a { flex: 1 1 0; min-width: 0; padding: 7px 12px; }
 }
 
 /* Empty / loading states */

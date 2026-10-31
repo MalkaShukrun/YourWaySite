@@ -2,8 +2,8 @@
 
 *How the ride-sharing app behaves today, written from the code: every rule the screens and the database enforce, and what the driver and the passenger each see in each situation.*
 
-- **Source:** the `YourWaySite` code and database migrations 0001–0027
-- **As of:** 29 October 2026
+- **Source:** the `YourWaySite` code and database migrations 0001–0030
+- **As of:** 31 October 2026
 - **Interface language:** Hebrew; labels below are quoted as they appear on screen
 
 **Contents**
@@ -90,12 +90,13 @@ Open for booking → Cancelled for this date → Shown as cancelled · never cha
 
 ## 3. Screens and where things appear
 
-*Every page except sign-in and the privacy policy requires a signed-in user with a completed profile. Signed-out visitors are sent to sign-in.*
+*Every page except sign-in, the terms of use and the privacy policy requires a signed-in user with a completed profile. Signed-out visitors are sent to sign-in.*
 
 | Screen | Address | Who | What it shows |
 |---|---|---|---|
-| Sign-in | `/login` | Anyone | Google sign-in, consent to the privacy policy, site totals (members and active routes, refreshed hourly), contact form. Opens the onboarding window for new users. |
-| Privacy policy | `/privacy` | Anyone | The policy text. |
+| Sign-in | `/login` | Anyone | Google sign-in, consent to the terms of use and the privacy policy, site totals (members and active routes, refreshed hourly). Opens the onboarding window for new users. |
+| Terms of use | `/terms` | Anyone | The terms text, including the cancellation policy. |
+| Privacy policy | `/privacy` | Anyone | The policy text, including the mailing and messages section. |
 | Ride search | `/` | All | Greeting, filter bar (route groups, date, departure from/until, ride type), result cards for the next 7 days. Each recurring route appears as one card with a chip per date showing free seats. |
 | Ride details and booking | `/ride/[id]?date=` | All | Day picker (recurring), pickup and drop-off choice, price total, booking button, route map, driver card (contact details only after booking), vehicle, note. |
 | My rides | `/my-rides` | Passenger | Tabs “נסיעות קרובות” (upcoming) and “היסטוריה” (past, newest first). Each row: time, date, route, price, stops, driver contact, cancel button, and “הנהגת ביטלה את הנסיעה” when the driver cancelled. |
@@ -116,7 +117,7 @@ Open for booking → Cancelled for this date → Shown as cancelled · never cha
 
 #### A1. A new user signs in for the first time
 
-**Trigger:** She ticks the privacy consent and signs in with Google.
+**Trigger:** She ticks the consent to the terms of use and the privacy policy, and signs in with Google.
 
 **Driver side**
 
@@ -148,7 +149,7 @@ She is sent to sign-in. After signing in she lands on her home screen, not the l
 
 **Where it shows**
 
-`/login`. Only sign-in, the privacy policy and the not-found page are open to visitors.
+`/login`. Only sign-in, the terms of use, the privacy policy and the not-found page are open to visitors.
 
 #### A3. A user edits her profile
 
@@ -870,7 +871,11 @@ In place of the page.
 
 | Topic | Current behaviour |
 |---|---|
-| Notifications | None. Bookings, cancellations and date cancellations are not sent to anyone; each side sees them on its own screens on the next load. Coordination is by phone. |
+| Notifications and mailing | None. Bookings, cancellations and date cancellations are not sent to anyone; each side sees them on its own screens on the next load. Coordination is by phone. |
+| Reports, suspending accounts, removing others' rides | No screens. Reports arrive through the contact form or by email; the terms reserve these rights, and they are carried out by hand in the database. |
+| Consent records | The sign-in consent to the terms and the privacy policy isn't saved, and existing users aren't asked again. |
+| Paid subscriptions | None. The terms allow adding paid features later. |
+| Account deletion | By request to support; there's no self-service deletion and no automatic deletion. |
 | Navigation buttons (Waze, Google Maps) | None, for drivers or passengers. Stops appear by name and on the route map. |
 | Return rides | Only the outbound ride exists. Drivers set no return time. |
 | Per-date time changes | Removed. A ride always leaves at its route's time. |

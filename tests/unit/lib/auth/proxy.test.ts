@@ -21,7 +21,7 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 
-// Only sign-in, the privacy policy and the auth callback are open to visitors (spec A2, §3).
+// Only sign-in, the legal pages and the auth callback are open to visitors (spec A2, §3).
 describe("signed-out visitors", () => {
   it.each(["/", "/my-rides", "/payments", "/dashboard", "/routes", "/routes/new", "/profile", "/admin/groups", "/ride/abc?date=2026-11-01"])(
     "are sent from %s to /login",
@@ -36,7 +36,7 @@ describe("signed-out visitors", () => {
     expect(locationOf(await updateSession(request("/routes?saved=1")))).toBe("http://localhost:3000/login");
   });
 
-  it.each(["/login", "/login?error=x", "/privacy", "/auth/callback"])("can open %s", async (path) => {
+  it.each(["/login", "/login?error=x", "/privacy", "/terms", "/auth/callback"])("can open %s", async (path) => {
     const response = await updateSession(request(path));
     expect(locationOf(response)).toBeNull();
   });

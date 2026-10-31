@@ -4,17 +4,17 @@ import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
-const PRIVACY_ERROR = "יש לאשר את מדיניות הפרטיות כדי להמשיך.";
+const CONSENT_ERROR = "יש לאשר את תנאי השימוש ומדיניות הפרטיות כדי להמשיך.";
 
 // Google is the only way in. It returns through /auth/callback, which sends
 // new users to onboarding.
 export function SignInOptions() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [acceptPrivacy, setAcceptPrivacy] = useState(false);
+  const [accepted, setAccepted] = useState(false);
 
   async function signInWithGoogle() {
-    if (!acceptPrivacy) return setError(PRIVACY_ERROR);
+    if (!accepted) return setError(CONSENT_ERROR);
     setLoading(true);
     setError("");
     const { error } = await createClient().auth.signInWithOAuth({
@@ -37,14 +37,14 @@ export function SignInOptions() {
       <label className="privacy-consent">
         <input
           type="checkbox"
-          checked={acceptPrivacy}
+          checked={accepted}
           onChange={(event) => {
-            setAcceptPrivacy(event.target.checked);
+            setAccepted(event.target.checked);
             setError("");
           }}
         />
         <span>
-          קראתי ואני מסכימה ל<Link href="/privacy">מדיניות הפרטיות</Link>
+          קראתי ואני מסכימה ל<Link href="/terms">תנאי השימוש</Link> ול<Link href="/privacy">מדיניות הפרטיות</Link>
         </span>
       </label>
       <button className="google-button" onClick={signInWithGoogle} disabled={loading}>

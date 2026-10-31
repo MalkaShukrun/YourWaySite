@@ -12,6 +12,8 @@ test.describe("sign-in page", () => {
     await expect(page.getByRole("button", { name: "הצטרפות עם Google" })).toBeVisible();
     await expect(page.getByRole("checkbox", { name: /מדיניות הפרטיות/ })).not.toBeChecked();
     await expect(page.getByRole("link", { name: "מדיניות הפרטיות" })).toBeVisible();
+    await expect(page.getByRole("checkbox", { name: /תנאי השימוש/ })).not.toBeChecked();
+    await expect(page.getByRole("link", { name: "תנאי השימוש" })).toBeVisible();
   });
 
   test("offers Google only: no email or password fields", async ({ page }) => {
@@ -36,11 +38,11 @@ test.describe("sign-in page", () => {
     }
   });
 
-  test("asks to accept the privacy policy before going to Google", async ({ page }) => {
+  test("asks to accept the terms and the privacy policy before going to Google", async ({ page }) => {
     await page.goto("/login");
     await page.getByRole("button", { name: "הצטרפות עם Google" }).click();
     await expect(page).toHaveURL(/\/login$/);
-    await expect(page.locator(".auth-error")).toHaveText("יש לאשר את מדיניות הפרטיות כדי להמשיך.");
+    await expect(page.locator(".auth-error")).toHaveText("יש לאשר את תנאי השימוש ומדיניות הפרטיות כדי להמשיך.");
   });
 
   test("starts Google sign-in once the policy is accepted, returning to the callback", async ({ page, baseURL }) => {
@@ -81,6 +83,20 @@ test.describe("privacy policy", () => {
   });
 });
 
+test.describe("terms of use", () => {
+  test("are open to visitors, link to the privacy policy and back to sign-in", async ({ page }) => {
+    await page.goto("/login");
+    await page.getByRole("link", { name: "תנאי השימוש" }).click();
+    await expect(page).toHaveURL(/\/terms$/);
+    await expect(page.getByRole("heading", { level: 1, name: "תנאי שימוש" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: /מדיניות ביטולים/ })).toBeVisible();
+    await page.getByRole("link", { name: "מדיניות הפרטיות" }).click();
+    await expect(page).toHaveURL(/\/privacy$/);
+    await page.getByRole("link", { name: /חזרה להתחברות/ }).click();
+    await expect(page).toHaveURL(/\/login$/);
+  });
+});
+
 test.describe("signed-out redirects (spec A2)", () => {
   for (const path of ["/", "/my-rides", "/payments", "/dashboard", "/routes", "/routes/new", "/profile", "/admin/groups", "/ride/00000000-0000-4000-8000-000000000000?date=2030-01-01"]) {
     test(`${path} sends visitors to sign-in`, async ({ page }) => {
@@ -101,10 +117,11 @@ test.describe("signed-out redirects (spec A2)", () => {
   });
 });
 
-test("sign-in and privacy pages load without errors", async ({ page }) => {
+test("sign-in, terms and privacy pages load without errors", async ({ page }) => {
   const errors = pageErrors(page);
   page.on("console", (msg) => msg.type() === "error" && errors.push(msg.text()));
   await page.goto("/login");
+  await page.goto("/terms");
   await page.goto("/privacy");
   expect(errors).toEqual([]);
 });

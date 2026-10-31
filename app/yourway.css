@@ -440,24 +440,6 @@ fieldset.editor-section { min-width: 0; margin: 0; border-top: 0; border-inline:
 .auth-brand .eyebrow { color: var(--green); font-size: 16px; font-weight: 800; }
 .auth-brand h1 { font-size: clamp(45px, 5.2vw, 72px); line-height: 1.02; color: var(--green-dark); margin: 13px 0 22px; letter-spacing: -2px; }
 .auth-brand p { color: #4F6158; max-width: 520px; font-size: 19px; line-height: 1.65; }
-.auth-road-scene { position: absolute; left: clamp(25px, 4vw, 65px); bottom: 30px; width: 72%; height: 34%; z-index: 2; border-radius: 28px; background: rgba(255,255,255,.42); border: 1px solid rgba(255,255,255,.64); overflow: hidden; box-shadow: inset 0 1px 0 rgba(255,255,255,.5); }
-.scene-circle { position: absolute; border-radius: 50%; border: 1px solid rgba(42,74,96,.14); }
-.circle-one { width: 170px; height: 170px; left: -70px; top: -65px; box-shadow: 0 0 0 35px rgba(42,74,96,.025); }
-.circle-two { width: 95px; height: 95px; right: -30px; bottom: -25px; background: rgba(255,255,255,.24); }
-.scene-road { position: absolute; width: 125%; height: 190px; left: -12%; bottom: -32px; border: 28px solid #2A4A60; border-color: #2A4A60 transparent transparent #2A4A60; border-radius: 50%; transform: rotate(-7deg); }
-.scene-road:before, .scene-road:after { content: ""; position: absolute; height: 2px; background: rgba(255,255,255,.72); transform: rotate(-10deg); }
-.scene-road:before { width: 34px; left: 40px; top: 32px; }
-.scene-road:after { width: 38px; left: 115px; top: -4px; }
-.scene-road i { position: absolute; width: 28px; height: 2px; background: rgba(255,255,255,.72); }
-.scene-road i:nth-child(1) { left: 190px; top: -22px; }
-.scene-road i:nth-child(2) { left: 265px; top: -28px; }
-.scene-road i:nth-child(3) { left: 335px; top: -14px; transform: rotate(9deg); }
-.scene-road i:nth-child(4) { left: 390px; top: 16px; transform: rotate(18deg); }
-.scene-car { position: absolute; left: 34%; bottom: 31%; width: 82px; height: 68px; border-radius: 21px; display: grid; place-items: center; color: var(--green-dark); background: white; box-shadow: 0 12px 25px rgba(30,55,71,.23); transform: rotate(-8deg); z-index: 4; }
-.scene-car span { position: absolute; width: 37px; height: 6px; bottom: 9px; border-radius: 50%; background: rgba(42,74,96,.15); }
-.scene-pin { position: absolute; width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; color: white; background: var(--green); box-shadow: 0 7px 15px rgba(30,55,71,.18); z-index: 3; }
-.pin-start { right: 16%; top: 17%; }
-.pin-end { left: 14%; bottom: 14%; background: #C2703D; }
 .auth-form { grid-area: form; direction: rtl; display: grid; place-items: center; padding: 40px clamp(22px, 4vw, 68px); }
 .auth-card { width: min(460px, 100%); text-align: center; background: white; border: 1px solid var(--line); border-top: 5px solid var(--lime); border-radius: 26px; padding: 42px 38px; box-shadow: 0 24px 60px rgba(36,52,47,.11); }
 .auth-form-eyebrow { display: inline-flex; color: var(--green); background: var(--green-soft); border-radius: 18px; padding: 6px 12px; margin-bottom: 16px; font-size: 16px; font-weight: 800; }
@@ -468,7 +450,7 @@ fieldset.editor-section { min-width: 0; margin: 0; border-top: 0; border-inline:
 .auth-role-pills .icon { color: var(--green); }
 .mobile-auth-logo { display: none; }
 .mobile-auth-title { display: none; }
-.mobile-road-scene { display: none; }
+.mobile-ticket-panel { display: none; }
 .google-button { width: 100%; min-height: 56px; border: 0; border-radius: 12px; background: var(--green); color: white; display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 17px; font-weight: 800; box-shadow: 0 10px 22px rgba(42,74,96,.2); }
 .google-button:hover { background: var(--green-dark); transform: translateY(-1px); }
 .google-g { width: 27px; height: 27px; border-radius: 50%; display: grid; place-items: center; font-family: Arial, sans-serif; color: #4285f4; background: white; font-size: 18px; font-weight: 800; }
@@ -500,7 +482,6 @@ fieldset.editor-section { min-width: 0; margin: 0; border-top: 0; border-inline:
   .editor-map { position: static; }
   .editor-map .large-map { height: 390px; }
   .auth-brand h1 { font-size: 48px; }
-  .auth-road-scene { width: 76%; height: 30%; }
 }
 
 @media (max-width: 780px) {
@@ -588,8 +569,11 @@ fieldset.editor-section { min-width: 0; margin: 0; border-top: 0; border-inline:
   .auth-card { border-radius: 24px; padding: 32px 22px; box-shadow: 0 16px 42px rgba(40,65,56,.09); }
   .mobile-auth-logo { display: flex; justify-content: center; margin-bottom: 28px; }
   .mobile-auth-title { display: block; color: var(--green-dark); font-size: 32px; line-height: 1.05; letter-spacing: -1px; margin: 0 0 30px; text-align: center; }
-  .mobile-road-scene { position: relative; display: block; inset: auto; width: 100%; height: 190px; margin: 0 0 27px; border-radius: 18px; background: linear-gradient(145deg, #E6F9C5 0%, #D7F5A5 100%); }
-  .mobile-road-scene .scene-road { width: 135%; }
+  .mobile-ticket-panel { display: block; margin: 0 0 27px; }
+  .mobile-ticket-panel .brand-ticket { width: 100%; padding: 16px 14px; border: 1px solid #DCE6DF; box-shadow: 0 10px 28px rgba(36,52,47,.1); }
+  .mobile-ticket-panel .ticket-route { gap: 10px; }
+  .mobile-ticket-panel .ticket-route strong { font-size: 17px; }
+  .mobile-ticket-panel .ticket-meta { gap: 10px; font-size: 15px; }
   .auth-role-pills { grid-template-columns: 1fr; }
   .modal-card { padding: 23px 18px; }
   .optional-car { align-items: flex-start; flex-wrap: wrap; }
@@ -697,10 +681,6 @@ fieldset.editor-section { min-width: 0; margin: 0; border-top: 0; border-inline:
   .auth-card { padding: 28px 20px; }
   .mobile-auth-logo { display: none; }
   .mobile-auth-title { display: block; color: var(--green-dark); font-size: 36px; text-align: right; margin-bottom: 20px; }
-  .mobile-road-scene { background: linear-gradient(160deg, #3A5F78, #1E3747); border-color: transparent; }
-  .mobile-road-scene .scene-road { border-color: #D7F5A5 transparent transparent #D7F5A5; }
-  .mobile-road-scene .scene-pin.pin-start { color: var(--green-dark); background: var(--lime); }
-  .mobile-road-scene .scene-pin.pin-end { color: #FFFFFF; background: #C2703D; }
   .auth-card h2 { font-size: 42px; }
   .auth-card > p { font-size: 16px; }
   .auth-role-pills { display: grid; }

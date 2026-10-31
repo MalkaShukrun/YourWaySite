@@ -31,6 +31,15 @@ test("driver mode shows the driver tabs, with groups only for admins", async ({ 
   await expect(bottomNav(page).getByRole("link", { name: "קבוצות" })).toBeVisible();
 });
 
+test("no public page scrolls sideways", async ({ page }) => {
+  for (const path of ["/login", "/terms", "/privacy"]) {
+    await page.goto(path);
+    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow, path).toBeLessThanOrEqual(0);
+  }
+});
+
 test("no page scrolls sideways", async ({ page, seed, signIn }) => {
   const driver = await seed.user("Driver");
   const route = await seed.route(driver);
