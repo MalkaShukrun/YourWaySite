@@ -27,6 +27,8 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
           <p>נהגות מפרסמות את הנסיעות שלהן, טרמפיסטיות נרשמות בלחיצה — והכול מתואם במקום אחד.</p>
         </div>
 
+        <BrandTicket />
+
         <ol className="brand-steps">
           <li><span><Search {...iconProps} size={19} /></span><div><strong>מוצאות נסיעה</strong><small>לפי מסלול, יום ושעה</small></div></li>
           <li><span><MapPin {...iconProps} size={19} /></span><div><strong>בוחרות תחנה</strong><small>איסוף והורדה מהמפה של הנהגת</small></div></li>
