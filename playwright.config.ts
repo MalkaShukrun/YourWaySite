@@ -42,6 +42,7 @@ export default defineConfig({
       NEXT_DIST_DIR: ".next-e2e",
       NEXT_PUBLIC_SUPABASE_URL: supabase.url,
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: supabase.anonKey,
+      SUPABASE_SECRET_KEY: supabase.serviceKey,
       SITE_URL: BASE_URL,
       // The contact form must never email the real support inbox from a test.
       RESEND_API_KEY: "e2e-disabled",

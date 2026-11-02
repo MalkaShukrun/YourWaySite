@@ -13,7 +13,7 @@ import { useHydrated } from "@/components/ui/useHydrated";
 
 type Props = { defaultName: string };
 
-// The email comes from Google and isn't editable here.
+// The email comes from the sign-in and isn't editable here.
 export function OnboardingModal({ defaultName }: Props) {
   const [serverError, setServerError] = useState("");
   const [pending, startTransition] = useTransition();

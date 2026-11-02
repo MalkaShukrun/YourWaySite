@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PHONE_PATTERN } from "@/lib/validation/patterns";
+import { PHONE_PATTERN, TIME_PATTERN } from "@/lib/validation/patterns";
 
 // Match the profiles_details check in supabase/migrations/0015.
 export const FULL_NAME_MAX = 60;
@@ -36,3 +36,15 @@ export const profileSchema = z
   });
 
 export type ProfileValues = z.infer<typeof profileSchema>;
+
+// The driver's daily email of tomorrow's passengers. The job that sends it runs
+// every 5 minutes, and a time after the last run of the day would never be due.
+export const dailyEmailSchema = z.object({
+  enabled: z.boolean(),
+  time: z
+    .string()
+    .regex(TIME_PATTERN, "יש לבחור שעה")
+    .refine((time) => Number(time.slice(3)) % 5 === 0, "יש לבחור שעה בקפיצות של 5 דקות"),
+});
+
+export type DailyEmailValues = z.infer<typeof dailyEmailSchema>;

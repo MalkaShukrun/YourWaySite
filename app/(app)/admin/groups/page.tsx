@@ -1,8 +1,11 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/auth/session";
+import { getAdminGroups, getAdminStats } from "@/lib/admin/data";
+import { AdminStatsSection } from "@/components/admin/AdminStatsSection";
 import { GroupsSection } from "@/components/admin/GroupsSection";
 import { GroupDialog } from "@/components/admin/GroupDialog";
+import { OtpEmailsSection } from "@/components/admin/OtpEmailsSection";
 
 export const metadata: Metadata = { title: "ניהול קבוצות" };
 
@@ -20,6 +23,7 @@ export default function AdminGroupsPage() {
 
 async function AdminGroups() {
   await requireAdmin();
+  const [stats, groups] = await Promise.all([getAdminStats(), getAdminGroups()]);
   return (
     <>
       <div className="welcome">
@@ -29,7 +33,9 @@ async function AdminGroups() {
         </div>
         <GroupDialog />
       </div>
-      <GroupsSection />
+      <AdminStatsSection stats={stats} />
+      <GroupsSection groups={groups} users={stats.users} />
+      <OtpEmailsSection />
     </>
   );
 }

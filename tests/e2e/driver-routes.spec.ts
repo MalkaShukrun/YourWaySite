@@ -179,7 +179,8 @@ test.describe("editing a published route (spec B4)", () => {
     await expect(page.getByRole("heading", { level: 1, name: "עריכת מסלול" })).toBeVisible();
     await expect(page.getByRole("button", { name: "שמירת השינויים" })).toBeEnabled();
 
-    await expect(page.getByRole("button", { name: `קבוצת נסיעה: ${label}` })).toBeDisabled();
+    await expect(page.getByRole("combobox", { name: "קבוצת נסיעה", exact: true })).toHaveValue(label);
+    await expect(page.getByRole("combobox", { name: "קבוצת נסיעה", exact: true })).toBeDisabled();
     await expect(page.getByLabel("מקומות פנויים")).toHaveValue("3");
     await expect(page.getByLabel("מקומות פנויים")).toBeDisabled();
     await expect(page.getByLabel("מחיר לכל טרמפיסטית")).toBeDisabled();
@@ -261,7 +262,7 @@ test.describe("removing (spec F1)", () => {
 });
 
 test.describe("history and cancelled tabs (spec F2, F3)", () => {
-  test("a one-time ride that took place sits in history, with no buttons", async ({ page, seed, signIn }) => {
+  test("a one-time ride that took place sits in history, and can only be copied", async ({ page, seed, signIn }) => {
     const driver = await seed.user("Driver");
     const route = await seed.route(driver, { date: israelDate(-1) });
     await signIn(page, driver);
@@ -272,11 +273,129 @@ test.describe("history and cancelled tabs (spec F2, F3)", () => {
     const card = page.locator(".route-card");
     await expect(card).toHaveCount(1);
     await expect(card.getByRole("button")).toHaveCount(0);
-    await expect(card.getByRole("link")).toHaveCount(0);
+    await expect(card.getByRole("link")).toHaveText(["שכפול נסיעה"]);
 
     // Opening its edit page returns to my routes (spec B4).
     await page.goto(`/routes/${route.id}`);
     await expect(page).toHaveURL(/\/routes$/);
+  });
+
+  test("copying a past ride publishes a new one with the changed details", async ({ page, seed, signIn }) => {
+    const driver = await seed.user("Driver");
+    const { id: groupId, label } = await namedGroup(seed);
+    const route = await seed.route(driver, { groupId, date: israelDate(-1), seats: 3, price: 7, time: "06:05", notes: "ישנה" });
+    await signIn(page, driver);
+
+    await page.goto("/routes?tab=history");
+    await routeCard(page, label).getByRole("link", { name: "שכפול נסיעה" }).click();
+    await expect(page).toHaveURL(new RegExp(`/routes/new\\?copy=${route.id}$`));
+    await expect(page.getByRole("heading", { level: 1, name: "שכפול נסיעה" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "שמירת המסלול" })).toBeEnabled();
+
+    // Its details are filled in and open to change; the date has to be chosen.
+    await expect(page.getByRole("combobox", { name: "קבוצת נסיעה", exact: true })).toHaveValue(label);
+    await expect(page.getByRole("combobox", { name: "קבוצת נסיעה", exact: true })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "נסיעה חד־פעמית" })).toHaveClass(/active/);
+    await expect(page.getByRole("button", { name: "נסיעה קבועה" })).not.toHaveClass(/active/);
+    await expect(page.getByRole("button", { name: "שעת יציאה: 06:05" })).toBeEnabled();
+    await expect(page.getByLabel("מקומות פנויים")).toHaveValue("3");
+    await expect(page.getByLabel("מחיר לכל טרמפיסטית")).toHaveValue("7");
+    await expect(page.getByLabel("הערות לטרמפיסטיות")).toHaveValue("ישנה");
+    await expect(pickupInputs(page).first()).not.toHaveAttribute("readonly", "");
+    await page.getByRole("button", { name: "שמירת המסלול" }).click();
+    await expect(page.locator(".form-alert")).toHaveText("יש לבחור תאריך");
+
+    await page.getByRole("button", { name: /^תאריך הנסיעה:/ }).click();
+    await page.getByRole("dialog", { name: "תאריך הנסיעה" }).getByRole("button", { name: "החודש הבא" }).click();
+    await page.getByRole("dialog", { name: "תאריך הנסיעה" }).locator(".calendar-grid button:not(.outside)").first().click();
+    await page.getByLabel("מקומות פנויים").fill("5");
+    await page.getByLabel("מחיר לכל טרמפיסטית").fill("12");
+    await pickupInputs(page).first().fill("תחנה חדשה");
+    await page.getByRole("button", { name: "שמירת המסלול" }).click();
+
+    await expect(page).toHaveURL(/\/routes\?saved=1$/);
+    await expect(routeCard(page, label)).toContainText("5 מקומות · ₪12 לטרמפיסטית");
+
+    // The original stays in history as it was.
+    await page.goto("/routes?tab=history");
+    await expect(routeCard(page, label)).toContainText("3 מקומות · ₪7 לטרמפיסטית");
+  });
+
+  test("a copy shows its ride's details after the new-route page or another copy was open", async ({ page, seed, signIn }) => {
+    const driver = await seed.user("Driver");
+    const first = await namedGroup(seed);
+    const second = await namedGroup(seed);
+    await seed.route(driver, { groupId: first.id, date: israelDate(-1), seats: 3, price: 7, time: "06:05", notes: "ראשונה" });
+    await seed.route(driver, { groupId: second.id, date: israelDate(-2), seats: 2, price: 9, time: "08:10", notes: "שנייה" });
+    await signIn(page, driver);
+
+    const expectCopyOf = async (time: string, seats: string, price: string, notes: string) => {
+      await expect(page.getByRole("heading", { level: 1, name: "שכפול נסיעה" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "נסיעה חד־פעמית" })).toHaveClass(/active/);
+      await expect(page.getByRole("button", { name: `שעת יציאה: ${time}` })).toBeVisible();
+      await expect(page.getByLabel("מקומות פנויים")).toHaveValue(seats);
+      await expect(page.getByLabel("מחיר לכל טרמפיסטית")).toHaveValue(price);
+      await expect(page.getByLabel("הערות לטרמפיסטיות")).toHaveValue(notes);
+    };
+
+    // Each step is a client navigation, so an open page could be kept and reused.
+    await page.goto("/routes");
+    await page.getByRole("link", { name: "הוספת מסלול" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "מסלול חדש" })).toBeVisible();
+    await page.getByRole("link", { name: "חזרה למסלולים" }).click();
+    await page.getByRole("link", { name: "היסטוריה" }).click();
+    await routeCard(page, first.label).getByRole("link", { name: "שכפול נסיעה" }).click();
+    await expectCopyOf("06:05", "3", "7", "ראשונה");
+
+    await page.getByRole("link", { name: "חזרה למסלולים" }).click();
+    await page.getByRole("link", { name: "היסטוריה" }).click();
+    await routeCard(page, second.label).getByRole("link", { name: "שכפול נסיעה" }).click();
+    await expectCopyOf("08:10", "2", "9", "שנייה");
+  });
+
+  test("copying an active one-time ride publishes a new one and keeps the original", async ({ page, seed, signIn }) => {
+    const driver = await seed.user("Driver");
+    const { id: groupId, label } = await namedGroup(seed);
+    const route = await seed.route(driver, { groupId, date: israelDate(3), seats: 3, price: 7, time: "06:05", notes: "פעילה" });
+    await signIn(page, driver);
+
+    await page.goto("/routes");
+    await routeCard(page, label).getByRole("link", { name: "שכפול נסיעה" }).click();
+    await expect(page).toHaveURL(new RegExp(`/routes/new\\?copy=${route.id}$`));
+    await expect(page.getByRole("heading", { level: 1, name: "שכפול נסיעה" })).toBeVisible();
+    await expect(page.getByLabel("מקומות פנויים")).toHaveValue("3");
+    await expect(page.getByLabel("הערות לטרמפיסטיות")).toHaveValue("פעילה");
+
+    await page.getByRole("button", { name: /^תאריך הנסיעה:/ }).click();
+    await page.getByRole("dialog", { name: "תאריך הנסיעה" }).getByRole("button", { name: "החודש הבא" }).click();
+    await page.getByRole("dialog", { name: "תאריך הנסיעה" }).locator(".calendar-grid button:not(.outside)").first().click();
+    await page.getByLabel("מקומות פנויים").fill("5");
+    await page.getByRole("button", { name: "שמירת המסלול" }).click();
+
+    await expect(page).toHaveURL(/\/routes\?saved=1$/);
+    await expect(routeCard(page, label)).toHaveCount(2);
+    await expect(routeCard(page, label).filter({ hasText: "3 מקומות" })).toHaveCount(1);
+    await expect(routeCard(page, label).filter({ hasText: "5 מקומות" })).toHaveCount(1);
+  });
+
+  test("a recurring route can be copied too", async ({ page, seed, signIn }) => {
+    const driver = await seed.user("Driver");
+    const { id: groupId, label } = await namedGroup(seed);
+    await seed.route(driver, { groupId, kind: "recurring", date: null });
+    await signIn(page, driver);
+
+    await page.goto("/routes");
+    await routeCard(page, label).getByRole("link", { name: "שכפול נסיעה" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "שכפול נסיעה" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "נסיעה קבועה" })).toHaveClass(/active/);
+  });
+
+  test("only a ride of her own can be copied", async ({ page, seed, signIn }) => {
+    const driver = await seed.user("Driver");
+    const others = await seed.route(await seed.user("Other"), { date: israelDate(-1) });
+    await signIn(page, driver);
+    await page.goto(`/routes/new?copy=${others.id}`);
+    await expect(page.getByRole("heading", { level: 1, name: "מסלול חדש" })).toBeVisible();
   });
 
   test("a one-time ride cancelled for its date moves to the cancelled tab", async ({ page, seed, signIn }) => {

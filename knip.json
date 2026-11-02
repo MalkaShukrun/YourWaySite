@@ -6,8 +6,7 @@
     "eslint.config.{js,mjs,cjs}",
     "playwright.config.{js,mjs,cjs,ts}",
     "tests/**/*.{test,spec}.ts",
-    "tests/integration/global-setup.ts",
-    "vitest.integration.config.mts"
+    "supabase/functions/*/index.ts"
   ],
   "project": [
     "**/*.{js,jsx,mjs,cjs,ts,tsx,css}",

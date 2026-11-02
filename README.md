@@ -25,6 +25,34 @@ Ride-sharing and group transportation app. Next.js (App Router) + Supabase.
    ```
    Open http://localhost:3000 — you'll be sent to `/login`.
 
+## Daily passenger email
+
+For now only admins have it: they turn it on in their profile and pick a time. A Supabase Edge Function
+(`supabase/functions/daily-passenger-email`), called by `pg_cron` every 5 minutes, sends each
+one tomorrow's passengers from a Gmail account. It needs no domain, and Gmail allows about
+500 emails a day. It stays off until all of this is done:
+
+1. **Gmail** — turn on 2-Step Verification on the sending account, then create an App Password
+   at https://myaccount.google.com/apppasswords.
+2. **Database** — run `supabase/migrations/0031_daily_passenger_email.sql` (or `setup.sql`).
+3. **Function** — deploy it and set its secrets. `CRON_SECRET` is any long random string:
+   ```bash
+   npx supabase login
+   npx supabase link --project-ref <PROJECT_REF>
+   npx supabase functions deploy daily-passenger-email
+   npx supabase secrets set CRON_SECRET=... GMAIL_USER=...@gmail.com GMAIL_APP_PASSWORD=... SITE_URL=https://...
+   ```
+4. **Schedule** — fill in and run `supabase/snippets/daily_passenger_email_cron.sql` in the SQL
+   editor, once. The same file shows how to check the runs and how to stop the job.
+
+## Sign-in with a personal code
+
+For women without a Google account. An admin adds the address on the admin page. It gets an account and a permanent 8-digit code, shown once on her screen, and she passes it on herself. A lost code is replaced with “קוד חדש”.
+
+Keep the **Email provider off** in Supabase (Authentication → Providers). Turning it on lets anyone sign up with the public key, around the list.
+
+Production needs `SUPABASE_SECRET_KEY` and `supabase/migrations/0032_personal_codes.sql` (or `setup.sql`). No domain is needed, because the app sends no email for this.
+
 ## Users and admins
 
 Everyone signs in with Google on the same login page. First login opens the onboarding

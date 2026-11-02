@@ -172,7 +172,7 @@ button { cursor: pointer; }
 .trip-footer .btn { padding: 0 11px; min-height: 37px; font-size: 16px; }
 
 .dashboard-actions { display: flex; gap: 10px; }
-.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; }
 .stat-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 17px; display: flex; align-items: center; gap: 13px; }
 .stat-icon { width: 43px; height: 43px; display: grid; place-items: center; border-radius: 12px; }
 .stat-icon.peach { color: #9A6457; background: #F5E5E0; }
@@ -275,9 +275,9 @@ input[type="time"] { direction: ltr; }
 .route-card-body { padding: 18px; }
 .route-card-body h2 { font-size: 19px; font-weight: 700; margin: 12px 0 8px; }
 .route-card-body p { display: flex; align-items: center; gap: 8px; color: #48554F; font-size: 16px; margin-bottom: 6px; }
-.route-actions { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 14px; display: flex; justify-content: space-between; }
+.route-actions { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 14px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; }
 .route-actions .btn:only-child { margin-right: auto; }
-.route-actions:has(.archive-warning) { flex-wrap: wrap; gap: 10px; }
+.route-actions-group { display: flex; gap: 8px; }
 .route-actions .archive-warning { flex-basis: 100%; margin: 0; font-size: 15px; }
 .back-link { border: 0; background: transparent; color: var(--green); display: inline-flex; align-items: center; gap: 7px; font-size: 16px; font-weight: 700; padding: 0; margin-bottom: 20px; }
 .back-link .icon { transform: rotate(180deg); }
@@ -394,7 +394,8 @@ fieldset.editor-section { min-width: 0; margin: 0; border-top: 0; border-inline:
 .editor-map { position: sticky; top: 96px; }
 .editor-map .large-map { height: 560px; }
 .map-hint { position: absolute; top: 15px; right: 50%; transform: translateX(50%); z-index: 5; background: #fff; color: var(--green); border-radius: 9px; padding: 8px 12px; box-shadow: 0 5px 16px rgba(38,62,54,.14); display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 700; white-space: nowrap; }
-.admin-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 18px; }
+.admin-stats { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 18px; }
+.admin-stats .stat-card { flex: 1 1 190px; }
 .group-row { min-height: 78px; display: grid; grid-template-columns: 44px 1fr auto auto; align-items: center; gap: 13px; padding: 12px 24px; border-bottom: 1px solid var(--line); }
 .group-row:last-child { border-bottom: 0; }
 .group-row > div:nth-child(2) { display: flex; flex-direction: column; }
@@ -465,6 +466,9 @@ fieldset.editor-section { min-width: 0; margin: 0; border-top: 0; border-inline:
 .vehicle-section > div:first-child h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 18px; }
 .vehicle-section > div:first-child span { color: #59665F; font-size: 16px; }
 .profile-save { display: flex; justify-content: flex-end; padding-top: 20px; }
+/* Visible overflow: the time picker's panel opens past the form's edge. */
+.daily-email-panel { margin-top: 18px; overflow: visible; }
+.daily-email-note { margin: 8px 0 0; color: #59665F; font-size: 15px; }
 .bottom-nav { display: none; }
 .toast { position: fixed; left: 28px; bottom: 28px; z-index: 50; color: #fff; background: #263e36; border-radius: 12px; padding: 13px 17px; box-shadow: 0 10px 30px rgba(25,50,41,.22); display: flex; align-items: center; gap: 10px; font-size: 16px; animation: toast-in .3s ease; }
 .toast > span { width: 26px; height: 26px; border-radius: 50%; background: #4f7668; display: grid; place-items: center; }
@@ -549,7 +553,6 @@ fieldset.editor-section { min-width: 0; margin: 0; border-top: 0; border-inline:
   .editor-form { padding: 0 17px; margin-bottom: 16px; }
   .editor-map .large-map { height: 320px; }
   .form-grid.compact { grid-template-columns: 1fr; }
-  .admin-stats { grid-template-columns: 1fr; }
   .group-row { grid-template-columns: 42px 1fr; padding: 14px 17px; }
   .group-row > .status-pill { grid-column: 2; width: max-content; }
   .group-row > .row-actions { grid-column: 2; grid-row: auto; }

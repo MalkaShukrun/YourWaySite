@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
-import { CalendarDays, Car, ChevronDown, MapPin, Plus, Users } from "lucide-react";
+import { CalendarDays, ChevronDown, Plus, Users } from "lucide-react";
 import { format } from "date-fns";
 import { requireUser } from "@/lib/auth/session";
 import { formatRideDate, formatTime, formatWeekRange, greetingFor, isIsoDate, israelHour, israelNow, israelToday, rideWeekOf } from "@/lib/utils/dates";
@@ -11,7 +11,7 @@ import { DashboardDatePicker } from "@/components/driver/DashboardDatePicker";
 import { DriverRideCard } from "@/components/driver/DriverRideCard";
 import { WeekDays } from "@/components/driver/WeekDays";
 import { StatCard } from "@/components/ui/StatCard";
-import { carIconProps, iconProps } from "@/components/ui/icon";
+import { iconProps } from "@/components/ui/icon";
 
 export const metadata: Metadata = { title: "הנסיעות שלי השבוע" };
 
@@ -38,8 +38,6 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
 
   const active = days.flatMap((d) => d.rides).filter((r) => !r.cancelled);
   const booked = active.reduce((sum, r) => sum + r.booked, 0);
-  const free = active.reduce((sum, r) => sum + Math.max(r.seats - r.booked, 0), 0);
-  const pickupStops = new Set(active.flatMap((r) => r.passengers.map((p) => p.pickup_stop_id))).size;
   const rideDays = days.filter((d) => d.rides.length > 0);
   // Only today's rides start expanded; in a week without rides today, the chosen date (or the first ride day) opens instead.
   const openDay = [today, date].find((d) => rideDays.some((r) => r.day === d)) ?? rideDays[0]?.day;
@@ -54,7 +52,7 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
   const actions = (
     <div className="dashboard-actions">
       <DashboardDatePicker value={date} display={formatWeekRange(week)} today={today} week={week} />
-      <Link className="btn btn-primary" href="/routes/new"><Plus {...iconProps} size={20} /> נסיעה חדשה</Link>
+      <Link className="btn btn-primary" href="/routes/new"><Plus {...iconProps} size={20} /> הוספת מסלול</Link>
     </div>
   );
 
@@ -68,9 +66,7 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
       </div>
 
       <div className="stats-grid">
-        <StatCard icon={<Users {...iconProps} size={20} />} value={booked} label="טרמפיסטיות רשומות" tone="peach" />
-        <StatCard icon={<Car {...carIconProps} size={20} />} value={free} label="מקומות פנויים" tone="green" />
-        <StatCard icon={<MapPin {...iconProps} size={20} />} value={pickupStops} label="תחנות איסוף" tone="purple" />
+        <StatCard icon={<Users {...iconProps} size={20} />} value={booked} label="טרמפיסטיות רשומות לשבוע הקרוב" tone="peach" />
         <StatCard icon={<CalendarDays {...iconProps} size={20} />} value={active.length} label="נסיעות השבוע" tone="blue" />
       </div>
 

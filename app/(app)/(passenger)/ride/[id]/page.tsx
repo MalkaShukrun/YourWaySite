@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, Car, MessageSquareText, Phone, Users } from "lucide-react";
 import { requireUser } from "@/lib/auth/session";
@@ -8,6 +7,7 @@ import { formatRideDate, formatTime, isIsoDate } from "@/lib/utils/dates";
 import { getMyBookings, getRide, getRouteDates } from "@/lib/rides/data";
 import { avatarColorFor, initialsOf, kindLabel, seatsText } from "@/lib/utils/format";
 import { BookingForm } from "@/components/passenger/BookingForm";
+import { BackToSearchLink } from "@/components/passenger/BackToSearchLink";
 import { carIconProps, iconProps } from "@/components/ui/icon";
 import { isUuid } from "@/lib/validation/patterns";
 
@@ -17,9 +17,9 @@ export const metadata: Metadata = { title: "פרטי נסיעה" };
 export default function RidePage({ params, searchParams }: PageProps<"/ride/[id]">) {
   return (
     <main className="page-content">
-      <Link className="back-link" href="/">
+      <BackToSearchLink className="back-link">
         <ArrowLeft {...iconProps} size={17} /> חזרה לכל הנסיעות
-      </Link>
+      </BackToSearchLink>
       <Suspense fallback={<div className="detail-layout" aria-busy="true" />}>
         <RideDetailsView params={params} searchParams={searchParams} />
       </Suspense>

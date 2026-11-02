@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Car, Info, MapPin, Repeat, RotateCcw, Search } from "lucide-react";
 import { DatePicker } from "@/components/ui/DatePicker";
@@ -9,10 +9,22 @@ import { TimePicker } from "@/components/ui/TimePicker";
 import type { RideGroup, RideKind } from "@/lib/rides/types";
 import { groupLabel } from "@/lib/utils/format";
 import { carIconProps, iconProps } from "@/components/ui/icon";
+import { rememberSearch } from "@/components/passenger/BackToSearchLink";
 
 const ROUTE_HINT = "להוספת מסלולי נסיעה מעיר לעיר יש ליצור קשר";
 
 type Filters = { groupIds?: string[]; date?: string; kind?: RideKind; from?: string; to?: string };
+
+function searchHref({ groupIds, date, from, to, kind }: { groupIds?: string[]; date?: string; from?: string; to?: string; kind?: string }) {
+  const params = new URLSearchParams();
+  for (const id of groupIds ?? []) params.append("group", id);
+  if (date) params.set("date", date);
+  if (from) params.set("from", from);
+  if (to) params.set("to", to);
+  if (kind) params.set("kind", kind);
+  const query = params.toString();
+  return query ? `/?${query}` : "/";
+}
 
 const KIND_OPTIONS = [
   { value: "", label: "כל הנסיעות" },
@@ -30,16 +42,13 @@ export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; i
   const [kind, setKind] = useState<string>(initial.kind ?? "");
   const groupOptions = groups.map((g) => ({ value: g.id, label: groupLabel(g.origin, g.destination) }));
 
+  // The search shown now — the ride page's back link returns to it.
+  const shownHref = searchHref(initial);
+  useEffect(() => rememberSearch(shownHref), [shownHref]);
+
   function submit(event: FormEvent) {
     event.preventDefault();
-    const params = new URLSearchParams();
-    for (const id of groupIds) params.append("group", id);
-    if (date) params.set("date", date);
-    if (from) params.set("from", from);
-    if (to) params.set("to", to);
-    if (kind) params.set("kind", kind);
-    const query = params.toString();
-    router.push(query ? `/?${query}` : "/");
+    router.push(searchHref({ groupIds, date, from, to, kind }));
   }
 
   const hasFilters = Boolean(

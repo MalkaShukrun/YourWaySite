@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import type { ProfileValues } from "@/lib/validation/profile";
+import { formatTime } from "@/lib/utils/dates";
+import type { DailyEmailValues, ProfileValues } from "@/lib/validation/profile";
 
 // Data Access Layer for the profile screen (SRS §1.3). RLS limits the row
 // to its owner.
@@ -21,6 +22,18 @@ export async function getProfileValues(userId: string, fallbackName: string): Pr
     vehicleColor: p?.vehicle_color ?? "",
     vehicleSeats: p?.vehicle_seats ? String(p.vehicle_seats) : "4",
   };
+}
+
+// The driver's daily email settings, for the profile screen.
+export async function getDailyEmailValues(userId: string): Promise<DailyEmailValues> {
+  const supabase = await createClient();
+  const { data: p } = await supabase
+    .from("profiles")
+    .select("daily_email_enabled, daily_email_time")
+    .eq("id", userId)
+    .maybeSingle();
+
+  return { enabled: Boolean(p?.daily_email_enabled), time: formatTime(p?.daily_email_time ?? "20:00") };
 }
 
 // The profile's vehicle columns; all null once the user removes the car.

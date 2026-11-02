@@ -59,9 +59,7 @@ test.describe("the week (spec D1)", () => {
 
     await page.goto(`/dashboard?date=${date}`);
     const stat = (label: string) => page.locator(".stat-card").filter({ hasText: label });
-    await expect(stat("טרמפיסטיות רשומות")).toContainText("1");
-    await expect(stat("מקומות פנויים")).toContainText("3");
-    await expect(stat("תחנות איסוף")).toContainText("1");
+    await expect(stat("טרמפיסטיות רשומות לשבוע הקרוב")).toContainText("1");
     await expect(stat("נסיעות השבוע")).toContainText("1");
   });
 
@@ -121,7 +119,6 @@ test.describe("cancelling a date (spec D2)", () => {
     await expect(card.getByText("לבטל את הנסיעה? אי אפשר להחזיר אותה.")).toBeVisible();
     await card.getByRole("button", { name: "כן, לבטל" }).click();
 
-    await expect(toast(page, "הנסיעה בוטלה לתאריך הזה בלבד")).toBeVisible();
     await expect(card.locator(".status-pill")).toHaveText("בוטלה לתאריך זה");
     await expect(card.getByRole("button", { name: "ביטול הנסיעה לתאריך זה בלבד" })).toHaveCount(0);
     await openCard(card);

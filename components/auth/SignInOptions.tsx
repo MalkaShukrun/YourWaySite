@@ -3,11 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { EmailCodeSignIn } from "@/components/auth/EmailCodeSignIn";
 
 const CONSENT_ERROR = "יש לאשר את תנאי השימוש ומדיניות הפרטיות כדי להמשיך.";
 
-// Google is the only way in. It returns through /auth/callback, which sends
-// new users to onboarding.
+// Google is the way in, and it returns through /auth/callback, which sends new
+// users to onboarding. Addresses an admin approved can use a personal code.
 export function SignInOptions() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -51,6 +52,7 @@ export function SignInOptions() {
         <span className="google-g">G</span>
         {loading ? "מעביר ל־Google…" : "הצטרפות עם Google"}
       </button>
+      <EmailCodeSignIn accepted={accepted} onNotAccepted={() => setError(CONSENT_ERROR)} />
       {error && <p className="auth-error" role="alert">{error}</p>}
     </>
   );

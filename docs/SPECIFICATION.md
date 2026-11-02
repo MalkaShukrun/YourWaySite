@@ -27,7 +27,7 @@ YourWay connects women who drive regular or one-off trips with women looking for
 |---|---|---|
 | **Passenger** | Searches rides, books seats, cancels, tracks payments. | Ride search, `/` |
 | **Driver** | Publishes routes, sees each day's passengers, cancels a date, adds passengers by hand. | Same account; switches to driver mode |
-| **Admin** | Everything above, plus creating and managing ride groups (origin → destination pairs). | Group management, `/admin/groups` |
+| **Admin** | Everything above, plus creating and managing ride groups (origin → destination pairs), giving out personal sign-in codes and seeing the site-wide totals. | Group management, `/admin/groups` |
 
 There is one account type. Any signed-in user can act as a passenger or as a driver. Being an admin is a flag on the profile; it is set in the database for the owner's account and can't be set from the app.
 
@@ -94,7 +94,7 @@ Open for booking → Cancelled for this date → Shown as cancelled · never cha
 
 | Screen | Address | Who | What it shows |
 |---|---|---|---|
-| Sign-in | `/login` | Anyone | Google sign-in, consent to the terms of use and the privacy policy, site totals (members and active routes, refreshed hourly). Opens the onboarding window for new users. |
+| Sign-in | `/login` | Anyone | Google sign-in, or a personal code for approved addresses (A6), consent to the terms of use and the privacy policy, site totals (members and active routes, refreshed hourly). Opens the onboarding window for new users. |
 | Terms of use | `/terms` | Anyone | The terms text, including the cancellation policy. |
 | Privacy policy | `/privacy` | Anyone | The policy text, including the mailing and messages section. |
 | Ride search | `/` | All | Greeting, filter bar (route groups, date, departure from/until, ride type), result cards for the next 7 days. Each recurring route appears as one card with a chip per date showing free seats. |
@@ -102,11 +102,11 @@ Open for booking → Cancelled for this date → Shown as cancelled · never cha
 | My rides | `/my-rides` | Passenger | Tabs “נסיעות קרובות” (upcoming) and “היסטוריה” (past, newest first). Each row: time, date, route, price, stops, driver contact, cancel button, and “הנהגת ביטלה את הנסיעה” when the driver cancelled. |
 | Payments | `/payments` | Passenger | Month picker (this month and the 3 before), totals for the month (total, paid, left to pay), one row per charged ride with a paid/unpaid toggle, and an all-time unpaid balance per driver. |
 | Weekly dashboard | `/dashboard?date=` | Driver | Week (Sunday–Saturday) containing the chosen date. Totals for the week; one folding section per day that has rides; one card per ride with its passengers and contact details, the day's stops, a map, cancel-for-date and add-passenger controls. |
-| My routes | `/routes` | Driver | Tabs “מסלולים פעילים” (active), “היסטוריה” (one-time rides that departed) and “מסלולים מבוטלים” (one-time rides cancelled for their date). |
-| New route | `/routes/new` | Driver | Route editor: group, type, days or date, time, seats, price, note, stops, map. |
+| My routes | `/routes` | Driver | Tabs “מסלולים פעילים” (active), “היסטוריה” (one-time rides that departed) and “מסלולים מבוטלים” (one-time rides cancelled for their date). Active and history cards have “שכפול נסיעה” (F2). |
+| New route | `/routes/new` | Driver | Route editor: group (with a search box), type, days or date, time, seats, price, note, stops, map. With `?copy=[id]`, “שכפול נסיעה”: the same editor filled from another of her routes (F2). Reached from “הוספת מסלול” on the dashboard. |
 | Edit route | `/routes/[id]` | Driver | Same editor with everything locked except the note and adding new stops. |
-| Profile | `/profile` | All | Name, phone, email (read-only, from Google), optional vehicle (model, colour, seats). Admins also see group management here. |
-| Group management | `/admin/groups` | Admin | Groups with how many routes use each; add, rename, hide/show, delete. |
+| Profile | `/profile` | All | Name, phone, email (read-only, from her sign-in), optional vehicle (model, colour, seats). Admins also see the daily passenger email (D7) and group management here. |
+| Group management | `/admin/groups` | Admin | Site-wide totals (H5). Groups with how many routes use each; add, rename, hide/show, delete. Personal-code addresses (H4). The group and address lists fold away under their titles. |
 | Not found | any unknown address | Anyone | “הדף לא נמצא”, with a link home. |
 
 ## 4. Scenarios
@@ -169,7 +169,7 @@ Her drivers see her new name and phone on their dashboards.
 
 Profile, ride cards, ride page driver card, driver dashboard passenger rows.
 
-**Rules:** the email can't be edited; it always comes from Google. Vehicle details are all-or-nothing: once she adds a car, model, colour and 1–8 seats are required. Having a vehicle is not required to publish routes.
+**Rules:** the email can't be edited; it always comes from her sign-in. Vehicle details are all-or-nothing: once she adds a car, model, colour and 1–8 seats are required. Having a vehicle is not required to publish routes.
 
 #### A4. A user switches between passenger and driver mode
 
@@ -202,6 +202,22 @@ Her session cookies are removed, even if Google already ended the session, and s
 **Where it shows**
 
 `/login`.
+
+#### A6. A user without Google signs in with a personal code
+
+**Trigger:** An admin added her address and gave her the code (H4). She opens “אין לך חשבון Google? כניסה עם קוד אישי”, ticks the consent and enters her email and code.
+
+**Passenger side**
+
+- She is signed in. The first time, the onboarding window asks for her name and phone, as in A1.
+- The same code works every time.
+- If she forgot it, “שכחת את הקוד? שלחי לנו מייל” copies the support address and shows it. The contact form needs a signed-in user, so it can't help here.
+
+**Where it shows**
+
+`/login`, under the Google button.
+
+**Rules:** the code is 8 digits and permanent, like a password. Any wrong address or code shows “המייל או הקוד שגויים.”, so the page doesn't show who is approved. An address gets 10 attempts an hour. An approved address that also has Google can use either way in, and both reach the same account.
 
 ### B. Publishing routes
 
@@ -330,12 +346,12 @@ Nothing; searches aren't recorded.
 
 - Without a date: rides from today through the next 6 days. With a date: that day only.
 - Filters: one or more route groups, ride type, departure from and until (inclusive).
-- Results are sorted by date then time; each route is one card.
+- Results are sorted by date then time; each route is one card. The heading shows how many were found (“N תוצאות”), with or without filters.
 - No results: “לא נמצאו נסיעות מתאימות”.
 
 **Where it shows**
 
-`/`; the filters are kept in the address, so the search can be shared or reloaded.
+`/`; the filters are kept in the address, so the search can be shared or reloaded. “חזרה לכל הנסיעות” on a ride page returns to the last search in that browser tab, with its filters.
 
 **Rules:** search never lists rides that departed, dates the driver cancelled, removed routes, or routes in hidden groups (which also can't be booked by link, H2). A past date in the address is ignored. "From" later than "until" is swapped. Full dates still appear, with a “מלאה” chip.
 
@@ -364,7 +380,7 @@ Nothing.
 **Driver side**
 
 - The passenger appears on that day's ride card with her name, phone, email and stops.
-- Free seats and the week's totals go down; booked count goes up.
+- The ride's free seats go down; the week's booked count goes up.
 - No notification is sent.
 
 **Passenger side**
@@ -461,7 +477,7 @@ Not-found page.
 **Driver side**
 
 - The week runs Sunday to Saturday. Only days with rides are listed.
-- Totals: booked passengers, free seats, distinct pickup stops, and rides this week (cancelled dates excluded).
+- Totals: “טרמפיסטיות רשומות לשבוע הקרוב” (booked passengers) and rides this week (cancelled dates excluded).
 - Today's rides start open; otherwise the chosen date or the first ride day.
 - Today is marked “היום”. Once all of today's rides that weren't cancelled have left, today also shows “שעת היציאה עברה”.
 - No rides: “אין לך נסיעות בשבוע הזה”.
@@ -482,8 +498,7 @@ Not applicable.
 
 **Driver side**
 
-- “הנסיעה בוטלה לתאריך הזה בלבד”.
-- The card shows “בוטלה לתאריך זה”; cancel and add-passenger controls disappear.
+- The card shows “בוטלה לתאריך זה”, with no other message; cancel and add-passenger controls disappear.
 - Other dates of the route are unchanged.
 - A one-time ride moves to “מסלולים מבוטלים” in my routes.
 
@@ -574,6 +589,26 @@ Self-booked passengers are never removed by the driver.
 
 Dashboard ride card.
 
+#### D7. A driver gets tomorrow's passengers by email (admins only, for now)
+
+**Trigger:** Under “מייל יומי לנהגות” on “הפרופיל שלי” she presses the button that shows the current state (“כבוי” or “פעיל”) to switch it, picks a time in 5-minute steps and presses “שמירת הגדרות המייל”. It is off until she turns it on; the suggested time is 20:00, Israel time.
+
+**Driver side**
+
+- Up to about 5 minutes after her time she gets one email, at her sign-in address, listing tomorrow's rides by departure time. For each ride: every active passenger's name, phone, email and boarding stop, ordered by stop.
+- If her time already passed today when she saves it, the email goes out on the next run.
+- She can change the time or turn the email off at any time; a date's email is never sent twice.
+
+**Passenger side**
+
+Nothing changes. A passenger the driver added shows the name and phone the driver entered, and no email (as on the dashboard, D4).
+
+**Where it shows**
+
+Profile; the driver's mailbox.
+
+**Rules:** for now only admins have it: other users don't see the setting, and the email isn't sent to anyone who stops being an admin, even if she turned it on. No email if she has no passengers tomorrow: a ride with none is left out, and so is a cancelled date. The list is a snapshot of the moment it was sent, and later changes aren't emailed. A failed send is tried again every 5 minutes until the end of the day.
+
 ### E. A passenger cancels
 
 #### E1. A passenger cancels before departure
@@ -656,7 +691,11 @@ Passenger: `/my-rides`. Rides that already departed stay as they were, in histor
 
 **Driver side**
 
-It sits under “היסטוריה” with no buttons. A direct attempt is refused with “הנסיעה כבר התקיימה ונשמרת בהיסטוריה — אי אפשר להסיר אותה.”
+It sits under “היסטוריה” with no way to remove or edit it. A direct attempt is refused with “הנסיעה כבר התקיימה ונשמרת בהיסטוריה — אי אפשר להסיר אותה.”
+
+Its only action is “שכפול נסיעה”: `/routes/new?copy=[id]` opens the new-route editor filled with its details and stops. All of them can be changed, including the group and the ride type, and the date starts empty. If its group was hidden since, the first visible group is selected instead. Saving publishes a new route under the B1/B2 rules; the original ride stays in history unchanged.
+
+Active routes, recurring and one-time, have the same “שכפול נסיעה” action next to their edit link. The copy is a separate new route; the original stays active and unchanged. Cancelled rides can't be copied.
 
 **Passenger side**
 
@@ -726,7 +765,7 @@ Nothing; the driver never sees payment marks.
 
 **Rules:** the month list covers this month and the 3 before; the per-driver balance covers all months. Each ride is charged at the price saved on its booking.
 
-### H. Admin: ride groups
+### H. Admin
 
 #### H1. An admin adds or renames a group
 
@@ -782,6 +821,31 @@ An unused group simply disappears from the filter.
 
 `/admin/groups`.
 
+#### H4. An admin gives a user a personal code
+
+**Trigger:** She adds an address under “כניסה עם קוד אישי” on the admin page.
+
+**Result**
+
+- The address gets an account right away, unless it already has one, and appears on the list.
+- Its code shows once on her screen, for her to pass on. It isn't emailed to anyone and can't be looked up later.
+- “קוד חדש” replaces a lost or leaked code; the old one stops working at once.
+- “הסרה” stops sign-in with the code. The account, its rides and any open session stay.
+
+**Rules:** only admins see or change the list, and nobody can read a code: only its hash is stored. An address already on the list is refused.
+
+#### H5. An admin sees the site-wide totals
+
+**Trigger:** She opens the admin page.
+
+**Result**
+
+- Today: passengers traveling and rides departing.
+- Users in the system: those who finished sign-up.
+- To date: rides that departed and passengers who traveled.
+
+**Rules:** only admins can read the totals. Each active booking counts as one passenger on one ride, guests included, so a round trip counts twice. Dates the driver cancelled aren't counted. Today's rides include every scheduled ride, booked or not; a ride counts as departed only if it had at least one passenger. Days follow Israel time.
+
 ### I. Support and errors
 
 #### I1. A user sends a message through the contact form
@@ -826,11 +890,12 @@ In place of the page.
 |---|---|---|---|
 | Driver's name, vehicle, routes, note | Yes | Yes | Yes |
 | Driver's phone and email | Own | While her booking is active (including dates the driver cancelled) | No |
-| Passenger's name, phone, email | For passengers booked on her rides | Own only | No |
+| Passenger's name, phone, email | For passengers booked on her rides (also in her daily email, D7, which stays in her mailbox) | Own only | No |
 | Who else is booked on a ride | Yes | No, only the number of free seats | No |
 | Guests the driver added | Name and phone she entered | No | No |
 | Paid / unpaid marks | No | Own only | No |
 | Site totals (members, active routes) | Yes | Yes | Yes, including signed-out visitors; totals only |
+| Site-wide ride totals (H5) and the personal-code list (H4) | No | No | Admins only; codes are stored only as a hash, so nobody can read them |
 
 ## 6. Booking and ride states
 
@@ -871,7 +936,7 @@ In place of the page.
 
 | Topic | Current behaviour |
 |---|---|
-| Notifications and mailing | None. Bookings, cancellations and date cancellations are not sent to anyone; each side sees them on its own screens on the next load. Coordination is by phone. |
+| Notifications and mailing | Only the optional daily email of tomorrow's passengers, for admins for now (D7). Bookings, cancellations and date cancellations are not sent to anyone as they happen; each side sees them on its own screens on the next load. Coordination is by phone. |
 | Reports, suspending accounts, removing others' rides | No screens. Reports arrive through the contact form or by email; the terms reserve these rights, and they are carried out by hand in the database. |
 | Consent records | The sign-in consent to the terms and the privacy policy isn't saved, and existing users aren't asked again. |
 | Paid subscriptions | None. The terms allow adding paid features later. |

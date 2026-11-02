@@ -84,7 +84,7 @@ a.nav-item { text-decoration: none; }
 .week-day + .week-day { margin-top: 20px; }
 .week-days-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; margin-bottom: 14px; }
 .week-days-actions > .btn { min-height: 36px; padding: 0 12px; font-size: 15px; }
-/* The week picker and "נסיעה חדשה" sit at the end of the row, after "open / collapse all". */
+/* The week picker and "הוספת מסלול" sit at the end of the row, after "open / collapse all". */
 .week-days-actions .dashboard-actions { margin-inline-start: 8px; }
 .week-days-actions .date-picker:has(.date-picker-button) .dropdown-options.calendar { left: 0; right: auto; }
 @media (max-width: 780px) {
@@ -185,6 +185,11 @@ a.nav-item { text-decoration: none; }
 .date-picker-button { width: auto; }
 
 /* Admin — ride groups (the design's .admin-stats / .group-row) */
+.panel-title-toggle { position: relative; }
+.panel-toggle { width: 34px; height: 34px; flex: 0 0 auto; display: grid; place-items: center; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.panel-toggle::after { content: ""; position: absolute; inset: 0; }
+.panel.open .today-chevron { transform: rotate(180deg); }
+.panel.collapsed .panel-title { border-bottom: 0; }
 .group-row.is-hidden strong { color: #8A968F; }
 .group-row .row-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .group-row > .confirm-inline { flex-wrap: wrap; }
@@ -218,3 +223,18 @@ a.nav-item { text-decoration: none; }
 .profile-panel .form-grid.compact .field:last-child { grid-column: auto; }
 .profile-panel .profile-subgrid { grid-template-columns: repeat(3, 1fr); }
 @media (max-width: 780px) { .profile-panel .profile-subgrid { grid-template-columns: 1fr; } }
+
+.email-code-link { display: block; width: 100%; margin-top: 12px; border: 0; background: none; color: var(--green); font-size: 15px; font-weight: 700; text-decoration: underline; cursor: pointer; }
+.email-code-form { display: grid; gap: 10px; margin-top: 14px; text-align: right; }
+.email-code-form .email-code-link { margin-top: 2px; text-align: center; }
+.email-code-form .email-code-note { text-align: center; color: #59665F; }
+.email-code-form p { margin: 0; font-size: 15px; }
+.panel:has(.otp-email-form) { margin-top: 18px; }
+.otp-email-form { display: flex; flex-wrap: wrap; gap: 10px; padding: 16px 24px; }
+.otp-email-form .input-shell { flex: 1 1 220px; }
+.otp-email-form .form-alert { flex-basis: 100%; margin: 0; }
+.otp-email-row { grid-template-columns: auto minmax(0, 1fr) auto; }
+.otp-email-actions { display: flex; gap: 8px; }
+.otp-code-note { flex-basis: 100%; grid-column: 1 / -1; margin: 0; font-size: 15px; }
+.otp-code-note strong { font-size: 18px; letter-spacing: 1px; }
+.otp-email-row strong { overflow-wrap: anywhere; }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
-import { CalendarDays, Clock, Plus, Users } from "lucide-react";
+import { CalendarDays, Clock, Copy, Plus, Users } from "lucide-react";
 import { format } from "date-fns";
 import { requireUser } from "@/lib/auth/session";
 import { formatRideDate, formatTime, israelNow } from "@/lib/utils/dates";
@@ -65,7 +65,7 @@ async function Routes({ searchParams }: Pick<PageProps<"/routes">, "searchParams
         </section>
       ) : (
         <div className="routes-grid">
-          {rows.map((route) => <RouteCard key={route.id} route={route} past={tab !== "active"} />)}
+          {rows.map((route) => <RouteCard key={route.id} route={route} tab={tab} />)}
         </div>
       )}
       <Toast message={query.saved === "1" ? "המסלול נשמר ופורסם" : ""} />
@@ -73,9 +73,13 @@ async function Routes({ searchParams }: Pick<PageProps<"/routes">, "searchParams
   );
 }
 
-// A `past` ride — one that took place or was cancelled — is kept for the record:
-// it can't be removed or given more stops.
-function RouteCard({ route, past }: { route: DriverRoute; past: boolean }) {
+// A ride that took place or was cancelled is kept for the record: it can't be
+// removed or given more stops. Active routes and rides that took place can be
+// copied into a new ride.
+function RouteCard({ route, tab }: { route: DriverRoute; tab: "active" | "history" | "cancelled" }) {
+  const copyLink = (
+    <Link className="btn btn-secondary" href={`/routes/new?copy=${route.id}`}><Copy {...iconProps} size={18} /> שכפול נסיעה</Link>
+  );
   return (
     <article className="route-card">
       <div className="route-card-body">
@@ -95,12 +99,16 @@ function RouteCard({ route, past }: { route: DriverRoute; past: boolean }) {
           <Clock {...iconProps} size={19} /> יציאה ב־{formatTime(route.out_time)}
         </p>
         <p><Users {...iconProps} size={19} /> {route.seats} מקומות · {formatPrice(route.price)} לטרמפיסטית</p>
-        {!past && (
+        {tab === "active" && (
           <div className="route-actions">
             <ArchiveRouteButton routeId={route.id} />
-            <Link className="btn btn-secondary" href={`/routes/${route.id}`}>עריכת מסלול</Link>
+            <div className="route-actions-group">
+              {copyLink}
+              <Link className="btn btn-secondary" href={`/routes/${route.id}`}>עריכת מסלול</Link>
+            </div>
           </div>
         )}
+        {tab === "history" && <div className="route-actions">{copyLink}</div>}
       </div>
     </article>
   );

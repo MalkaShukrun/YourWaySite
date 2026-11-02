@@ -71,6 +71,37 @@ test.describe("onboarding (spec A1)", () => {
   });
 });
 
+test.describe("daily passenger email (spec D7)", () => {
+  test("isn't offered to a user who isn't an admin (for now)", async ({ page, seed, signIn }) => {
+    await signIn(page, await seed.user("Driver"));
+    await openForm(page, "/profile", "שמירת שינויים");
+    await expect(page.getByText("מייל יומי לנהגות")).toHaveCount(0);
+  });
+
+  test("an admin turns it on, picks a time and turns it off again", async ({ page, seed, signIn }) => {
+    const user = await seed.user("Driver", { admin: true });
+    await signIn(page, user);
+    const saved = async () =>
+      (await seed.service.from("profiles").select("daily_email_enabled, daily_email_time").eq("id", user.id).single()).data;
+
+    await openForm(page, "/profile", "שמירת הגדרות המייל");
+    await page.getByRole("button", { name: "כבוי", exact: true }).click();
+    await page.getByRole("button", { name: "שעת השליחה: 20:00" }).click();
+    await page.getByRole("option", { name: "07" }).click();
+    await page.getByRole("option", { name: "30" }).click();
+    await page.getByRole("button", { name: "שמירת הגדרות המייל" }).click();
+    await expect(toast(page, "הגדרות המייל נשמרו")).toBeVisible();
+    expect(await saved()).toEqual({ daily_email_enabled: true, daily_email_time: "07:30:00" });
+
+    await page.reload();
+    await expect(page.getByRole("button", { name: "שעת השליחה: 07:30" })).toBeVisible();
+    await page.getByRole("button", { name: "פעיל", exact: true }).click();
+    await expect(page.getByRole("button", { name: "שעת השליחה: 07:30" })).toBeHidden();
+    await page.getByRole("button", { name: "שמירת הגדרות המייל" }).click();
+    await expect.poll(saved).toEqual({ daily_email_enabled: false, daily_email_time: "07:30:00" });
+  });
+});
+
 test.describe("profile (spec A3)", () => {
   test("shows her details with a read-only email, saves changes and keeps them", async ({ page, seed, signIn }) => {
     const user = await seed.user("Profile", { fullName: "רחל לוי" });

@@ -10,7 +10,7 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: async () => sb.mock.clie
 vi.mock("@supabase/supabase-js", () => ({ createClient: () => sb.mock.client }));
 sb.mock = createSupabaseMock();
 const { getProfileValues, vehicleColumns } = await import("@/lib/profile/data");
-const { getAdminGroups } = await import("@/lib/admin/data");
+const { getAdminGroups, getAdminStats } = await import("@/lib/admin/data");
 const { getSiteStats } = await import("@/lib/site/stats");
 
 beforeEach(() => {
@@ -75,6 +75,23 @@ describe("getAdminGroups", () => {
   it("throws on a database error", async () => {
     sb.mock.onTable("ride_groups", { error: { message: "denied" } });
     await expect(getAdminGroups()).rejects.toThrow("denied");
+  });
+});
+
+describe("getAdminStats", () => {
+  const stats = { users: 5, rides_today: 2, passengers_today: 3, rides_departed: 40, passengers_departed: 90 };
+  const mockRpc = (result: object) =>
+    sb.mock.client.rpc.mockReturnValueOnce({ single: async () => ({ data: null, error: null, ...result }) } as never);
+
+  it("reads the totals", async () => {
+    mockRpc({ data: stats });
+    expect(await getAdminStats()).toEqual(stats);
+    expect(sb.mock.client.rpc).toHaveBeenCalledWith("admin_stats");
+  });
+
+  it("throws on a database error, such as a user who isn't an admin", async () => {
+    mockRpc({ error: { message: "no rows" } });
+    await expect(getAdminStats()).rejects.toThrow("no rows");
   });
 });
 

@@ -1,5 +1,5 @@
 -- YourWay — full database setup. Paste this whole file into Supabase → SQL Editor → Run.
--- Generated from supabase/migrations/0001–0030. Safe to run more than once.
+-- Generated from supabase/migrations/0001–0033. Safe to run more than once.
 
 
 -- ════════ supabase/migrations/0001_profiles.sql ════════
@@ -3046,3 +3046,196 @@ revoke select on public.bookings from authenticated;
 grant select (id, route_id, ride_date, passenger_id, pickup_stop_id, dropoff_stop_id, status,
               created_at, cancelled_at, added_by_driver, guest_name, guest_phone, price)
   on public.bookings to authenticated;
+
+
+-- ════════ supabase/migrations/0031_daily_passenger_email.sql ════════
+-- YourWay — a daily email to the driver with tomorrow's passengers.
+-- Run after 0030_paid_mark_private.sql. Safe to run again.
+--
+-- The driver turns the email on and picks its time on her profile. The Edge
+-- Function supabase/functions/daily-passenger-email runs every 5 minutes (see
+-- supabase/snippets/daily_passenger_email_cron.sql) and claims the drivers
+-- whose time has come.
+
+-- daily_email_sent_for is the ride date she was last sent, so she gets one
+-- email per date. Only the system writes it: users have no grant on it.
+alter table public.profiles
+  add column if not exists daily_email_enabled  boolean not null default false,
+  add column if not exists daily_email_time     time    not null default '20:00',
+  add column if not exists daily_email_sent_for date;
+
+grant update (daily_email_enabled, daily_email_time) on public.profiles to authenticated;
+
+-- Marks the drivers who are due as sent for tomorrow (Israel time) and returns
+-- those who have passengers, with their rides. Two runs at once can't claim the
+-- same driver. A run that was missed is made up for by the next one, and a
+-- driver who picks a time that already passed today is due right away. Same
+-- rules as driver_rides and driver_passengers (0013): a passenger the driver
+-- added shows the details she entered, and those have no email. For now only
+-- admins get the email (spec D7). Each run takes
+-- up to 50 drivers, so a long queue can't outlast the function; the rest are
+-- still due on the next run.
+create or replace function public.claim_daily_passenger_emails()
+returns table (
+  driver_id    uuid,
+  driver_name  text,
+  driver_email text,
+  ride_date    date,
+  rides        jsonb
+)
+language plpgsql
+security definer set search_path = ''
+as $$
+declare
+  v_now      timestamp := now() at time zone 'Asia/Jerusalem';
+  v_tomorrow date      := v_now::date + 1;
+begin
+  return query
+  with due as (
+    update public.profiles u set daily_email_sent_for = v_tomorrow
+    where u.id in (select p.id from public.profiles p
+                   where p.daily_email_enabled and p.is_admin and p.email <> ''
+                     and p.daily_email_time <= v_now::time
+                     and p.daily_email_sent_for is distinct from v_tomorrow
+                   limit 50
+                   for update skip locked)
+    returning u.id, u.full_name, u.email
+  )
+  select d.id, d.full_name, d.email, v_tomorrow, list.rides
+  from due d
+  join lateral (
+    select jsonb_agg(jsonb_build_object(
+             'origin', g.origin,
+             'destination', g.destination,
+             'out_time', to_char(r.out_time, 'HH24:MI'),
+             'passengers', onboard.passengers
+           ) order by r.out_time) as rides
+    from public.routes r
+    join public.ride_groups g on g.id = r.group_id
+    join lateral (
+      select jsonb_agg(jsonb_build_object(
+               'name',   case when b.added_by_driver then b.guest_name  else p.full_name end,
+               'phone',  case when b.added_by_driver then b.guest_phone else p.phone end,
+               'email',  case when b.added_by_driver then null          else p.email end,
+               'pickup', s.label
+             ) order by s.position, b.created_at) as passengers
+      from public.bookings b
+      left join public.profiles p on p.id = b.passenger_id
+      join public.stops s on s.id = b.pickup_stop_id
+      where b.route_id = r.id and b.ride_date = v_tomorrow and b.status = 'active'
+    ) onboard on onboard.passengers is not null
+    where r.driver_id = d.id and r.is_active and public.route_runs_on(r, v_tomorrow)
+      and not exists (select 1 from public.ride_exceptions x
+                      where x.route_id = r.id and x.ride_date = v_tomorrow and x.cancelled)
+  ) list on list.rides is not null;
+end;
+$$;
+
+revoke execute on function public.claim_daily_passenger_emails from anon, authenticated, public;
+grant execute on function public.claim_daily_passenger_emails to service_role;
+
+
+-- ════════ supabase/migrations/0032_personal_codes.sql ════════
+-- YourWay — sign-in with a permanent personal code, for addresses an admin approved.
+-- Run after 0031_daily_passenger_email.sql. Safe to run again.
+--
+-- Supabase's Email provider stays off, so nobody can sign up or ask for a code
+-- with the public key. The admin gets each user's code and passes it on
+-- herself. Only a hash is stored, so a lost code is replaced, not looked up.
+
+-- Addresses are stored lower-case, as auth.users stores them. The attempt
+-- columns are the limit in claim_code_attempt: only the system writes them.
+create table if not exists public.otp_emails (
+  email         text primary key check (email <> '' and email = lower(btrim(email))),
+  created_at    timestamptz not null default now(),
+  code_hash     text not null,
+  attempts_from timestamptz,
+  attempt_count integer not null default 0
+);
+
+alter table public.otp_emails enable row level security;
+
+drop policy if exists "otp_emails: admins manage" on public.otp_emails;
+create policy "otp_emails: admins manage" on public.otp_emails for all to authenticated
+  using ((select public.is_admin())) with check ((select public.is_admin()));
+
+-- Admins list and remove addresses. Rows are written with the secret key,
+-- which also writes the hash.
+revoke all on public.otp_emails from anon, authenticated;
+grant select (email, created_at), delete on public.otp_emails to authenticated;
+
+-- Counts one sign-in attempt and returns the hash to check it against. Null
+-- when the address isn't listed or used its 10 attempts this hour, so a code
+-- can't be guessed.
+create or replace function public.claim_code_attempt(p_email text)
+returns text
+language plpgsql
+security definer set search_path = ''
+as $$
+declare
+  v_window_start timestamptz := now() - interval '1 hour';
+  v_hash         text;
+begin
+  update public.otp_emails e
+  set attempt_count = case when e.attempts_from > v_window_start then e.attempt_count + 1 else 1 end,
+      attempts_from = case when e.attempts_from > v_window_start then e.attempts_from else now() end
+  where e.email = p_email
+    and (e.attempts_from is null or e.attempts_from <= v_window_start or e.attempt_count < 10)
+  returning e.code_hash into v_hash;
+  return v_hash;
+end;
+$$;
+
+revoke execute on function public.claim_code_attempt from anon, authenticated, public;
+grant execute on function public.claim_code_attempt to service_role;
+
+
+-- ════════ supabase/migrations/0033_admin_stats.sql ════════
+-- YourWay — site-wide totals on the admin page.
+-- Run after 0032_personal_codes.sql. Safe to run again.
+--
+-- Bookings' access rules don't let an admin read other people's bookings, and
+-- this shouldn't change that: the function returns totals only, to admins only.
+--
+-- A booking is one passenger on one ride, guests included, so someone who rides
+-- out and back counts twice. A date the driver cancelled keeps its bookings
+-- active (ride_exceptions), so it's left out explicitly. A ride that departed
+-- with nobody booked leaves no trace and isn't counted: past dates of a
+-- recurring route can't be rebuilt from today's schedule.
+
+create or replace function public.admin_stats()
+returns table (
+  users                bigint,
+  rides_today          bigint,
+  passengers_today     bigint,
+  rides_departed       bigint,
+  passengers_departed  bigint
+)
+language sql stable
+security definer set search_path = ''
+as $$
+  with onboard as (
+    select b.route_id, b.ride_date,
+           public.departure_at(b.ride_date, r.out_time) <= now() as departed
+    from public.bookings b
+    join public.routes r on r.id = b.route_id
+    where b.status = 'active'
+      and not exists (select 1 from public.ride_exceptions x
+                      where x.route_id = b.route_id and x.ride_date = b.ride_date and x.cancelled)
+  )
+  select
+    -- Members who finished sign-up, as on the login page (public_stats).
+    (select count(*) from public.profiles where phone is not null),
+    -- Scheduled today, booked or not, including those that already left.
+    (select count(*) from public.routes r
+     where r.is_active and public.route_runs_on(r, public.israel_today())
+       and not exists (select 1 from public.ride_exceptions x
+                       where x.route_id = r.id and x.ride_date = public.israel_today() and x.cancelled)),
+    (select count(*) from onboard where ride_date = public.israel_today()),
+    (select count(distinct (route_id, ride_date)) from onboard where departed),
+    (select count(*) from onboard where departed)
+  where public.is_admin()
+$$;
+
+revoke execute on function public.admin_stats from anon, public;
+grant execute on function public.admin_stats to authenticated;

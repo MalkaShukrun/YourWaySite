@@ -75,11 +75,10 @@ async function Results({ searchParams }: { searchParams: SearchParams }) {
   const [user, filters] = await Promise.all([requireUser(), readFilters(searchParams)]);
   const rides = await searchRides(filters);
   const routes = groupByRoute(rides);
-  const filtered = Object.values(filters).some(Boolean);
 
   return (
     <>
-      <ResultsHead subtitle={filtered ? `${routes.length} תוצאות` : ""} />
+      <ResultsHead subtitle={`${routes.length} תוצאות`} />
       {rides.length === 0 ? (
         <div className="panel empty-state">
           <strong>לא נמצאו נסיעות מתאימות</strong>

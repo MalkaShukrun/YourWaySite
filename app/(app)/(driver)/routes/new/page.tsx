@@ -2,27 +2,40 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { format } from "date-fns";
 import { requireUser } from "@/lib/auth/session";
-import { israelToday } from "@/lib/utils/dates";
+import { israelNow } from "@/lib/utils/dates";
 import { getRideGroups } from "@/lib/rides/data";
+import { getRouteForEdit } from "@/lib/driver/data";
 import { RouteEditor } from "@/components/driver/RouteEditor";
 import { iconProps } from "@/components/ui/icon";
+import { isUuid } from "@/lib/validation/patterns";
 
 export const metadata: Metadata = { title: "מסלול חדש" };
 
-export default function NewRoutePage() {
+// A new route, or with `?copy=<id>` a new one that starts from another of her
+// routes — an active one or a ride that took place, not a cancelled one.
+export default function NewRoutePage({ searchParams }: PageProps<"/routes/new">) {
   return (
     <main className="page-content">
       <Link className="back-link" href="/routes"><ArrowLeft {...iconProps} size={17} /> חזרה למסלולים</Link>
       <Suspense fallback={<div className="editor-layout" aria-busy="true" />}>
-        <Editor />
+        <Editor searchParams={searchParams} />
       </Suspense>
     </main>
   );
 }
 
-async function Editor() {
-  await requireUser();
-  const [groups, today] = await Promise.all([getRideGroups(), israelToday()]);
-  return <RouteEditor groups={groups} route={null} today={today} />;
+async function Editor({ searchParams }: Pick<PageProps<"/routes/new">, "searchParams">) {
+  const user = await requireUser();
+  const { copy } = await searchParams;
+  const [groups, now, source] = await Promise.all([
+    getRideGroups(),
+    israelNow(),
+    typeof copy === "string" && isUuid(copy) ? getRouteForEdit(user.id, copy) : null,
+  ]);
+  const copyFrom = source && !source.ride_cancelled ? source : null;
+  // Next keeps this page's client state when only the query changes, and the
+  // form reads its values once, so each source needs its own editor.
+  return <RouteEditor key={copyFrom?.id ?? "new"} groups={groups} route={null} copyFrom={copyFrom} today={format(now, "yyyy-MM-dd")} />;
 }

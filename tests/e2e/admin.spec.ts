@@ -124,7 +124,7 @@ test.describe("hiding (spec H2)", () => {
     await expect(page.locator(".today-card").filter({ hasText: origin })).toHaveCount(1);
     // …but can't pick it for a new route.
     await page.goto("/routes/new");
-    await page.getByRole("button", { name: /^קבוצת נסיעה:/ }).click();
+    await page.getByRole("combobox", { name: "קבוצת נסיעה", exact: true }).click();
     await expect(page.getByRole("listbox", { name: "קבוצת נסיעה" }).getByRole("option", { name: `${origin} ← ירושלים` })).toHaveCount(0);
   });
 
@@ -165,10 +165,51 @@ test.describe("deleting (spec H3)", () => {
   });
 });
 
+test("the group list folds away and opens again", async ({ page, seed, signIn }) => {
+  const origin = newName(seed);
+  await seed.group({ origin, destination: "ירושלים" });
+  await signIn(page, await seed.user("Admin", { admin: true }));
+  await page.goto("/admin/groups");
+  const row = groupRow(page, `${origin} ← ירושלים`);
+  const toggle = page.getByRole("button", { name: "כל הקבוצות" });
+  await expect(row).toBeVisible();
+
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(row).toBeHidden();
+
+  await page.locator(".panel-title-toggle", { hasText: "כל הקבוצות" }).click();
+  await expect(row).toBeVisible();
+});
+
+test("the personal code list folds away and opens again", async ({ page, seed, signIn }) => {
+  await signIn(page, await seed.user("Admin", { admin: true }));
+  await page.goto("/admin/groups");
+  const input = page.getByPlaceholder("name@example.com");
+  const toggle = page.getByRole("button", { name: "כניסה עם קוד אישי" });
+  await expect(input).toBeVisible();
+
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(input).toBeHidden();
+
+  await page.locator(".panel-title-toggle", { hasText: "כניסה עם קוד אישי" }).click();
+  await expect(input).toBeVisible();
+});
+
 test("shows the totals and the group list", async ({ page, seed, signIn }) => {
   await signIn(page, await seed.user("Admin", { admin: true }));
   await page.goto("/admin/groups");
-  for (const label of ["קבוצות פעילות", "נהגות עם מסלולים", "מסלולים פעילים"]) {
+  for (const label of [
+    "טרמפיסטיות נוסעות היום",
+    "נסיעות יוצאות היום",
+    "משתמשות במערכת",
+    "נסיעות שיצאו עד היום",
+    "טרמפיסטיות שנסעו עד היום",
+    "קבוצות פעילות",
+    "נהגות עם מסלולים",
+    "מסלולים פעילים",
+  ]) {
     await expect(page.locator(".stat-card").filter({ hasText: label })).toBeVisible();
   }
   await expect(page.getByRole("heading", { name: "כל הקבוצות" })).toBeVisible();

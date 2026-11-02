@@ -8,7 +8,8 @@ import { Toast } from "@/components/ui/Toast";
 type RideRef = { routeId: string; date: string };
 
 // "Cancel ride for this date only" (SRS §6.1). Passengers see it as
-// cancelled, so it asks first and can't be undone.
+// cancelled, so it asks first and can't be undone. Success needs no message:
+// the card is marked cancelled in its place.
 export function CancelForDateButton({ routeId, date }: RideRef) {
   const [confirming, setConfirming] = useState(false);
   const [toast, setToast] = useState({ message: "", id: 0 });
@@ -17,7 +18,7 @@ export function CancelForDateButton({ routeId, date }: RideRef) {
   const cancel = () =>
     startTransition(async () => {
       const result = await cancelRideForDate(routeId, date);
-      setToast((t) => ({ id: t.id + 1, message: result.error ?? "הנסיעה בוטלה לתאריך הזה בלבד" }));
+      if (result.error) setToast((t) => ({ id: t.id + 1, message: result.error }));
       setConfirming(false);
     });
 

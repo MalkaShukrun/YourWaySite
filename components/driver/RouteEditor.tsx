@@ -18,7 +18,7 @@ import { groupArea } from "@/lib/utils/places";
 import { NOTES_MAX, routeSchema, STOP_LABEL_EMPTY, STOP_LABEL_MAX, type RouteValues } from "@/lib/validation/route";
 import { useHydrated } from "@/components/ui/useHydrated";
 
-type Props = { groups: RideGroup[]; route: EditableRoute | null; today: string };
+type Props = { groups: RideGroup[]; route: EditableRoute | null; copyFrom?: EditableRoute | null; today: string };
 
 // One message for the stop list: missing names together, otherwise the first
 // stop's own problem (e.g. a one-letter name).
@@ -31,9 +31,12 @@ function stopLabelError(stops: unknown) {
 
 // Add a route: details, days & times, and stops — marking them on the map is
 // optional (SRS §5.1). A published route (`route`) is shown read-only; the
-// only changes it takes are its note and new stops.
-export function RouteEditor({ groups, route, today }: Props) {
+// only changes it takes are its note and new stops. `copyFrom` fills a new
+// route from another of her rides: everything stays editable and the date is
+// left to choose — the copy is a new ride, not the old one moved.
+export function RouteEditor({ groups, route, copyFrom, today }: Props) {
   const locked = route !== null;
+  const source = route ?? copyFrom;
   // The stop (by index) waiting for a click on the map.
   const [placing, setPlacing] = useState<number | null>(null);
   const [serverError, setServerError] = useState("");
@@ -49,15 +52,18 @@ export function RouteEditor({ groups, route, today }: Props) {
   } = useForm<RouteValues>({
     resolver: zodResolver(routeSchema),
     defaultValues: {
-      groupId: route?.group_id ?? groups[0]?.id ?? "",
-      kind: route?.kind ?? "recurring",
-      weekdays: route?.weekdays ?? [0, 2, 4],
-      rideDate: route?.ride_date ?? today,
-      outTime: route ? route.out_time.slice(0, 5) : "07:15",
-      seats: String(route?.seats ?? 4),
-      price: String(route?.price ?? ""),
-      notes: route?.notes ?? "",
-      stops: route?.stops.map((s) => ({ id: s.id, kind: s.kind, label: s.label, lat: s.lat, lng: s.lng })) ?? [],
+      // A copied ride's group may have been hidden since.
+      groupId: route?.group_id ?? groups.find((g) => g.id === copyFrom?.group_id)?.id ?? groups[0]?.id ?? "",
+      kind: source?.kind ?? "recurring",
+      // One-time rides have no weekdays.
+      weekdays: source?.weekdays.length ? source.weekdays : [0, 2, 4],
+      rideDate: copyFrom ? "" : route?.ride_date ?? today,
+      outTime: source ? source.out_time.slice(0, 5) : "07:15",
+      seats: String(source?.seats ?? 4),
+      price: String(source?.price ?? ""),
+      notes: source?.notes ?? "",
+      // Copied stops have no id: they are new stops of the new route.
+      stops: source?.stops.map((s) => ({ id: copyFrom ? "" : s.id, kind: s.kind, label: s.label, lat: s.lat, lng: s.lng })) ?? [],
     },
   });
   const { fields, append, remove, update } = useFieldArray({ control, name: "stops", keyName: "key" });
@@ -160,7 +166,7 @@ export function RouteEditor({ groups, route, today }: Props) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
       <div className="welcome">
-        <div><p>הגדרת נסיעה</p><h1>{locked ? "עריכת מסלול" : "מסלול חדש"}</h1></div>
+        <div><p>הגדרת נסיעה</p><h1>{locked ? "עריכת מסלול" : copyFrom ? "שכפול נסיעה" : "מסלול חדש"}</h1></div>
       </div>
 
       <div className="editor-layout">
@@ -168,6 +174,11 @@ export function RouteEditor({ groups, route, today }: Props) {
           {locked && (
             <p className="editor-locked-note">
               מסלול שפורסם אי אפשר לשנות — אפשר רק לערוך את ההערה ולהוסיף תחנות. כדי לשנות פרטים אחרים, הסירי את המסלול והוסיפי מסלול חדש.
+            </p>
+          )}
+          {copyFrom && (
+            <p className="editor-locked-note">
+              פרטי הנסיעה הועתקו, ואפשר לשנות את כולם. בחרי תאריך חדש ושמרי כדי לפרסם.
             </p>
           )}
           <fieldset className="editor-section" disabled={locked}>
@@ -184,6 +195,7 @@ export function RouteEditor({ groups, route, today }: Props) {
                     onChange={field.onChange}
                     options={groups.map((g) => ({ value: g.id, label: groupLabel(g.origin, g.destination) }))}
                     icon={<Route {...iconProps} size={20} />}
+                    searchable
                   />
                 )}
               />
