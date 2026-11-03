@@ -34,7 +34,7 @@ one tomorrow's passengers from a Gmail account. It needs no domain, and Gmail al
 
 1. **Gmail** — turn on 2-Step Verification on the sending account, then create an App Password
    at https://myaccount.google.com/apppasswords.
-2. **Database** — run `supabase/migrations/0031_daily_passenger_email.sql` (or `setup.sql`).
+2. **Database** — run `supabase/migrations/0031_daily_passenger_email.sql`, `0034_daily_email_all_drivers.sql` and `0035_daily_email_retry_after_midnight.sql` (or `setup.sql`).
 3. **Function** — deploy it and set its secrets. `CRON_SECRET` is any long random string:
    ```bash
    npx supabase login

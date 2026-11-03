@@ -72,14 +72,8 @@ test.describe("onboarding (spec A1)", () => {
 });
 
 test.describe("daily passenger email (spec D7)", () => {
-  test("isn't offered to a user who isn't an admin (for now)", async ({ page, seed, signIn }) => {
-    await signIn(page, await seed.user("Driver"));
-    await openForm(page, "/profile", "שמירת שינויים");
-    await expect(page.getByText("מייל יומי לנהגות")).toHaveCount(0);
-  });
-
-  test("an admin turns it on, picks a time and turns it off again", async ({ page, seed, signIn }) => {
-    const user = await seed.user("Driver", { admin: true });
+  test("a driver turns it on, picks a time and turns it off again", async ({ page, seed, signIn }) => {
+    const user = await seed.user("Driver");
     await signIn(page, user);
     const saved = async () =>
       (await seed.service.from("profiles").select("daily_email_enabled, daily_email_time").eq("id", user.id).single()).data;

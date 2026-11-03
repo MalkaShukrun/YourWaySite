@@ -24,12 +24,11 @@ const settings = (values: Record<string, unknown>) => w.service.from("profiles")
 
 beforeAll(async () => {
   w = createWorld();
-  // Admins only, for now (spec D7).
-  [driver, passenger] = await Promise.all([w.user("Driver", { admin: true }), w.user("Passenger", { fullName: "רחל נוסעת" })]);
+  [driver, passenger] = await Promise.all([w.user("Driver"), w.user("Passenger", { fullName: "רחל נוסעת" })]);
 });
 beforeEach(async () => {
   check(await w.service.from("routes").update({ is_active: false }).eq("driver_id", driver.id));
-  check(await settings({ is_admin: true, daily_email_enabled: true, daily_email_time: "00:00", daily_email_sent_for: null }));
+  check(await settings({ daily_email_enabled: true, daily_email_time: "00:00", daily_email_sent_for: null, daily_email_retry_for: null }));
 });
 afterAll(() => w?.cleanup());
 
@@ -60,6 +59,42 @@ describe("claim_daily_passenger_emails", () => {
     expect(await claim()).toHaveLength(1);
   });
 
+  it("retries a failed send for its own date, whatever her time", async () => {
+    const route = await w.route(driver, { date: tomorrow });
+    check(await w.book(passenger, route, tomorrow));
+    expect(await claim()).toHaveLength(1);
+
+    // What the function does when the send fails.
+    check(await settings({ daily_email_retry_for: tomorrow, daily_email_time: "23:59:59" }));
+    const [retry, ...others] = await claim();
+    expect(others).toEqual([]);
+    expect(retry.ride_date).toBe(tomorrow);
+    expect(await claim()).toEqual([]);
+  });
+
+  it("after midnight, retries the ride day itself with only the rides that haven't left", async () => {
+    const today = daysFromToday(0);
+    const later = await w.route(driver, { date: today, time: "23:59:59" });
+    const left = await w.route(driver, { date: today, time: "00:00" });
+    await w.bookDirectly(passenger, later, today);
+    await w.bookDirectly(passenger, left, today);
+
+    // Last night's send for today failed, and it's now after midnight.
+    check(await settings({ daily_email_sent_for: today, daily_email_retry_for: today, daily_email_time: "23:59:59" }));
+    const [retry] = await claim();
+    expect(retry.ride_date).toBe(today);
+    expect(retry.rides.map((r) => r.out_time)).toEqual(["23:59"]);
+  });
+
+  it("drops a retry once its date is over", async () => {
+    const yesterday = daysFromToday(-1);
+    const route = await w.route(driver, { date: yesterday });
+    await w.bookDirectly(passenger, route, yesterday);
+
+    check(await settings({ daily_email_sent_for: yesterday, daily_email_retry_for: yesterday, daily_email_time: "23:59:59" }));
+    expect(await claim()).toEqual([]);
+  });
+
   it("skips a driver who didn't turn it on, or whose time hasn't come", async () => {
     const route = await w.route(driver, { date: tomorrow });
     check(await w.book(passenger, route, tomorrow));
@@ -68,14 +103,6 @@ describe("claim_daily_passenger_emails", () => {
     expect(await claim()).toEqual([]);
 
     check(await settings({ daily_email_enabled: true, daily_email_time: "23:59:59" }));
-    expect(await claim()).toEqual([]);
-  });
-
-  it("skips a driver who isn't an admin, even with it turned on (for now)", async () => {
-    const route = await w.route(driver, { date: tomorrow });
-    check(await w.book(passenger, route, tomorrow));
-
-    check(await settings({ is_admin: false }));
     expect(await claim()).toEqual([]);
   });
 
@@ -127,7 +154,9 @@ describe("access", () => {
     const { data } = await driver.db.from("profiles").select("daily_email_enabled, daily_email_time").eq("id", driver.id).single();
     expect(data).toEqual({ daily_email_enabled: false, daily_email_time: "07:30:00" });
 
-    const { error } = await driver.db.from("profiles").update({ daily_email_sent_for: tomorrow }).eq("id", driver.id);
-    expect(error?.code).toBe(DENIED);
+    for (const column of ["daily_email_sent_for", "daily_email_retry_for"]) {
+      const { error } = await driver.db.from("profiles").update({ [column]: tomorrow }).eq("id", driver.id);
+      expect(error?.code).toBe(DENIED);
+    }
   });
 });

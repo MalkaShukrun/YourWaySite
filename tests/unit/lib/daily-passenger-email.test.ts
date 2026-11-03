@@ -34,6 +34,12 @@ describe("buildEmail", () => {
     }
   });
 
+  it("says today, not tomorrow, when a retry after midnight sends it on the ride day", () => {
+    expect(buildEmail(email()).subject).toMatch(/^הנוסעות שלך למחר,/);
+    expect(buildEmail(email(), "", "2026-11-01").subject).toMatch(/^הנוסעות שלך למחר,/);
+    expect(buildEmail(email(), "", "2026-11-02").subject).toMatch(/^הנוסעות שלך להיום,/);
+  });
+
   it("shows a dash where a passenger has no email", () => {
     expect(buildEmail(email()).text).toContain("אורחת | טלפון: 052-000-0000 | דוא״ל: — |");
   });

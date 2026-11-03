@@ -33,17 +33,21 @@ async function claim() {
   return (await response.json()) as DailyEmail[];
 }
 
+// Keeps the ride date for the retry, so a send that fails just before
+// midnight is still tried after it (0035).
 async function release(email: DailyEmail) {
   const query = `id=eq.${email.driver_id}&daily_email_sent_for=eq.${email.ride_date}`;
   const response = await rest(`profiles?${query}`, {
     method: "PATCH",
-    body: JSON.stringify({ daily_email_sent_for: null }),
+    body: JSON.stringify({ daily_email_retry_for: email.ride_date }),
   });
   if (!response.ok) console.error("daily-passenger-email: release failed", email.driver_id, response.status);
 }
 
+const israelToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date());
+
 async function send(email: DailyEmail) {
-  await sendMail({ to: email.driver_email, ...buildEmail(email, env("SITE_URL")) });
+  await sendMail({ to: email.driver_email, ...buildEmail(email, env("SITE_URL"), israelToday()) });
 }
 
 Deno.serve(async (request) => {

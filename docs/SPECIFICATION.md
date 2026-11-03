@@ -105,7 +105,7 @@ Open for booking → Cancelled for this date → Shown as cancelled · never cha
 | My routes | `/routes` | Driver | Tabs “מסלולים פעילים” (active), “היסטוריה” (one-time rides that departed) and “מסלולים מבוטלים” (one-time rides cancelled for their date). Active and history cards have “שכפול נסיעה” (F2). |
 | New route | `/routes/new` | Driver | Route editor: group (with a search box), type, days or date, time, seats, price, note, stops, map. With `?copy=[id]`, “שכפול נסיעה”: the same editor filled from another of her routes (F2). Reached from “הוספת מסלול” on the dashboard. |
 | Edit route | `/routes/[id]` | Driver | Same editor with everything locked except the note and adding new stops. |
-| Profile | `/profile` | All | Name, phone, email (read-only, from her sign-in), optional vehicle (model, colour, seats). Admins also see the daily passenger email (D7) and group management here. |
+| Profile | `/profile` | All | Name, phone, email (read-only, from her sign-in), optional vehicle (model, colour, seats), and the daily passenger email (D7). Admins also see group management here. |
 | Group management | `/admin/groups` | Admin | Site-wide totals (H5). Groups with how many routes use each; add, rename, hide/show, delete. Personal-code addresses (H4). The group and address lists fold away under their titles. |
 | Not found | any unknown address | Anyone | “הדף לא נמצא”, with a link home. |
 
@@ -589,7 +589,7 @@ Self-booked passengers are never removed by the driver.
 
 Dashboard ride card.
 
-#### D7. A driver gets tomorrow's passengers by email (admins only, for now)
+#### D7. A driver gets tomorrow's passengers by email
 
 **Trigger:** Under “מייל יומי לנהגות” on “הפרופיל שלי” she presses the button that shows the current state (“כבוי” or “פעיל”) to switch it, picks a time in 5-minute steps and presses “שמירת הגדרות המייל”. It is off until she turns it on; the suggested time is 20:00, Israel time.
 
@@ -607,7 +607,7 @@ Nothing changes. A passenger the driver added shows the name and phone the drive
 
 Profile; the driver's mailbox.
 
-**Rules:** for now only admins have it: other users don't see the setting, and the email isn't sent to anyone who stops being an admin, even if she turned it on. No email if she has no passengers tomorrow: a ride with none is left out, and so is a cancelled date. The list is a snapshot of the moment it was sent, and later changes aren't emailed. A failed send is tried again every 5 minutes until the end of the day.
+**Rules:** every user sees the setting; only a driver with passengers gets an email. No email if she has no passengers tomorrow: a ride with none is left out, and so is a cancelled date. The list is a snapshot of the moment it was sent, and later changes aren't emailed. A failed send is tried again every 5 minutes, for the same ride date, until the end of that date; a retry that goes out on the ride day itself says “להיום” and lists only the rides that haven't left yet.
 
 ### E. A passenger cancels
 
@@ -936,7 +936,7 @@ In place of the page.
 
 | Topic | Current behaviour |
 |---|---|
-| Notifications and mailing | Only the optional daily email of tomorrow's passengers, for admins for now (D7). Bookings, cancellations and date cancellations are not sent to anyone as they happen; each side sees them on its own screens on the next load. Coordination is by phone. |
+| Notifications and mailing | Only the optional daily email of tomorrow's passengers, for drivers (D7). Bookings, cancellations and date cancellations are not sent to anyone as they happen; each side sees them on its own screens on the next load. Coordination is by phone. |
 | Reports, suspending accounts, removing others' rides | No screens. Reports arrive through the contact form or by email; the terms reserve these rights, and they are carried out by hand in the database. |
 | Consent records | The sign-in consent to the terms and the privacy policy isn't saved, and existing users aren't asked again. |
 | Paid subscriptions | None. The terms allow adding paid features later. |

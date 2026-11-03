@@ -20,7 +20,7 @@ type Deps = {
 };
 
 // Sends every claimed email, one at a time so Gmail doesn't see a burst.
-// A failed send is released, so the next run tries that driver again.
+// A failed send is released, so the next run tries that driver again, for the same date.
 export async function sendDailyEmails({ claim, send, release, wait }: Deps) {
   const emails = await claim();
   let sent = 0;
@@ -74,13 +74,16 @@ function rideText(ride: DailyRide) {
 }
 
 // siteUrl is the site's public address, for the link to the profile; optional.
-export function buildEmail(email: DailyEmail, siteUrl = "") {
+// today ("YYYY-MM-DD", Israel time) is set when a retry after midnight sends
+// the email on the ride day itself.
+export function buildEmail(email: DailyEmail, siteUrl = "", today = "") {
   const date = formatDate(email.ride_date);
+  const when = email.ride_date === today ? "להיום" : "למחר";
   const updatedNote = "הרשימה נכונה לרגע השליחה. ברשימת הנוסעות באתר תמיד מופיע המצב העדכני.";
   const profileUrl = siteUrl ? `${siteUrl.replace(/\/$/, "")}/profile` : "";
   const settings = "אפשר לשנות את השעה או להפסיק את המיילים בעמוד הפרופיל";
   return {
-    subject: `הנוסעות שלך למחר, ${date}`,
+    subject: `הנוסעות שלך ${when}, ${date}`,
     text: [
       `שלום ${email.driver_name},`,
       `אלו הנוסעות הרשומות לנסיעות שלך ב${date}:`,

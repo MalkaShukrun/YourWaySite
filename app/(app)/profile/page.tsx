@@ -22,15 +22,14 @@ export default function ProfilePage() {
 
 async function Profile() {
   const user = await requireUser();
-  // The daily email is for admins only, for now (spec D7).
   const [defaults, dailyEmail] = await Promise.all([
     getProfileValues(user.id, user.fullName),
-    user.isAdmin ? getDailyEmailValues(user.id) : null,
+    getDailyEmailValues(user.id),
   ]);
   return (
     <>
       <ProfileForm initials={initialsOf(user.fullName) || "?"} email={user.email} defaults={defaults} />
-      {dailyEmail && <DailyEmailForm email={user.email} defaults={dailyEmail} />}
+      <DailyEmailForm email={user.email} defaults={dailyEmail} />
     </>
   );
 }

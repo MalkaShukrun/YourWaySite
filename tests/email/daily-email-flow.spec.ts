@@ -17,8 +17,7 @@ test("the driver gets tomorrow's passenger by email", async ({ browser, page, se
 
   const origin = `בדיקה ${seed.tag}`;
   const groupId = await seed.group({ origin, destination: "ירושלים" });
-  // Admins only, for now (spec D7).
-  const driver = await seed.user("Driver", { fullName: "נהגת לבדיקה", admin: true });
+  const driver = await seed.user("Driver", { fullName: "נהגת לבדיקה" });
   await signIn(page, driver);
 
   // The driver publishes a recurring route, Sunday to Friday.

@@ -2,7 +2,7 @@
 
 import { refresh } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireAdmin, requireUser } from "@/lib/auth/session";
+import { requireUser } from "@/lib/auth/session";
 import { firstIssue } from "@/lib/utils/action-errors";
 import { vehicleColumns } from "@/lib/profile/data";
 import { dailyEmailSchema, profileSchema, type DailyEmailValues, type ProfileValues } from "@/lib/validation/profile";
@@ -31,10 +31,9 @@ export async function saveProfile(values: ProfileValues) {
   return {};
 }
 
-// Save when the driver gets her daily email of tomorrow's passengers. Admins
-// only, for now (spec D7).
+// Save when the driver gets her daily email of tomorrow's passengers (spec D7).
 export async function saveDailyEmail(values: DailyEmailValues) {
-  const user = await requireAdmin();
+  const user = await requireUser();
   const parsed = dailyEmailSchema.safeParse(values);
   if (!parsed.success) return { error: firstIssue(parsed.error) };
 
