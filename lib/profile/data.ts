@@ -29,11 +29,15 @@ export async function getDailyEmailValues(userId: string): Promise<DailyEmailVal
   const supabase = await createClient();
   const { data: p } = await supabase
     .from("profiles")
-    .select("daily_email_enabled, daily_email_time")
+    .select("daily_email_enabled, daily_email_updates_enabled, daily_email_time")
     .eq("id", userId)
     .maybeSingle();
 
-  return { enabled: Boolean(p?.daily_email_enabled), time: formatTime(p?.daily_email_time ?? "20:00") };
+  return {
+    enabled: Boolean(p?.daily_email_enabled),
+    updates: Boolean(p?.daily_email_updates_enabled),
+    time: formatTime(p?.daily_email_time ?? "20:00"),
+  };
 }
 
 // The profile's vehicle columns; all null once the user removes the car.

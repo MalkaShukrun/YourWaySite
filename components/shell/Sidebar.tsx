@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { iconProps } from "@/components/ui/icon";
+import { Announcement } from "./Announcement";
 import { adminNavItem, driverNavItems, isNavItemActive, passengerNavItems, profileNavItem, type NavItem } from "./nav";
 import { useMode } from "./useMode";
 
@@ -36,6 +37,7 @@ export function Sidebar({ adminSlot }: { adminSlot: ReactNode }) {
         <NavLink item={profileNavItem} pathname={pathname} />
         {adminSlot}
       </nav>
+      <Announcement />
     </aside>
   );
 }

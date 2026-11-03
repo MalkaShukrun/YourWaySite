@@ -40,6 +40,18 @@ describe("buildEmail", () => {
     expect(buildEmail(email(), "", "2026-11-02").subject).toMatch(/^הנוסעות שלך להיום,/);
   });
 
+  it("an update says so and marks the passengers who are new", () => {
+    const rides = email().rides;
+    rides[0].passengers[0].is_new = true;
+    const { subject, text, html } = buildEmail(email({ rides, since: "2026-11-01T18:00:00+00:00" }));
+    expect(subject).toMatch(/^עדכון: הנוסעות שלך למחר,/);
+    expect(text).toContain("זו הרשימה המעודכנת");
+    expect(text).toContain("- רחל (חדשה) |");
+    expect(text).not.toContain("אורחת (חדשה)");
+    expect(html).toContain("<strong>רחל</strong> (חדשה)");
+    expect(buildEmail(email()).text).not.toContain("חדשה");
+  });
+
   it("shows a dash where a passenger has no email", () => {
     expect(buildEmail(email()).text).toContain("אורחת | טלפון: 052-000-0000 | דוא״ל: — |");
   });

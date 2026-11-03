@@ -27,19 +27,33 @@ const rest = (path: string, init: RequestInit) =>
     },
   });
 
-async function claim() {
-  const response = await rest("rpc/claim_daily_passenger_emails", { method: "POST", body: "{}" });
-  if (!response.ok) throw new Error(`claim failed: ${response.status} ${await response.text()}`);
+async function claimFrom(fn: string) {
+  const response = await rest(`rpc/${fn}`, { method: "POST", body: "{}" });
+  if (!response.ok) throw new Error(`claim failed: ${fn} ${response.status} ${await response.text()}`);
   return (await response.json()) as DailyEmail[];
 }
 
-// Keeps the ride date for the retry, so a send that fails just before
-// midnight is still tried after it (0035).
+// The daily emails first: a driver claimed for one now has nothing new for an
+// update. Those are already marked as sent, so a failed update claim mustn't
+// stop them going out.
+async function claim() {
+  const daily = await claimFrom("claim_daily_passenger_emails");
+  try {
+    return [...daily, ...(await claimFrom("claim_passenger_update_emails"))];
+  } catch (error) {
+    console.error("daily-passenger-email:", error);
+    return daily;
+  }
+}
+
+// A daily email keeps its ride date for the retry, so a send that fails just
+// before midnight is still tried after it (0035). An update goes back to its
+// previous sent time, so the next run finds the same new passengers (0036).
 async function release(email: DailyEmail) {
   const query = `id=eq.${email.driver_id}&daily_email_sent_for=eq.${email.ride_date}`;
   const response = await rest(`profiles?${query}`, {
     method: "PATCH",
-    body: JSON.stringify({ daily_email_retry_for: email.ride_date }),
+    body: JSON.stringify(email.since ? { daily_email_sent_at: email.since } : { daily_email_retry_for: email.ride_date }),
   });
   if (!response.ok) console.error("daily-passenger-email: release failed", email.driver_id, response.status);
 }

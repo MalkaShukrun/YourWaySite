@@ -1,13 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useForm, useWatch } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Car, Mail, Phone, User } from "lucide-react";
+import { Car, Mail, User } from "lucide-react";
 import { saveProfile } from "@/app/(app)/profile/actions";
-import { FULL_NAME_MAX, profileSchema, type ProfileValues } from "@/lib/validation/profile";
+import { FULL_NAME_MAX, type ProfileValues } from "@/lib/validation/profile";
 import { Toast } from "@/components/ui/Toast";
-import { VehicleFields } from "@/components/profile/VehicleFields";
+import { PhoneField, useProfileForm, VehicleFields } from "@/components/profile/ProfileFields";
 import { carIconProps, iconProps } from "@/components/ui/icon";
 import { FieldError } from "@/components/ui/FieldError";
 import { useHydrated } from "@/components/ui/useHydrated";
@@ -20,14 +18,8 @@ export function ProfileForm({ initials, email, defaults }: Props) {
   const [saved, setSaved] = useState(0);
   const [pending, startTransition] = useTransition();
   const hydrated = useHydrated();
-  const {
-    register,
-    handleSubmit,
-    control,
-    setValue,
-    formState: { errors },
-  } = useForm<ProfileValues>({ resolver: zodResolver(profileSchema), defaultValues: defaults });
-  const hasVehicle = useWatch({ control, name: "hasVehicle" });
+  const form = useProfileForm(defaults);
+  const { register, handleSubmit, setValue, formState: { errors }, hasVehicle } = form;
 
   const onSubmit = (values: ProfileValues) =>
     startTransition(async () => {
@@ -57,11 +49,7 @@ export function ProfileForm({ initials, email, defaults }: Props) {
           <span>כתובת דוא״ל</span>
           <div className="input-shell is-readonly"><Mail {...iconProps} size={20} /><input value={email} readOnly dir="ltr" /></div>
         </label>
-        <label className="field">
-          <span>מספר טלפון</span>
-          <div className="input-shell"><Phone {...iconProps} size={20} /><input {...register("phone")} type="tel" inputMode="tel" placeholder="050-000-0000" autoComplete="tel" /></div>
-          <FieldError message={errors.phone?.message} />
-        </label>
+        <PhoneField form={form} />
       </div>
 
       <div className="vehicle-section profile-vehicle">
@@ -70,18 +58,14 @@ export function ProfileForm({ initials, email, defaults }: Props) {
           <span>הפרטים יוצגו לטרמפיסטיות</span>
         </div>
         {hasVehicle ? (
-          <button type="button" className="btn btn-ghost" onClick={() => setValue("hasVehicle", false)}>הסרת הרכב</button>
+          <button type="button" className="btn btn-ghost outlined" onClick={() => setValue("hasVehicle", false)}>הסרת הרכב</button>
         ) : (
           <button type="button" className="btn btn-secondary" onClick={() => setValue("hasVehicle", true)}>הוספת רכב</button>
         )}
       </div>
       {hasVehicle && (
         <div className="form-grid compact profile-subgrid">
-          <VehicleFields
-            model={{ input: register("vehicleModel"), error: errors.vehicleModel?.message }}
-            color={{ input: register("vehicleColor"), error: errors.vehicleColor?.message }}
-            seats={{ input: register("vehicleSeats"), error: errors.vehicleSeats?.message }}
-          />
+          <VehicleFields form={form} />
         </div>
       )}
 

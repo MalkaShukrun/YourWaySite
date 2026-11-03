@@ -222,7 +222,8 @@ a.nav-item { text-decoration: none; }
    grid stays in even columns. */
 .profile-panel .form-grid.compact .field:last-child { grid-column: auto; }
 .profile-panel .profile-subgrid { grid-template-columns: repeat(3, 1fr); }
-@media (max-width: 780px) { .profile-panel .profile-subgrid { grid-template-columns: 1fr; } }
+.profile-panel .profile-subgrid.daily-email-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; padding-top: 22px; }
+@media (max-width: 780px) { .profile-panel .profile-subgrid, .profile-panel .profile-subgrid.daily-email-grid { grid-template-columns: 1fr; } }
 
 .email-code-link { display: block; width: 100%; margin-top: 12px; border: 0; background: none; color: var(--green); font-size: 15px; font-weight: 700; text-decoration: underline; cursor: pointer; }
 .email-code-form { display: grid; gap: 10px; margin-top: 14px; text-align: right; }

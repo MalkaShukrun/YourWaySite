@@ -76,23 +76,31 @@ test.describe("daily passenger email (spec D7)", () => {
     const user = await seed.user("Driver");
     await signIn(page, user);
     const saved = async () =>
-      (await seed.service.from("profiles").select("daily_email_enabled, daily_email_time").eq("id", user.id).single()).data;
+      (await seed.service
+        .from("profiles")
+        .select("daily_email_enabled, daily_email_updates_enabled, daily_email_time")
+        .eq("id", user.id)
+        .single()).data;
+    const updates = page.getByRole("button", { name: "מייל עדכון על נוסעת חדשה" });
 
     await openForm(page, "/profile", "שמירת הגדרות המייל");
     await page.getByRole("button", { name: "כבוי", exact: true }).click();
     await page.getByRole("button", { name: "שעת השליחה: 20:00" }).click();
     await page.getByRole("option", { name: "07" }).click();
     await page.getByRole("option", { name: "30" }).click();
+    await expect(updates).toHaveAttribute("aria-pressed", "false");
+    await updates.click();
     await page.getByRole("button", { name: "שמירת הגדרות המייל" }).click();
     await expect(toast(page, "הגדרות המייל נשמרו")).toBeVisible();
-    expect(await saved()).toEqual({ daily_email_enabled: true, daily_email_time: "07:30:00" });
+    expect(await saved()).toEqual({ daily_email_enabled: true, daily_email_updates_enabled: true, daily_email_time: "07:30:00" });
 
     await page.reload();
     await expect(page.getByRole("button", { name: "שעת השליחה: 07:30" })).toBeVisible();
+    await expect(updates).toHaveAttribute("aria-pressed", "true");
     await page.getByRole("button", { name: "פעיל", exact: true }).click();
     await expect(page.getByRole("button", { name: "שעת השליחה: 07:30" })).toBeHidden();
     await page.getByRole("button", { name: "שמירת הגדרות המייל" }).click();
-    await expect.poll(saved).toEqual({ daily_email_enabled: false, daily_email_time: "07:30:00" });
+    await expect.poll(saved).toEqual({ daily_email_enabled: false, daily_email_updates_enabled: true, daily_email_time: "07:30:00" });
   });
 });
 

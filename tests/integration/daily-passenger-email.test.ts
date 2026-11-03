@@ -1,34 +1,49 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { check, createWorld, daysFromToday, DENIED, type User, type World } from "./support/world";
 
-// The driver's daily email (spec D7): claim_daily_passenger_emails.
+// The driver's daily email (spec D7): claim_daily_passenger_emails, and
+// claim_passenger_update_emails for passengers who book after it.
 
 type Claimed = {
   driver_id: string;
   driver_email: string;
   ride_date: string;
+  since?: string;
   rides: {
     out_time: string;
-    passengers: { name: string; phone: string | null; email: string | null; pickup: string }[];
+    passengers: { name: string; phone: string | null; email: string | null; pickup: string; is_new?: boolean }[];
   }[];
 };
 
 let w: World;
 let driver: User;
 let passenger: User;
+let late: User;
 const tomorrow = daysFromToday(1);
 
-const claim = async () =>
-  (check(await w.service.rpc("claim_daily_passenger_emails")) as Claimed[]).filter((c) => c.driver_id === driver.id);
+const mine = (rows: unknown) => (rows as Claimed[]).filter((c) => c.driver_id === driver.id);
+const claim = async () => mine(check(await w.service.rpc("claim_daily_passenger_emails")));
+const claimUpdates = async () => mine(check(await w.service.rpc("claim_passenger_update_emails")));
 const settings = (values: Record<string, unknown>) => w.service.from("profiles").update(values).eq("id", driver.id);
 
 beforeAll(async () => {
   w = createWorld();
-  [driver, passenger] = await Promise.all([w.user("Driver"), w.user("Passenger", { fullName: "רחל נוסעת" })]);
+  [driver, passenger, late] = await Promise.all([
+    w.user("Driver"),
+    w.user("Passenger", { fullName: "רחל נוסעת" }),
+    w.user("Late", { fullName: "לאה מאחרת" }),
+  ]);
 });
 beforeEach(async () => {
   check(await w.service.from("routes").update({ is_active: false }).eq("driver_id", driver.id));
-  check(await settings({ daily_email_enabled: true, daily_email_time: "00:00", daily_email_sent_for: null, daily_email_retry_for: null }));
+  check(await settings({
+    daily_email_enabled: true,
+    daily_email_updates_enabled: true,
+    daily_email_time: "00:00",
+    daily_email_sent_for: null,
+    daily_email_retry_for: null,
+    daily_email_sent_at: null,
+  }));
 });
 afterAll(() => w?.cleanup());
 
@@ -143,18 +158,83 @@ describe("claim_daily_passenger_emails", () => {
   });
 });
 
+describe("claim_passenger_update_emails", () => {
+  it("after the daily email, sends the full list again with the passenger who just booked marked", async () => {
+    const route = await w.route(driver, { date: tomorrow });
+    check(await w.book(passenger, route, tomorrow));
+    expect(await claim()).toHaveLength(1);
+    expect(await claimUpdates()).toEqual([]);
+
+    check(await w.book(late, route, tomorrow));
+    const [update, ...others] = await claimUpdates();
+    expect(others).toEqual([]);
+    expect(update.ride_date).toBe(tomorrow);
+    expect(update.since).toBeTruthy();
+    expect(update.rides[0].passengers.map((p) => [p.name, p.is_new])).toEqual([
+      ["רחל נוסעת", false],
+      ["לאה מאחרת", true],
+    ]);
+    expect(await claimUpdates()).toEqual([]);
+  });
+
+  it("finds the same passenger again once a failed update is released", async () => {
+    const route = await w.route(driver, { date: tomorrow });
+    check(await w.book(passenger, route, tomorrow));
+    await claim();
+    check(await w.book(late, route, tomorrow));
+
+    const [update] = await claimUpdates();
+    // What the function does when the send fails.
+    check(await settings({ daily_email_sent_at: update.since }));
+    expect(await claimUpdates()).toHaveLength(1);
+  });
+
+  it("sends nothing before the daily email, when it's off, or for a passenger the driver added", async () => {
+    const route = await w.route(driver, { date: tomorrow });
+    check(await w.book(passenger, route, tomorrow));
+    expect(await claimUpdates()).toEqual([]);
+
+    await claim();
+    check(await w.addGuest(driver, route, tomorrow));
+    expect(await claimUpdates()).toEqual([]);
+
+    check(await settings({ daily_email_updates_enabled: false }));
+    check(await w.book(late, route, tomorrow));
+    expect(await claimUpdates()).toEqual([]);
+  });
+
+  it("leaves a driver whose daily email waits for a retry to that retry", async () => {
+    const route = await w.route(driver, { date: tomorrow });
+    check(await w.book(passenger, route, tomorrow));
+    await claim();
+    check(await settings({ daily_email_retry_for: tomorrow }));
+    check(await w.book(late, route, tomorrow));
+
+    expect(await claimUpdates()).toEqual([]);
+  });
+});
+
 describe("access", () => {
-  it("only the system can claim", async () => {
-    const { error } = await driver.db.rpc("claim_daily_passenger_emails");
+  it("only the system can claim, or read the list", async () => {
+    for (const fn of ["claim_daily_passenger_emails", "claim_passenger_update_emails"]) {
+      const { error } = await driver.db.rpc(fn);
+      expect(error?.code).toBe(DENIED);
+    }
+    const { error } = await driver.db.rpc("daily_email_rides", { p_driver: driver.id, p_date: tomorrow });
     expect(error?.code).toBe(DENIED);
   });
 
-  it("a driver edits her settings, but not the date already sent", async () => {
-    check(await driver.db.from("profiles").update({ daily_email_enabled: false, daily_email_time: "07:30" }).eq("id", driver.id));
-    const { data } = await driver.db.from("profiles").select("daily_email_enabled, daily_email_time").eq("id", driver.id).single();
-    expect(data).toEqual({ daily_email_enabled: false, daily_email_time: "07:30:00" });
+  it("a driver edits her settings, but not what was already sent", async () => {
+    const values = { daily_email_enabled: false, daily_email_updates_enabled: false, daily_email_time: "07:30" };
+    check(await driver.db.from("profiles").update(values).eq("id", driver.id));
+    const { data } = await driver.db
+      .from("profiles")
+      .select("daily_email_enabled, daily_email_updates_enabled, daily_email_time")
+      .eq("id", driver.id)
+      .single();
+    expect(data).toEqual({ ...values, daily_email_time: "07:30:00" });
 
-    for (const column of ["daily_email_sent_for", "daily_email_retry_for"]) {
+    for (const column of ["daily_email_sent_for", "daily_email_retry_for", "daily_email_sent_at"]) {
       const { error } = await driver.db.from("profiles").update({ [column]: tomorrow }).eq("id", driver.id);
       expect(error?.code).toBe(DENIED);
     }

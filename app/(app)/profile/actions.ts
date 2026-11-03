@@ -40,7 +40,11 @@ export async function saveDailyEmail(values: DailyEmailValues) {
   const supabase = await createClient();
   const { error } = await supabase
     .from("profiles")
-    .update({ daily_email_enabled: parsed.data.enabled, daily_email_time: parsed.data.time })
+    .update({
+      daily_email_enabled: parsed.data.enabled,
+      daily_email_updates_enabled: parsed.data.updates,
+      daily_email_time: parsed.data.time,
+    })
     .eq("id", user.id);
 
   if (error) return { error: "לא הצלחנו לשמור את ההגדרות. נסי שוב בעוד רגע." };

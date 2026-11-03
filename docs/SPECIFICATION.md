@@ -43,6 +43,8 @@ The interface has a passenger mode and a driver mode, each with its own menu. Op
 
 On phones the menu becomes a bottom tab bar with short labels.
 
+At the bottom of the menu, a card announces the daily passenger email: “**חדש!** קבלי התראות במייל על הטרמפיסטיות שלך, בתזמון שאפשר להתאים בפרופיל.” It opens the profile. On phones, where the menu is a tab bar, it is a pulsing bell in the top bar instead.
+
 ## 2. Core concepts and rules
 
 ### Ride groups
@@ -595,9 +597,10 @@ Dashboard ride card.
 
 **Driver side**
 
-- Up to about 5 minutes after her time she gets one email, at her sign-in address, listing tomorrow's rides by departure time. For each ride: every active passenger's name, phone, email and boarding stop, ordered by stop.
+- Up to about 5 minutes after her time she gets one email, at her sign-in address, listing tomorrow's rides by departure time. For each ride: every active passenger's name, phone, email and boarding stop, ordered by stop, including passengers she added herself.
 - If her time already passed today when she saves it, the email goes out on the next run.
-- She can change the time or turn the email off at any time; a date's email is never sent twice.
+- She can change the time or turn the email off at any time; a date's daily email is never sent twice (update emails, below, come on top of it).
+- With “מייל עדכון על נוסעת חדשה” on (a second switch, shown while the daily email is on, off until she turns it on): when a passenger books a ride of that date after the daily email went out, she gets another email within about 5 minutes. Its subject starts with “עדכון:”, and it has the full updated list with the new passengers marked “(חדשה)”. Several bookings between two runs come in one email.
 
 **Passenger side**
 
@@ -607,7 +610,7 @@ Nothing changes. A passenger the driver added shows the name and phone the drive
 
 Profile; the driver's mailbox.
 
-**Rules:** every user sees the setting; only a driver with passengers gets an email. No email if she has no passengers tomorrow: a ride with none is left out, and so is a cancelled date. The list is a snapshot of the moment it was sent, and later changes aren't emailed. A failed send is tried again every 5 minutes, for the same ride date, until the end of that date; a retry that goes out on the ride day itself says “להיום” and lists only the rides that haven't left yet.
+**Rules:** every user sees the setting; only a driver with passengers gets an email. No email if she has no passengers tomorrow: a ride with none is left out, and so is a cancelled date. The list is a snapshot of the moment it was sent. Only a new booking by a passenger sends an update: a passenger the driver added, a cancellation or a cancelled date doesn't. Updates for a date continue, for rides that haven't left yet, until her daily email for the next date is sent (at her time on the ride day itself); while her daily email waits for a retry, the retry carries the new passengers instead. A failed send is tried again every 5 minutes, for the same ride date, until the end of that date; a retry that goes out on the ride day itself says “להיום” and lists only the rides that haven't left yet.
 
 ### E. A passenger cancels
 

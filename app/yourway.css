@@ -67,6 +67,16 @@ button { cursor: pointer; }
 .role-switch button { border: 0; background: transparent; color: #59665F; padding: 7px 18px; min-width: 132px; border-radius: 8px; font-size: 16px; font-weight: 600; transition: .2s ease; text-align: center; }
 .role-switch button.active { color: var(--green-dark); background: var(--lime); font-weight: 800; box-shadow: 0 3px 9px rgba(42,74,96,.14); }
 .header-actions { display: flex; align-items: center; gap: 22px; }
+.side-announce { display: flex; align-items: flex-start; gap: 10px; margin-top: 18px; padding: 12px; border-radius: 13px; background: var(--green-soft); border: 1px solid #D3DFE7; color: var(--green-dark); font-size: 14px; line-height: 1.45; text-align: right; text-decoration: none; transition: background .2s ease, box-shadow .2s ease; }
+.side-announce:hover { background: #DFE9F0; box-shadow: 0 3px 9px rgba(42,74,96,.12); }
+.side-announce strong { font-weight: 800; }
+/* Phones only: there the sidebar, and its card, are hidden. */
+.header-announce { display: none; }
+.announce-bell { position: relative; flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--lime); color: var(--green-dark); display: grid; place-items: center; animation: announce-pulse 2.4s ease-in-out infinite; }
+.announce-bell::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--lime); z-index: -1; animation: announce-ring 2.4s ease-out infinite; }
+@keyframes announce-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+@keyframes announce-ring { 0% { transform: scale(1); opacity: .7; } 70%, 100% { transform: scale(1.7); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .announce-bell, .announce-bell::after { animation: none; } }
 .contact-button { min-height: 40px; padding: 0 14px; }
 .form-grid.contact-dialog-fields { grid-template-columns: 1fr; }
 .textarea-shell { padding: 10px 13px; align-items: stretch; }
@@ -469,6 +479,11 @@ fieldset.editor-section { min-width: 0; margin: 0; border-top: 0; border-inline:
 /* Visible overflow: the time picker's panel opens past the form's edge. */
 .daily-email-panel { margin-top: 18px; overflow: visible; }
 .daily-email-note { margin: 8px 0 0; color: #59665F; font-size: 15px; }
+.daily-email-updates .btn { align-self: flex-start; }
+.daily-email-box { border: 1px solid var(--line); border-radius: 14px; padding: 18px; background: #fff; }
+/* "Off" / remove state of a toggle: the "on" button's border on a gray fill. */
+.btn-ghost.outlined { border-color: #dce4df; background: #F0F2F1; padding-inline: 17px; }
+.btn-ghost.outlined:hover { border-color: #C9D2CD; background: #E7EAE8; }
 .bottom-nav { display: none; }
 .toast { position: fixed; left: 28px; bottom: 28px; z-index: 50; color: #fff; background: #263e36; border-radius: 12px; padding: 13px 17px; box-shadow: 0 10px 30px rgba(25,50,41,.22); display: flex; align-items: center; gap: 10px; font-size: 16px; animation: toast-in .3s ease; }
 .toast > span { width: 26px; height: 26px; border-radius: 50%; background: #4f7668; display: grid; place-items: center; }
@@ -490,6 +505,7 @@ fieldset.editor-section { min-width: 0; margin: 0; border-top: 0; border-inline:
 
 @media (max-width: 780px) {
   .sidebar { display: none; }
+  .header-announce { display: flex; }
   .main-shell { width: 100%; margin: 0; padding-bottom: 72px; }
   .topbar { height: auto; min-height: 76px; padding: 10px 18px; flex-wrap: wrap; gap: 9px; }
   .mobile-logo { display: block; }

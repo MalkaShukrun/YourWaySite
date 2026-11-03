@@ -28,6 +28,7 @@ export function DailyEmailForm({ email, defaults }: Props) {
     formState: { errors },
   } = useForm<DailyEmailValues>({ resolver: zodResolver(dailyEmailSchema), defaultValues: defaults });
   const enabled = useWatch({ control, name: "enabled" });
+  const updates = useWatch({ control, name: "updates" });
 
   const onSubmit = (values: DailyEmailValues) =>
     startTransition(async () => {
@@ -44,13 +45,13 @@ export function DailyEmailForm({ email, defaults }: Props) {
           <h3><Mail {...iconProps} size={20} /> מייל יומי לנהגות</h3>
           <span>רשימת הנוסעות של מחר, עם טלפון, דוא״ל ותחנת עלייה</span>
         </div>
-        <button type="button" className={`btn ${enabled ? "btn-secondary" : "btn-ghost"}`} onClick={() => setValue("enabled", !enabled)}>
+        <button type="button" className={`btn outlined ${enabled ? "btn-secondary" : "btn-ghost"}`} onClick={() => setValue("enabled", !enabled)}>
           {enabled ? "פעיל" : "כבוי"}
         </button>
       </div>
       {enabled && (
-        <div className="form-grid compact profile-subgrid">
-          <div className="field">
+        <div className="form-grid compact profile-subgrid daily-email-grid">
+          <div className="field daily-email-box">
             <span>שעת השליחה</span>
             <Controller
               control={control}
@@ -61,6 +62,21 @@ export function DailyEmailForm({ email, defaults }: Props) {
             <p className="daily-email-note">
               המייל יישלח אל <span dir="ltr">{email}</span> עד כ־5 דקות אחרי השעה שבחרת, פעם ביום. אם למחר אין נוסעות
               רשומות, לא יישלח מייל.
+            </p>
+          </div>
+          <div className="field daily-email-box daily-email-updates">
+            <span id="daily-email-updates-label">מייל עדכון על נוסעת חדשה</span>
+            <button
+              type="button"
+              className={`btn outlined ${updates ? "btn-secondary" : "btn-ghost"}`}
+              aria-labelledby="daily-email-updates-label"
+              aria-pressed={updates}
+              onClick={() => setValue("updates", !updates)}
+            >
+              {updates ? "פעיל" : "כבוי"}
+            </button>
+            <p className="daily-email-note">
+              אם נוסעת נרשמת אחרי שהמייל היומי נשלח, תקבלי מייל נוסף עם הרשימה המעודכנת. נוסעות שהוספת בעצמך מופיעות ברשימה, אבל לא שולחות מייל עדכון לאחר שעת השליחה.
             </p>
           </div>
         </div>

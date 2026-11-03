@@ -39,8 +39,10 @@ export type ProfileValues = z.infer<typeof profileSchema>;
 
 // The driver's daily email of tomorrow's passengers. The job that sends it runs
 // every 5 minutes, and a time after the last run of the day would never be due.
+// updates: another email when a passenger books after it went out.
 export const dailyEmailSchema = z.object({
   enabled: z.boolean(),
+  updates: z.boolean(),
   time: z
     .string()
     .regex(TIME_PATTERN, "יש לבחור שעה")

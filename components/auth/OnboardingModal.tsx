@@ -1,12 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useForm, useWatch } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Car, Phone, User } from "lucide-react";
-import { FULL_NAME_MAX, profileSchema, type ProfileValues } from "@/lib/validation/profile";
+import { Car, User } from "lucide-react";
+import { FULL_NAME_MAX, type ProfileValues } from "@/lib/validation/profile";
 import { completeProfile, signOut } from "@/app/(auth)/login/actions";
-import { VehicleFields } from "@/components/profile/VehicleFields";
+import { PhoneField, useProfileForm, VehicleFields } from "@/components/profile/ProfileFields";
 import { carIconProps, iconProps } from "@/components/ui/icon";
 import { FieldError } from "@/components/ui/FieldError";
 import { useHydrated } from "@/components/ui/useHydrated";
@@ -18,24 +16,15 @@ export function OnboardingModal({ defaultName }: Props) {
   const [serverError, setServerError] = useState("");
   const [pending, startTransition] = useTransition();
   const hydrated = useHydrated();
-  const {
-    register,
-    handleSubmit,
-    control,
-    setValue,
-    formState: { errors },
-  } = useForm<ProfileValues>({
-    resolver: zodResolver(profileSchema),
-    defaultValues: {
-      fullName: defaultName,
-      phone: "",
-      hasVehicle: false,
-      vehicleModel: "",
-      vehicleColor: "",
-      vehicleSeats: "4",
-    },
+  const form = useProfileForm({
+    fullName: defaultName,
+    phone: "",
+    hasVehicle: false,
+    vehicleModel: "",
+    vehicleColor: "",
+    vehicleSeats: "4",
   });
-  const hasVehicle = useWatch({ control, name: "hasVehicle" });
+  const { register, handleSubmit, setValue, formState: { errors }, hasVehicle } = form;
 
   const onSubmit = (values: ProfileValues) =>
     startTransition(async () => {
@@ -64,26 +53,15 @@ export function OnboardingModal({ defaultName }: Props) {
             <div className="input-shell"><input {...register("fullName")} autoComplete="name" maxLength={FULL_NAME_MAX} /></div>
             <FieldError message={errors.fullName?.message} />
           </label>
-          <label className="field required">
-            <span>מספר טלפון</span>
-            <div className="input-shell">
-              <Phone {...iconProps} size={20} />
-              <input {...register("phone")} type="tel" inputMode="tel" placeholder="050-000-0000" autoComplete="tel" />
-            </div>
-            <FieldError message={errors.phone?.message} />
-          </label>
+          <PhoneField form={form} required />
         </div>
 
         {hasVehicle ? (
           <div className="vehicle-fields">
             <div className="form-grid compact">
-              <VehicleFields
-                model={{ input: register("vehicleModel"), error: errors.vehicleModel?.message }}
-                color={{ input: register("vehicleColor"), error: errors.vehicleColor?.message }}
-                seats={{ input: register("vehicleSeats"), error: errors.vehicleSeats?.message }}
-              />
+              <VehicleFields form={form} />
             </div>
-            <button type="button" className="btn btn-ghost" onClick={() => setValue("hasVehicle", false)}>
+            <button type="button" className="btn btn-ghost outlined" onClick={() => setValue("hasVehicle", false)}>
               בלי רכב כרגע
             </button>
           </div>
