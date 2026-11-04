@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createSupabaseMock } from "../helpers/supabase-mock";
 import { ID } from "../helpers/fixtures";
 
@@ -10,7 +10,7 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: async () => sb.mock.clie
 vi.mock("@supabase/supabase-js", () => ({ createClient: () => sb.mock.client }));
 sb.mock = createSupabaseMock();
 const { getProfileValues, vehicleColumns } = await import("@/lib/profile/data");
-const { getAdminGroups, getAdminStats } = await import("@/lib/admin/data");
+const { activeRouteTotals, getAdminGroups, getAdminStats } = await import("@/lib/admin/data");
 const { getSiteStats } = await import("@/lib/site/stats");
 
 beforeEach(() => {
@@ -66,15 +66,74 @@ describe("vehicleColumns", () => {
 });
 
 describe("getAdminGroups", () => {
+  afterEach(() => vi.useRealTimers());
+
   it("lists every group, hidden ones too, with the routes that use it", async () => {
     sb.mock.onTable("ride_groups", { data: [{ id: ID.group, routes: [] }] });
     expect(await getAdminGroups()).toEqual([{ id: ID.group, routes: [] }]);
     expect(sb.mock.callsOn("ride_groups")).not.toContainEqual(["eq", ["is_active", true]]);
   });
 
+  // Active as in the driver's active tab (spec H5, F2, F3).
+  it("counts a route as active only while its driver lists it as active", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-03T10:00:00Z")); // 12:00 in Israel
+    const route = (overrides: object) => ({
+      driver_id: ID.driver,
+      is_active: true,
+      kind: "one_time",
+      ride_date: "2026-11-04",
+      out_time: "08:00:00",
+      ride_exceptions: [],
+      ...overrides,
+    });
+    sb.mock.onTable("ride_groups", {
+      data: [
+        {
+          id: ID.group,
+          routes: [
+            route({}), // upcoming
+            route({ kind: "recurring", ride_date: "2026-01-01" }), // recurring, started long ago
+            route({ is_active: false }), // removed
+            route({ ride_date: "2026-11-03", out_time: "11:59:00" }), // left a minute ago
+            route({ ride_exceptions: [{ ride_date: "2026-11-04", cancelled: true }] }), // cancelled for its date
+            route({ ride_exceptions: [{ ride_date: "2026-11-05", cancelled: true }] }), // another date cancelled
+          ],
+        },
+      ],
+    });
+    const [group] = await getAdminGroups();
+    expect(group.routes.map((r) => r.is_active)).toEqual([true, true, false, false, false, true]);
+    expect(group.routes[0]).toEqual({ driver_id: ID.driver, is_active: true });
+  });
+
   it("throws on a database error", async () => {
     sb.mock.onTable("ride_groups", { error: { message: "denied" } });
     await expect(getAdminGroups()).rejects.toThrow("denied");
+  });
+});
+
+describe("activeRouteTotals", () => {
+  const group = (is_active: boolean, routes: [driver: string, active: boolean][]) => ({
+    id: ID.group,
+    origin: "בית שמש",
+    destination: "ירושלים",
+    is_active,
+    routes: routes.map(([driver_id, active]) => ({ driver_id, is_active: active })),
+  });
+
+  it("counts active routes in visible groups, and each of their drivers once", () => {
+    expect(
+      activeRouteTotals([
+        group(true, [["a", true], ["a", true], ["b", false]]),
+        group(true, [["c", true]]),
+        group(false, [["d", true]]), // hidden group: can't be booked
+      ]),
+    ).toEqual({ routes: 3, drivers: 2 });
+  });
+
+  it("is zero without groups", () => {
+    expect(activeRouteTotals([])).toEqual({ routes: 0, drivers: 0 });
   });
 });
 

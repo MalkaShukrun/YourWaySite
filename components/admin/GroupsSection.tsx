@@ -1,5 +1,5 @@
 import { Car, Route, UserCheck, Users } from "lucide-react";
-import type { AdminGroup } from "@/lib/admin/data";
+import { activeRouteTotals, type AdminGroup } from "@/lib/admin/data";
 import { groupLabel } from "@/lib/utils/format";
 import { CollapsiblePanel } from "@/components/ui/CollapsiblePanel";
 import { StatCard } from "@/components/ui/StatCard";
@@ -9,15 +9,14 @@ import { carIconProps, iconProps } from "@/components/ui/icon";
 // Ride group management (SRS §8) — stats and the group list from the design.
 // Render only for admins (the caller checks with requireAdmin and loads the groups).
 export function GroupsSection({ groups, users }: { groups: AdminGroup[]; users: number }) {
-  const activeRoutes = groups.flatMap((g) => g.routes.filter((r) => r.is_active));
-  const drivers = new Set(activeRoutes.map((r) => r.driver_id)).size;
+  const active = activeRouteTotals(groups);
 
   return (
     <>
       <div className="admin-stats">
         <StatCard icon={<UserCheck {...iconProps} size={20} />} value={users} label="משתמשות במערכת" tone="purple" />
-        <StatCard icon={<Car {...carIconProps} size={20} />} value={activeRoutes.length} label="מסלולים פעילים" tone="blue" />
-        <StatCard icon={<Users {...iconProps} size={20} />} value={drivers} label="נהגות עם מסלולים" tone="purple" />
+        <StatCard icon={<Car {...carIconProps} size={20} />} value={active.routes} label="מסלולים פעילים" tone="blue" />
+        <StatCard icon={<Users {...iconProps} size={20} />} value={active.drivers} label="נהגות עם מסלולים" tone="purple" />
         <StatCard icon={<Route {...iconProps} size={20} />} value={groups.filter((g) => g.is_active).length} label="קבוצות פעילות" tone="green" />
       </div>
 

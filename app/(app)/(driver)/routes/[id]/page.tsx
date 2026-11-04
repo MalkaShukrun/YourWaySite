@@ -14,7 +14,8 @@ import { isUuid } from "@/lib/validation/patterns";
 
 export const metadata: Metadata = { title: "עריכת מסלול" };
 
-// Edit a published route (SRS §5.1): only its note and new stops — its other details are fixed.
+// Edit a published route (SRS §5.1): in full while nobody has booked it; once
+// a passenger has, only its note and new stops — its other details are fixed.
 export default function EditRoutePage({ params }: PageProps<"/routes/[id]">) {
   return (
     <main className="page-content">

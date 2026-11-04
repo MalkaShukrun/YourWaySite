@@ -30,12 +30,13 @@ function stopLabelError(stops: unknown) {
 }
 
 // Add a route: details, days & times, and stops — marking them on the map is
-// optional (SRS §5.1). A published route (`route`) is shown read-only; the
-// only changes it takes are its note and new stops. `copyFrom` fills a new
+// optional (SRS §5.1). A route a passenger has booked (`route.has_bookings`)
+// is shown read-only; the only changes it takes are its note and new stops. A
+// route nobody has booked stays editable in full. `copyFrom` fills a new
 // route from another of her rides: everything stays editable and the date is
 // left to choose — the copy is a new ride, not the old one moved.
 export function RouteEditor({ groups, route, copyFrom, today }: Props) {
-  const locked = route !== null;
+  const locked = route !== null && route.has_bookings;
   const source = route ?? copyFrom;
   // The stop (by index) waiting for a click on the map.
   const [placing, setPlacing] = useState<number | null>(null);
@@ -52,8 +53,9 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
   } = useForm<RouteValues>({
     resolver: zodResolver(routeSchema),
     defaultValues: {
-      // A copied ride's group may have been hidden since.
-      groupId: route?.group_id ?? groups.find((g) => g.id === copyFrom?.group_id)?.id ?? groups[0]?.id ?? "",
+      // An editable ride's group may have been hidden since: fall back to the
+      // first visible group, which is what the select shows.
+      groupId: locked ? route.group_id : groups.find((g) => g.id === source?.group_id)?.id ?? groups[0]?.id ?? "",
       kind: source?.kind ?? "recurring",
       // One-time rides have no weekdays.
       weekdays: source?.weekdays.length ? source.weekdays : [0, 2, 4],
@@ -76,6 +78,9 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
   const stops = useWatch({ control, name: "stops" });
   const notes = useWatch({ control, name: "notes" });
 
+  // On a booked route its saved stops are fixed.
+  const isFixed = (stop: { id: string }) => locked && Boolean(stop.id);
+
   const toggleDay = (day: number) =>
     setValue(
       "weekdays",
@@ -86,9 +91,9 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
   const onSubmit = (values: RouteValues) =>
     startTransition(async () => {
       setServerError("");
-      const result = route
+      const result = locked
         ? await updateRoute(route.id, { notes: values.notes, stops: values.stops.filter((s) => !s.id) })
-        : await saveRoute(values);
+        : await saveRoute(values, route?.id ?? null);
       if (result?.error) setServerError(result.error);
     });
 
@@ -98,18 +103,20 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
       <div className={`editor-stops ${stopKind === "dropoff" ? "dropoff-editor-stops" : ""}`}>
         {fields.map((field, index) =>
           field.kind !== stopKind ? null : (
-            <div key={field.key}>
+            <div key={field.key} className={isFixed(field) ? "is-fixed" : ""}>
               <span>{fields.slice(0, index + 1).filter((f) => f.kind === stopKind).length}</span>
+              {/* Read-only rather than disabled: a disabled input drops its value from the form. */}
               <input
                 {...register(`stops.${index}.label`)}
                 placeholder="שם התחנה (לדוגמה: צומת ביג)"
                 maxLength={STOP_LABEL_MAX}
                 autoFocus={!field.label}
-                readOnly={Boolean(field.id)}
+                readOnly={isFixed(field)}
+                aria-disabled={isFixed(field) || undefined}
                 aria-invalid={Boolean(errors.stops?.[index]?.label)}
               />
-              {/* Saved stops are fixed; only new ones can be placed or removed. */}
-              {!field.id && (
+              {/* Only new stops can be placed or removed. */}
+              {!isFixed(field) && (
                 <>
                   <button
                     type="button"
@@ -166,14 +173,19 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
       <div className="welcome">
-        <div><p>הגדרת נסיעה</p><h1>{locked ? "עריכת מסלול" : copyFrom ? "שכפול נסיעה" : "מסלול חדש"}</h1></div>
+        <div><p>הגדרת נסיעה</p><h1>{route ? "עריכת מסלול" : copyFrom ? "שכפול נסיעה" : "מסלול חדש"}</h1></div>
       </div>
 
       <div className="editor-layout">
         <section className="panel editor-form">
           {locked && (
             <p className="editor-locked-note">
-              מסלול שפורסם אי אפשר לשנות — אפשר רק לערוך את ההערה ולהוסיף תחנות. כדי לשנות פרטים אחרים, הסירי את המסלול והוסיפי מסלול חדש.
+              כבר נרשמו טרמפיסטיות למסלול, ולכן אי אפשר לשנות אותו — אפשר רק לערוך את ההערה ולהוסיף תחנות. כדי לשנות פרטים אחרים, שכפלי את הנסיעה ושני בה את מה שצריך, ואחר כך הסירי את המסלול הזה.
+            </p>
+          )}
+          {route && !locked && (
+            <p className="editor-locked-note">
+              עדיין לא נרשמו טרמפיסטיות למסלול, ולכן אפשר לשנות את כל הפרטים. אחרי שתירשם הטרמפיסטית הראשונה, יהיה אפשר רק לערוך את ההערה ולהוסיף תחנות.
             </p>
           )}
           {copyFrom && (
@@ -211,7 +223,7 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
           </fieldset>
 
           <div className="editor-section">
-            {/* The note stays editable on a published route; the rest is fixed. */}
+            {/* The note stays editable on a booked route; the rest is fixed. */}
             <fieldset className="editor-fields" disabled={locked}>
               <div className="section-heading"><span>2</span><div><h2>ימים ושעות</h2><p>מתי את יוצאת וחוזרת?</p></div></div>
               {kind === "recurring" && (
@@ -279,7 +291,7 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
             <div className="editor-actions">
               <Link className="btn btn-secondary" href="/routes">ביטול</Link>
               <button type="submit" className="btn btn-primary" disabled={!hydrated || pending}>
-                {pending ? "שומר..." : locked ? "שמירת השינויים" : "שמירת המסלול"}
+                {pending ? "שומר..." : route ? "שמירת השינויים" : "שמירת המסלול"}
               </button>
             </div>
           </div>
@@ -299,6 +311,7 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
           <LazyRouteEditorMap
             stops={stops}
             area={area}
+            lockSaved={locked}
             placing={placing === null ? null : stops[placing]?.kind ?? null}
             onPlace={(lat, lng) => {
               if (placing === null) return;

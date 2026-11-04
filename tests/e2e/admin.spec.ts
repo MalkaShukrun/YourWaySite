@@ -197,6 +197,23 @@ test("the personal code list folds away and opens again", async ({ page, seed, s
   await expect(input).toBeVisible();
 });
 
+// Active as in the driver's active tab (spec H5): one-time rides that took
+// place or were cancelled for their date aren't counted.
+test("a group's active routes leave out past and cancelled one-time rides", async ({ page, seed, signIn }) => {
+  const origin = newName(seed);
+  const groupId = await seed.group({ origin, destination: "ירושלים" });
+  const driver = await seed.user("Driver");
+  const date = israelDate(3);
+  await seed.route(driver, { groupId, date });
+  await seed.route(driver, { groupId, date: israelDate(-1) });
+  const cancelled = await seed.route(driver, { groupId, date });
+  await seed.service.from("ride_exceptions").insert({ route_id: cancelled.id, ride_date: date, cancelled: true });
+  await signIn(page, await seed.user("Admin", { admin: true }));
+
+  await page.goto("/admin/groups");
+  await expect(groupRow(page, `${origin} ← ירושלים`)).toContainText("מסלול פעיל אחד");
+});
+
 test("shows the totals and the group list", async ({ page, seed, signIn }) => {
   await signIn(page, await seed.user("Admin", { admin: true }));
   await page.goto("/admin/groups");
@@ -204,7 +221,7 @@ test("shows the totals and the group list", async ({ page, seed, signIn }) => {
     "טרמפיסטיות נוסעות היום",
     "נסיעות יוצאות היום",
     "משתמשות במערכת",
-    "נסיעות שיצאו עד היום",
+    "נסיעות שיצאו עם טרמפיסטיות",
     "טרמפיסטיות שנסעו עד היום",
     "קבוצות פעילות",
     "נהגות עם מסלולים",

@@ -1,5 +1,9 @@
 import "server-only";
+import { format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
+import { israelNow } from "@/lib/utils/dates";
+import { isCancelledOneTimeRide, routeTab } from "@/lib/driver/data";
+import type { DriverRoute } from "@/lib/driver/types";
 
 // Data Access Layer for group management (SRS §8). RLS limits ride_groups
 // writes to admins; callers check with requireAdmin before reading.
@@ -9,19 +13,40 @@ export type AdminGroup = {
   origin: string;
   destination: string;
   is_active: boolean;
+  // `is_active`: listed under its driver's active routes — not removed, and
+  // not a one-time ride that took place or was cancelled for its date.
   routes: { driver_id: string; is_active: boolean }[];
+};
+
+type GroupRow = Omit<AdminGroup, "routes"> & {
+  routes: (Pick<DriverRoute, "kind" | "ride_date" | "out_time"> & {
+    driver_id: string;
+    is_active: boolean;
+    ride_exceptions: { ride_date: string; cancelled: boolean }[] | null;
+  })[];
 };
 
 // Every group, hidden ones included, with the routes that use it.
 export async function getAdminGroups(): Promise<AdminGroup[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("ride_groups")
-    .select("id, origin, destination, is_active, routes(driver_id, is_active)")
-    .order("origin")
-    .order("destination");
+  const [{ data, error }, israel] = await Promise.all([
+    supabase
+      .from("ride_groups")
+      .select("id, origin, destination, is_active, routes(driver_id, is_active, kind, ride_date, out_time, ride_exceptions(ride_date, cancelled))")
+      .order("origin")
+      .order("destination"),
+    israelNow(),
+  ]);
   if (error) throw new Error(error.message);
-  return (data ?? []) as AdminGroup[];
+  const now = format(israel, "yyyy-MM-dd HH:mm");
+  return ((data ?? []) as GroupRow[]).map(({ routes, ...group }) => ({
+    ...group,
+    routes: routes.map(({ ride_exceptions, ...route }) => ({
+      driver_id: route.driver_id,
+      is_active:
+        route.is_active && routeTab({ ...route, ride_cancelled: isCancelledOneTimeRide(route, ride_exceptions) }, now) === "active",
+    })),
+  }));
 }
 
 export type AdminStats = {
@@ -31,6 +56,13 @@ export type AdminStats = {
   rides_departed: number;
   passengers_departed: number;
 };
+
+// The active routes, and the drivers who have one. A hidden group's routes
+// can't be booked, so they aren't counted.
+export function activeRouteTotals(groups: AdminGroup[]) {
+  const routes = groups.filter((g) => g.is_active).flatMap((g) => g.routes.filter((r) => r.is_active));
+  return { routes: routes.length, drivers: new Set(routes.map((r) => r.driver_id)).size };
+}
 
 // Site-wide totals (0033_admin_stats.sql). The function returns them to admins only.
 export async function getAdminStats(): Promise<AdminStats> {

@@ -14,7 +14,7 @@ import { isUuid } from "@/lib/validation/patterns";
 export const metadata: Metadata = { title: "מסלול חדש" };
 
 // A new route, or with `?copy=<id>` a new one that starts from another of her
-// routes — an active one or a ride that took place, not a cancelled one.
+// routes — active, a ride that took place, or one cancelled for its date.
 export default function NewRoutePage({ searchParams }: PageProps<"/routes/new">) {
   return (
     <main className="page-content">
@@ -29,12 +29,11 @@ export default function NewRoutePage({ searchParams }: PageProps<"/routes/new">)
 async function Editor({ searchParams }: Pick<PageProps<"/routes/new">, "searchParams">) {
   const user = await requireUser();
   const { copy } = await searchParams;
-  const [groups, now, source] = await Promise.all([
+  const [groups, now, copyFrom] = await Promise.all([
     getRideGroups(),
     israelNow(),
     typeof copy === "string" && isUuid(copy) ? getRouteForEdit(user.id, copy) : null,
   ]);
-  const copyFrom = source && !source.ride_cancelled ? source : null;
   // Next keeps this page's client state when only the query changes, and the
   // form reads its values once, so each source needs its own editor.
   return <RouteEditor key={copyFrom?.id ?? "new"} groups={groups} route={null} copyFrom={copyFrom} today={format(now, "yyyy-MM-dd")} />;

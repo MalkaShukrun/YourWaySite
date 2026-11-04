@@ -62,7 +62,7 @@ export const routeSchema = z
 
 export type RouteValues = z.infer<typeof routeSchema>;
 
-// The only changes a published route takes: its note, and stops added to it.
+// The only changes a booked route takes: its note, and stops added to it.
 export const routeUpdateSchema = z.object({
   notes: notesSchema,
   stops: z.array(routeStopSchema.omit({ id: true })),

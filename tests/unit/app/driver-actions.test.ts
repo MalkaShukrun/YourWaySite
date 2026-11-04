@@ -46,7 +46,7 @@ const DRIVER_MESSAGES: [string, string][] = [
   ["INVALID_PASSENGER", "יש להזין שם וטלפון."],
   ["INVALID_STOP", "התחנה שנבחרה אינה חלק מהמסלול."],
   ["BOOKING_NOT_FOUND", "ההרשמה לא נמצאה."],
-  ["ROUTE_LOCKED", "אי אפשר לשנות מסלול שפורסם — אפשר רק לערוך את ההערה ולהוסיף תחנות."],
+  ["ROUTE_LOCKED", "כבר נרשמו טרמפיסטיות למסלול, ולכן אי אפשר לשנות אותו — אפשר רק לערוך את ההערה ולהוסיף תחנות."],
   ["RIDE_CANCELLED", "הנסיעה בוטלה לתאריך הזה, ואי אפשר להחזיר אותה."],
   ["RIDE_DEPARTED", "הנסיעה כבר יצאה ולא ניתן לבטל אותה."],
   ["RIDE_PAST", "הנסיעה כבר התקיימה ונשמרת בהיסטוריה — אי אפשר להסיר אותה."],
@@ -106,8 +106,33 @@ describe("saveRoute (publish a route)", () => {
   });
 });
 
-// A published route takes only its note and new stops (spec B4).
-describe("updateRoute (edit a published route)", () => {
+// A route nobody has booked is saved over in full (spec B4).
+describe("saveRoute (edit a route nobody has booked)", () => {
+  it("saves over the route with its stops, saved ones by id", async () => {
+    const stops = [{ ...values().stops[0], id: ID.pickup }, values().stops[1]];
+    expect(await runAction(() => saveRoute(values({ seats: "6", stops }), ID.route))).toEqual({ redirectedTo: "/routes?saved=1" });
+    const [name, args] = sb.mock.client.rpc.mock.calls[0] as [string, { p_route_id: string; p_route: { seats: string }; p_stops: { id: string }[] }];
+    expect(name).toBe("save_route");
+    expect(args.p_route_id).toBe(ID.route);
+    expect(args.p_route.seats).toBe("6");
+    expect(args.p_stops.map((s) => s.id)).toEqual([ID.pickup, ""]);
+  });
+
+  it("refuses a malformed route id without touching the database", async () => {
+    expect(await runAction(() => saveRoute(values(), "nope"))).toEqual({ error: "המסלול לא נמצא." });
+    expect(sb.mock.client.rpc).not.toHaveBeenCalled();
+  });
+
+  it("shows the lock once a passenger has booked it meanwhile", async () => {
+    sb.mock.onRpc("save_route", { error: { message: "P0001: ROUTE_LOCKED" } });
+    expect(await runAction(() => saveRoute(values(), ID.route))).toEqual({
+      error: "כבר נרשמו טרמפיסטיות למסלול, ולכן אי אפשר לשנות אותו — אפשר רק לערוך את ההערה ולהוסיף תחנות.",
+    });
+  });
+});
+
+// A booked route takes only its note and new stops (spec B4).
+describe("updateRoute (edit a booked route)", () => {
   const newStop = { kind: "dropoff" as const, label: " צומת גומא ", lat: null, lng: null };
 
   it("saves the trimmed note and the new stops", async () => {

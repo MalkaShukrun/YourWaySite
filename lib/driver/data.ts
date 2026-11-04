@@ -38,17 +38,23 @@ export async function getDriverDay(date: string) {
   };
 }
 
+type RideExceptions = { ride_date: string; cancelled: boolean }[] | null;
+
 type RouteRow = Omit<DriverRoute, "origin" | "destination" | "ride_cancelled"> & {
   ride_groups: { origin: string; destination: string } | null;
-  ride_exceptions: { ride_date: string; cancelled: boolean }[] | null;
+  ride_exceptions: RideExceptions;
 };
+
+// A one-time ride the driver cancelled for its date ("cancel for this date only").
+export function isCancelledOneTimeRide(route: Pick<DriverRoute, "kind" | "ride_date">, exceptions: RideExceptions) {
+  return route.kind === "one_time" && !!exceptions?.find((x) => x.ride_date === route.ride_date)?.cancelled;
+}
 
 function flatten(row: RouteRow): DriverRoute {
   const { ride_groups, ride_exceptions, ...route } = row;
-  const exception = ride_exceptions?.find((x) => x.ride_date === route.ride_date);
   return {
     ...route,
-    ride_cancelled: route.kind === "one_time" && !!exception?.cancelled,
+    ride_cancelled: isCancelledOneTimeRide(route, ride_exceptions),
     origin: ride_groups?.origin ?? "",
     destination: ride_groups?.destination ?? "",
   };
@@ -63,6 +69,12 @@ export function isPastOneTimeRide(route: Pick<DriverRoute, "kind" | "ride_date" 
   return route.kind === "one_time" && !!route.ride_date && `${route.ride_date} ${formatTime(route.out_time)}` <= now;
 }
 
+// The tab of my routes a route is listed under (spec F2, F3): a one-time ride
+// cancelled for its date, or one that took place, leaves the active tab.
+export function routeTab(route: Pick<DriverRoute, "kind" | "ride_date" | "out_time" | "ride_cancelled">, now: string) {
+  return route.ride_cancelled ? "cancelled" : isPastOneTimeRide(route, now) ? "history" : "active";
+}
+
 export async function getMyRoutes(driverId: string): Promise<DriverRoute[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -75,9 +87,11 @@ export async function getMyRoutes(driverId: string): Promise<DriverRoute[]> {
   return ((data ?? []) as unknown as RouteRow[]).map(flatten);
 }
 
+// `has_bookings` counts any booking on any date, cancelled ones included: only
+// a route nobody has booked can be edited in full (0037_edit_unbooked_routes.sql).
 export async function getRouteForEdit(driverId: string, routeId: string): Promise<EditableRoute | null> {
   const supabase = await createClient();
-  const [{ data: route }, stops] = await Promise.all([
+  const [{ data: route }, stops, bookings] = await Promise.all([
     supabase
       .from("routes")
       .select(ROUTE_COLUMNS)
@@ -86,7 +100,9 @@ export async function getRouteForEdit(driverId: string, routeId: string): Promis
       .eq("is_active", true)
       .maybeSingle(),
     getRouteStops(routeId),
+    supabase.from("bookings").select("id", { count: "exact", head: true }).eq("route_id", routeId),
   ]);
+  if (bookings.error) throw new Error(bookings.error.message);
   if (!route) return null;
-  return { ...flatten(route as unknown as RouteRow), stops };
+  return { ...flatten(route as unknown as RouteRow), stops, has_bookings: (bookings.count ?? 0) > 0 };
 }

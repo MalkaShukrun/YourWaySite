@@ -19,7 +19,7 @@ const ERRORS: Record<string, string> = {
   INVALID_PASSENGER: "יש להזין שם וטלפון.",
   INVALID_STOP: "התחנה שנבחרה אינה חלק מהמסלול.",
   BOOKING_NOT_FOUND: "ההרשמה לא נמצאה.",
-  ROUTE_LOCKED: "אי אפשר לשנות מסלול שפורסם — אפשר רק לערוך את ההערה ולהוסיף תחנות.",
+  ROUTE_LOCKED: "כבר נרשמו טרמפיסטיות למסלול, ולכן אי אפשר לשנות אותו — אפשר רק לערוך את ההערה ולהוסיף תחנות.",
   RIDE_CANCELLED: "הנסיעה בוטלה לתאריך הזה, ואי אפשר להחזיר אותה.",
   RIDE_DEPARTED: "הנסיעה כבר יצאה ולא ניתן לבטל אותה.",
   RIDE_PAST: "הנסיעה כבר התקיימה ונשמרת בהיסטוריה — אי אפשר להסיר אותה.",
@@ -29,17 +29,20 @@ const messageFor = (error: { message: string }) => messageForCode(error, ERRORS)
 
 const rideRef = z.object({ routeId: z.uuid(), date: z.iso.date() });
 
-// Create a route with its stops (SRS §5.1). Once published it can't be
-// changed, only given a new note and more stops (updateRoute) or removed.
-export async function saveRoute(values: RouteValues) {
+// Create a route with its stops (SRS §5.1), or with `routeId` save over one
+// nobody has booked yet (0037_edit_unbooked_routes.sql). Once a passenger books
+// it, it can't be changed, only given a new note and more stops (updateRoute)
+// or removed.
+export async function saveRoute(values: RouteValues, routeId: string | null = null) {
   await requireUser();
+  if (routeId !== null && !z.uuid().safeParse(routeId).success) return { error: ERRORS.ROUTE_NOT_FOUND };
   const parsed = routeSchema.safeParse(values);
   if (!parsed.success) return { error: firstIssue(parsed.error) };
 
   const v = parsed.data;
   const supabase = await createClient();
   const { error } = await supabase.rpc("save_route", {
-    p_route_id: null,
+    p_route_id: routeId,
     p_route: {
       group_id: v.groupId,
       kind: v.kind,
@@ -57,7 +60,7 @@ export async function saveRoute(values: RouteValues) {
   redirect("/routes?saved=1");
 }
 
-// The only changes a published route takes: its note, and more stops after its
+// The only changes a booked route takes: its note, and more stops after its
 // existing ones (0022_lock_routes.sql, 0028_editable_route_notes.sql).
 export async function updateRoute(routeId: string, values: RouteUpdateValues) {
   await requireUser();

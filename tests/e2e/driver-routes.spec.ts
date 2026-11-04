@@ -4,7 +4,8 @@ import { rideDay, type Seed } from "../integration/support/seed";
 import { choose, chooseTime, expectNotFound, israelDate, openForm, toast } from "./support/ui";
 
 // The driver's routes (spec B1–B5, F1–F3): publishing, form problems, the
-// locked edit page, removing, and the history and cancelled tabs.
+// edit page (full until booked, then locked), removing, and the history and
+// cancelled tabs.
 
 // A group named for this test, so its cards are easy to find.
 async function namedGroup(seed: Seed) {
@@ -166,11 +167,54 @@ test.describe("form problems (spec B5)", () => {
 });
 
 test.describe("editing a published route (spec B4)", () => {
-  test("everything is locked except the note and new stops", async ({ page, seed, signIn }) => {
+  test("nobody has booked it: every detail and stop can change", async ({ page, seed, signIn }) => {
+    const driver = await seed.user("Driver");
+    const { label } = await namedGroup(seed);
+    const route = await seed.route(driver, { kind: "recurring", date: null, seats: 3, price: 7, time: "06:05" });
+    await signIn(page, driver);
+
+    await openForm(page, `/routes/${route.id}`, "שמירת השינויים");
+    await expect(page.getByText("עדיין לא נרשמו טרמפיסטיות למסלול")).toBeVisible();
+    await choose(page, "קבוצת נסיעה", label);
+    await page.getByLabel("מקומות פנויים").fill("5");
+    await page.getByLabel("מחיר לכל טרמפיסטית").fill("12");
+    await pickupInputs(page).first().fill("תחנה ששונתה");
+    await expect(page.getByRole("button", { name: "מחיקת התחנה" })).toHaveCount(2);
+    await expect(page.locator(".editor-stops > .is-fixed")).toHaveCount(0);
+    await page.getByRole("button", { name: "שמירת השינויים" }).click();
+
+    await expect(page).toHaveURL(/\/routes\?saved=1$/);
+    await expect(routeCard(page, label)).toHaveCount(1); // the same route, moved to the new group
+    const { data } = await seed.service.from("routes").select("seats, price").eq("id", route.id).single();
+    expect(data).toEqual({ seats: 5, price: 12 });
+    await page.goto(`/routes/${route.id}`);
+    await expect(pickupInputs(page).first()).toHaveValue("תחנה ששונתה");
+  });
+
+  test("nobody has booked it and its group was hidden: it's saved in the group the form shows", async ({ page, seed, signIn }) => {
+    const driver = await seed.user("Driver");
+    const hidden = await seed.group({ active: false });
+    const route = await seed.route(driver, { groupId: hidden });
+    await signIn(page, driver);
+
+    await openForm(page, `/routes/${route.id}`, "שמירת השינויים");
+    const shown = await page.getByRole("combobox", { name: "קבוצת נסיעה", exact: true }).inputValue();
+    await page.getByRole("button", { name: "שמירת השינויים" }).click();
+
+    await expect(page).toHaveURL(/\/routes\?saved=1$/);
+    const { data } = await seed.service.from("routes").select("group_id, ride_groups(origin)").eq("id", route.id).single();
+    expect(data!.group_id).not.toBe(hidden);
+    expect(shown).toContain((data!.ride_groups as unknown as { origin: string }).origin);
+  });
+
+  test("once booked, everything is locked except the note and new stops", async ({ page, seed, signIn }) => {
     const driver = await seed.user("Driver");
     const { id: groupId, label } = await namedGroup(seed);
     const route = await seed.route(driver, { groupId, kind: "recurring", date: null, seats: 3, price: 7, time: "06:05" });
     const passenger = await seed.user("Passenger");
+    // A past booking still locks it: the passenger's history keeps the ride.
+    const past = israelDate(-7);
+    await seed.bookDirectly(await seed.user("Booked"), route, past);
     await signIn(page, driver);
 
     await page.goto("/routes");
@@ -186,6 +230,8 @@ test.describe("editing a published route (spec B4)", () => {
     await expect(page.getByLabel("מחיר לכל טרמפיסטית")).toBeDisabled();
     await expect(page.getByRole("button", { name: "שעת יציאה: 06:05" })).toBeDisabled();
     await expect(pickupInputs(page).first()).toHaveAttribute("readonly", "");
+    await expect(pickupInputs(page).first()).toHaveAttribute("aria-disabled", "true");
+    await expect(page.locator(".editor-stops > .is-fixed")).toHaveCount(2); // shown like the other locked fields
     await expect(page.getByRole("button", { name: "מחיקת התחנה" })).toHaveCount(0);
 
     await page.getByLabel("הערות לטרמפיסטיות").fill("מחכה עד 10 דקות");
@@ -398,18 +444,25 @@ test.describe("history and cancelled tabs (spec F2, F3)", () => {
     await expect(page.getByRole("heading", { level: 1, name: "מסלול חדש" })).toBeVisible();
   });
 
-  test("a one-time ride cancelled for its date moves to the cancelled tab", async ({ page, seed, signIn }) => {
+  test("a one-time ride cancelled for its date moves to the cancelled tab, and can only be copied", async ({ page, seed, signIn }) => {
     const driver = await seed.user("Driver");
     const date = israelDate(3);
-    const route = await seed.route(driver, { date });
+    const route = await seed.route(driver, { date, seats: 3, notes: "מבוטלת" });
     await driver.db.from("ride_exceptions").insert({ route_id: route.id, ride_date: date, cancelled: true });
     await signIn(page, driver);
 
     await page.goto("/routes?tab=cancelled");
     const card = page.locator(".route-card");
     await expect(card).toHaveCount(1);
-    await expect(card.getByRole("button", { name: "הסרת המסלול" })).toHaveCount(0);
-    await expect(card.getByRole("link", { name: "עריכת מסלול" })).toHaveCount(0);
+    await expect(card.getByRole("button")).toHaveCount(0);
+    await expect(card.getByRole("link")).toHaveText(["שכפול נסיעה"]);
+
+    await card.getByRole("link", { name: "שכפול נסיעה" }).click();
+    await expect(page).toHaveURL(new RegExp(`/routes/new\\?copy=${route.id}$`));
+    await expect(page.getByRole("heading", { level: 1, name: "שכפול נסיעה" })).toBeVisible();
+    await expect(page.getByLabel("מקומות פנויים")).toHaveValue("3");
+    await expect(page.getByLabel("הערות לטרמפיסטיות")).toHaveValue("מבוטלת");
+
     await page.goto("/routes");
     await expect(page.locator(".route-card")).toHaveCount(0);
   });

@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 
-type Result = { data?: unknown; error?: { message: string; code?: string; details?: string } | null };
+type Result = { data?: unknown; count?: number | null; error?: { message: string; code?: string; details?: string } | null };
 type Call = [method: string, args: unknown[]];
 
 // A stand-in for the Supabase client. Every query-builder call is recorded and

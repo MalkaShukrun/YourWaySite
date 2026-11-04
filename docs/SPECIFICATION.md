@@ -2,8 +2,8 @@
 
 *How the ride-sharing app behaves today, written from the code: every rule the screens and the database enforce, and what the driver and the passenger each see in each situation.*
 
-- **Source:** the `YourWaySite` code and database migrations 0001–0030
-- **As of:** 31 October 2026
+- **Source:** the `YourWaySite` code and database migrations 0001–0037
+- **As of:** 3 November 2026
 - **Interface language:** Hebrew; labels below are quoted as they appear on screen
 
 **Contents**
@@ -57,7 +57,8 @@ A ride group is an origin–destination pair, such as “בית שמש ← יר�
 - **One-time ride** (“נסיעה חד־פעמית”): runs on a single date, which can be any day including Saturday.
 - Each route has a departure time, 1–8 seats, a price per passenger (up to 4 digits, 2 decimals), an optional note of up to 200 characters, and at least one pickup stop and one drop-off stop.
 - Stop names are 2–60 characters. Marking a stop on the map is optional; a stop can have just a name.
-- **A published route can't be edited.** Its group, days, date, time, seats, price and existing stops are fixed. The only changes allowed are adding more stops and editing the note. To change anything else, the driver removes the route and creates a new one.
+- **A route nobody has booked can be edited in full** — its group, type, days, date, time, seats, price, note and stops (rename, move, remove, add).
+- **A booked route can't be edited.** Once any passenger has booked it — on any date, past or future, including a booking later cancelled — its group, days, date, time, seats, price and existing stops are fixed. The only changes allowed are adding more stops and editing the note. To change anything else, the driver duplicates the ride (F2), changes the copy, and then removes the original route.
 - A removed route can't be restored.
 
 ### Rides and dates
@@ -104,11 +105,11 @@ Open for booking → Cancelled for this date → Shown as cancelled · never cha
 | My rides | `/my-rides` | Passenger | Tabs “נסיעות קרובות” (upcoming) and “היסטוריה” (past, newest first). Each row: time, date, route, price, stops, driver contact, cancel button, and “הנהגת ביטלה את הנסיעה” when the driver cancelled. |
 | Payments | `/payments` | Passenger | Month picker (this month and the 3 before), totals for the month (total, paid, left to pay), one row per charged ride with a paid/unpaid toggle, and an all-time unpaid balance per driver. |
 | Weekly dashboard | `/dashboard?date=` | Driver | Week (Sunday–Saturday) containing the chosen date. Totals for the week; one folding section per day that has rides; one card per ride with its passengers and contact details, the day's stops, a map, cancel-for-date and add-passenger controls. |
-| My routes | `/routes` | Driver | Tabs “מסלולים פעילים” (active), “היסטוריה” (one-time rides that departed) and “מסלולים מבוטלים” (one-time rides cancelled for their date). Active and history cards have “שכפול נסיעה” (F2). |
+| My routes | `/routes` | Driver | Tabs “מסלולים פעילים” (active), “היסטוריה” (one-time rides that departed) and “מסלולים מבוטלים” (one-time rides cancelled for their date). Every card has “שכפול נסיעה” (F2, F3). |
 | New route | `/routes/new` | Driver | Route editor: group (with a search box), type, days or date, time, seats, price, note, stops, map. With `?copy=[id]`, “שכפול נסיעה”: the same editor filled from another of her routes (F2). Reached from “הוספת מסלול” on the dashboard. |
-| Edit route | `/routes/[id]` | Driver | Same editor with everything locked except the note and adding new stops. |
+| Edit route | `/routes/[id]` | Driver | Same editor. Fully editable while nobody has booked the route; once booked, everything is locked except the note and adding new stops. |
 | Profile | `/profile` | All | Name, phone, email (read-only, from her sign-in), optional vehicle (model, colour, seats), and the daily passenger email (D7). Admins also see group management here. |
-| Group management | `/admin/groups` | Admin | Site-wide totals (H5). Groups with how many routes use each; add, rename, hide/show, delete. Personal-code addresses (H4). The group and address lists fold away under their titles. |
+| Group management | `/admin/groups` | Admin | Site-wide totals (H5). Groups with how many active routes each has; add, rename, hide/show, delete. Personal-code addresses (H4). The group and address lists fold away under their titles. |
 | Not found | any unknown address | Anyone | “הדף לא נמצא”, with a link home. |
 
 ## 4. Scenarios
@@ -284,20 +285,22 @@ Ride page map; driver's dashboard map on each ride card.
 
 **Driver side**
 
-- Everything is locked except the note and adding new stops.
-- She can change the note (up to 200 characters) or clear it.
-- Saving new stops adds them after the existing ones.
-- To change days, time, seats or price she must remove the route and publish a new one.
+- **Nobody has booked the route** (no booking on any date, past or future, cancelled ones included): the note above the form reads “עדיין לא נרשמו טרמפיסטיות למסלול, ולכן אפשר לשנות את כל הפרטים…”. Every field is editable — group, type, days, date, time, seats, price, note — and saved stops can be renamed, moved on the map or removed, like in a new route. If its group was hidden since, the first visible group is selected instead. Saving updates the same route.
+- **A passenger has booked it:** the note reads “כבר נרשמו טרמפיסטיות למסלול, ולכן אי אפשר לשנות אותו…”, and everything is locked except the note and adding new stops. Locked fields, and the saved stops, are shown faded with a not-allowed cursor; saved stops have no map or remove buttons.
+  - She can change the note (up to 200 characters) or clear it.
+  - Saving new stops adds them after the existing ones.
+  - To change days, time, seats or price, the note tells her to duplicate the ride (“שכפלי את הנסיעה ושני בה את מה שצריך, ואחר כך הסירי את המסלול הזה”) — duplicating first, because a removed route can't be copied.
+- If a passenger books while she has the full editor open, saving is refused with `ROUTE_LOCKED`.
 
 **Passenger side**
 
-Booked passengers keep exactly what they booked. New stops become available for new bookings. The updated note shows on the ride page for everyone, including passengers who already booked.
+A route nobody has booked has no one to affect. Booked passengers keep exactly what they booked. New stops become available for new bookings. The updated note shows on the ride page for everyone, including passengers who already booked.
 
 **Where it shows**
 
 `/routes/[id]`; new stops and the note on the ride page; new stops on the dashboard.
 
-**Rules:** enforced in the database too (`ROUTE_LOCKED`: “אי אפשר לשנות מסלול שפורסם — אפשר רק לערוך את ההערה ולהוסיף תחנות.”). Passengers aren't notified when the note changes. Not available for a one-time ride that has departed or was cancelled; opening its address returns to my routes.
+**Rules:** enforced in the database too (`ROUTE_LOCKED`: “כבר נרשמו טרמפיסטיות למסלול, ולכן אי אפשר לשנות אותו — אפשר רק לערוך את ההערה ולהוסיף תחנות.”). Passengers aren't notified when the note changes. Not available for a one-time ride that has departed or was cancelled; opening its address returns to my routes.
 
 #### B5. A driver's form has a problem
 
@@ -698,7 +701,7 @@ It sits under “היסטוריה” with no way to remove or edit it. A direct 
 
 Its only action is “שכפול נסיעה”: `/routes/new?copy=[id]` opens the new-route editor filled with its details and stops. All of them can be changed, including the group and the ride type, and the date starts empty. If its group was hidden since, the first visible group is selected instead. Saving publishes a new route under the B1/B2 rules; the original ride stays in history unchanged.
 
-Active routes, recurring and one-time, have the same “שכפול נסיעה” action next to their edit link. The copy is a separate new route; the original stays active and unchanged. Cancelled rides can't be copied.
+Active routes, recurring and one-time, have the same “שכפול נסיעה” action next to their edit link. The copy is a separate new route; the original stays active and unchanged. Cancelled rides can be copied too (F3).
 
 **Passenger side**
 
@@ -714,7 +717,7 @@ Her history and payments for that ride are kept.
 
 **Driver side**
 
-It moves to “מסלולים מבוטלים”, newest date first, with no remove or add-stops buttons, and stays there after its date.
+It moves to “מסלולים מבוטלים”, newest date first, with no remove or add-stops buttons, and stays there after its date. Its only action is “שכפול נסיעה”, as in F2: it opens the new-route editor filled with its details, and saving publishes a new route; the cancelled ride stays cancelled.
 
 **Passenger side**
 
@@ -843,11 +846,12 @@ An unused group simply disappears from the filter.
 
 **Result**
 
-- Today: passengers traveling and rides departing.
-- Users in the system: those who finished sign-up.
-- To date: rides that departed and passengers who traveled.
+- Today: passengers traveling (“טרמפיסטיות נוסעות היום”) and rides departing (“נסיעות יוצאות היום”).
+- To date: rides that departed with passengers (“נסיעות שיצאו עם טרמפיסטיות”) and passengers who traveled (“טרמפיסטיות שנסעו עד היום”).
+- Users in the system (“משתמשות במערכת”): those who finished sign-up.
+- Active routes (“מסלולים פעילים”), the drivers who have one (“נהגות עם מסלולים”), and visible groups (“קבוצות פעילות”). Each group row shows its own count of active routes.
 
-**Rules:** only admins can read the totals. Each active booking counts as one passenger on one ride, guests included, so a round trip counts twice. Dates the driver cancelled aren't counted. Today's rides include every scheduled ride, booked or not; a ride counts as departed only if it had at least one passenger. Days follow Israel time.
+**Rules:** only admins can read the totals. Each active booking counts as one passenger on one ride, guests included, so a round trip counts twice. Dates the driver cancelled aren't counted. Today's rides include every scheduled ride, booked or not; a ride counts as departed only if it had at least one passenger, since a ride that left empty leaves no record. A route is active as in its driver's “מסלולים פעילים” tab: not removed, and not a one-time ride that took place or was cancelled for its date. The totals leave out routes in hidden groups, which can't be booked; a hidden group's row still shows its own count. Days follow Israel time.
 
 ### I. Support and errors
 
@@ -929,7 +933,7 @@ In place of the page.
 | `RIDE_DEPARTED` | Both | “הנסיעה כבר יצאה ולא ניתן לבטל אותה.” | Cancelling after departure |
 | `RIDE_CANCELLED` | Driver | “הנסיעה בוטלה לתאריך הזה, ואי אפשר להחזיר אותה.” | Undoing a date cancellation |
 | `RIDE_PAST` | Driver | “הנסיעה כבר התקיימה ונשמרת בהיסטוריה — אי אפשר להסיר אותה.” | Removing a one-time ride that took place |
-| `ROUTE_LOCKED` | Driver | “אי אפשר לשנות מסלול שפורסם — אפשר רק לערוך את ההערה ולהוסיף תחנות.” | Editing a published route |
+| `ROUTE_LOCKED` | Driver | “כבר נרשמו טרמפיסטיות למסלול, ולכן אי אפשר לשנות אותו — אפשר רק לערוך את ההערה ולהוסיף תחנות.” | Editing a booked route beyond its note and new stops |
 | `INVALID_PASSENGER` | Driver | “יש להזין שם וטלפון.” | Bad guest name or phone |
 | `GUEST_EXISTS` | Driver | Not shown as an error: the form asks “כבר יש הרשמה עם מספר הטלפון הזה (…). להחליף אותה?” | Adding a guest phone that already has a seat on that ride and date (D5) |
 

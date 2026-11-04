@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { requireUser } from "@/lib/auth/session";
 import { formatRideDate, formatTime, israelNow } from "@/lib/utils/dates";
 import { formatPrice, groupLabel, routeKindLabel, weekdaysLabel } from "@/lib/utils/format";
-import { getMyRoutes, isPastOneTimeRide } from "@/lib/driver/data";
+import { getMyRoutes, routeTab } from "@/lib/driver/data";
 import type { DriverRoute } from "@/lib/driver/types";
 import { ArchiveRouteButton } from "@/components/driver/ArchiveRouteButton";
 import { Toast } from "@/components/ui/Toast";
@@ -37,8 +37,7 @@ async function Routes({ searchParams }: Pick<PageProps<"/routes">, "searchParams
   // Cancelled one-time rides have their own tab; the others whose date and departure time
   // have passed move to the history. Both show the latest ride first. Active routes keep
   // the newest created first, as getMyRoutes returns them.
-  const tabOf = (r: DriverRoute) => (r.ride_cancelled ? "cancelled" : isPastOneTimeRide(r, now) ? "history" : "active");
-  const rows = routes.filter((r) => tabOf(r) === tab);
+  const rows = routes.filter((r) => routeTab(r, now) === tab);
   if (tab !== "active") {
     rows.sort((a, b) => `${b.ride_date} ${b.out_time}`.localeCompare(`${a.ride_date} ${a.out_time}`));
   }
@@ -74,8 +73,7 @@ async function Routes({ searchParams }: Pick<PageProps<"/routes">, "searchParams
 }
 
 // A ride that took place or was cancelled is kept for the record: it can't be
-// removed or given more stops. Active routes and rides that took place can be
-// copied into a new ride.
+// removed or given more stops. Every ride can be copied into a new one.
 function RouteCard({ route, tab }: { route: DriverRoute; tab: "active" | "history" | "cancelled" }) {
   const copyLink = (
     <Link className="btn btn-secondary" href={`/routes/new?copy=${route.id}`}><Copy {...iconProps} size={18} /> שכפול נסיעה</Link>
@@ -108,7 +106,7 @@ function RouteCard({ route, tab }: { route: DriverRoute; tab: "active" | "histor
             </div>
           </div>
         )}
-        {tab === "history" && <div className="route-actions">{copyLink}</div>}
+        {tab !== "active" && <div className="route-actions">{copyLink}</div>}
       </div>
     </article>
   );

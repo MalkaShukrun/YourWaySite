@@ -101,6 +101,20 @@ describe("getRouteForEdit", () => {
     );
   });
 
+  // Only a route nobody has booked, on any date, is edited in full (spec B4).
+  it.each([
+    [0, false],
+    [2, true],
+  ])("with %i bookings on any date, has_bookings is %s", async (count, hasBookings) => {
+    sb.mock.onTable("routes", { data: routeRow() });
+    sb.mock.onTable("bookings", { data: null, count });
+    expect(await getRouteForEdit(ID.driver, ID.route)).toMatchObject({ has_bookings: hasBookings });
+    expect(sb.mock.callsOn("bookings")).toEqual([
+      ["select", ["id", { count: "exact", head: true }]],
+      ["eq", ["route_id", ID.route]],
+    ]);
+  });
+
   // Another driver's route, or a removed one, can't be opened (spec B4).
   it("is null for a route that isn't the driver's active route", async () => {
     sb.mock.onTable("routes", { data: null });

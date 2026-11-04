@@ -1,18 +1,20 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { CHECK_FAILED, check, createWorld, daysFromToday, DENIED, type User, type World } from "./support/world";
 
-// Publishing routes (spec B1–B3) and the lock on published routes (B4, §2):
-// only the note and new stops can change, and a removed route stays removed.
+// Publishing routes (spec B1–B3) and the lock on booked routes (B4, §2): a
+// route nobody has booked can be edited in full; once a passenger books it,
+// only the note and new stops can change; and a removed route stays removed.
 
 let w: World;
 let driver: User;
 let stranger: User;
+let passenger: User;
 let groupId: string;
 let otherGroupId: string;
 
 beforeAll(async () => {
   w = createWorld();
-  [driver, stranger] = await Promise.all([w.user("Driver"), w.user("Stranger")]);
+  [driver, stranger, passenger] = await Promise.all([w.user("Driver"), w.user("Stranger"), w.user("Passenger")]);
   [groupId, otherGroupId] = await Promise.all([w.group(), w.group()]);
 });
 afterAll(() => w?.cleanup());
@@ -45,6 +47,23 @@ async function publish(user: User, overrides: Record<string, unknown> = {}, stop
 const routeRow = async (id: string) => (await w.service.from("routes").select("*").eq("id", id).single()).data!;
 const stopsOf = async (id: string) =>
   (await w.service.from("stops").select("kind, label, lat, lng, position").eq("route_id", id).order("kind").order("position")).data!;
+const stopIdsOf = async (id: string) =>
+  (await w.service.from("stops").select("id, kind").eq("route_id", id).order("kind").order("position")).data!;
+
+// A passenger's booking on the route's first date, written directly.
+async function bookOn(id: string, status: "active" | "cancelled" = "active") {
+  const stops = await stopIdsOf(id);
+  check(
+    await w.service.from("bookings").insert({
+      route_id: id,
+      ride_date: daysFromToday(1),
+      passenger_id: passenger.id,
+      pickup_stop_id: stops.find((s) => s.kind === "pickup")!.id,
+      dropoff_stop_id: stops.find((s) => s.kind === "dropoff")!.id,
+      status,
+    }),
+  );
+}
 
 describe("publishing (spec B1, B2, B3)", () => {
   it("saves a recurring route with its days in order, a trimmed note and its stops", async () => {
@@ -128,10 +147,87 @@ describe("publishing (spec B1, B2, B3)", () => {
   });
 });
 
-describe("a published route is locked (spec B4)", () => {
+describe("a route nobody has booked can be edited in full (spec B4)", () => {
+  const edited = {
+    kind: "one_time",
+    weekdays: [],
+    ride_date: daysFromToday(5),
+    out_time: "09:45",
+    seats: "6",
+    price: "22",
+    notes: "שונה",
+  };
+
+  it("the driver changes every detail and renames, moves, removes and adds stops through save_route", async () => {
+    const id = check(await publish(driver)) as string;
+    const [kenyon, , central] = await stopIdsOf(id); // קניון, צומת, תחנה מרכזית
+    const { error } = await driver.db.rpc("save_route", {
+      p_route_id: id,
+      p_route: { ...edited, group_id: otherGroupId },
+      p_stops: [
+        { id: kenyon.id, kind: "pickup", label: "קניון חדש", lat: 31.7, lng: 35.1 },
+        { id: central.id, kind: "dropoff", label: "תחנה מרכזית", lat: null, lng: null },
+        { id: "", kind: "dropoff", label: "יעד נוסף", lat: null, lng: null },
+      ],
+    });
+    expect(error).toBeNull();
+    expect(await routeRow(id)).toMatchObject({
+      group_id: otherGroupId,
+      kind: "one_time",
+      weekdays: [],
+      ride_date: daysFromToday(5),
+      out_time: "09:45:00",
+      seats: 6,
+      price: 22,
+      notes: "שונה",
+      is_active: true,
+    });
+    expect(await stopsOf(id)).toEqual([
+      { kind: "pickup", label: "קניון חדש", lat: 31.7, lng: 35.1, position: 1 },
+      { kind: "dropoff", label: "תחנה מרכזית", lat: null, lng: null, position: 1 },
+      { kind: "dropoff", label: "יעד נוסף", lat: null, lng: null, position: 2 },
+    ]);
+  });
+
+  it("the driver renames, moves and removes its stops directly", async () => {
+    const id = check(await publish(driver)) as string;
+    const [first, second] = (await stopIdsOf(id)).filter((s) => s.kind === "pickup");
+    expect((await driver.db.from("stops").update({ label: "Renamed", lat: 31.7, lng: 35.2 }).eq("id", first.id)).error).toBeNull();
+    expect((await driver.db.from("stops").delete().eq("id", second.id)).error).toBeNull();
+  });
+
+  it("another user can't edit it through save_route", async () => {
+    const id = check(await publish(driver)) as string;
+    const { error } = await stranger.db.rpc("save_route", {
+      p_route_id: id,
+      p_route: { ...edited, group_id: groupId },
+      p_stops: [
+        { id: "", kind: "pickup", label: "Fake", lat: null, lng: null },
+        { id: "", kind: "dropoff", label: "Fake", lat: null, lng: null },
+      ],
+    });
+    expect(error?.message).toContain("ROUTE_NOT_FOUND");
+    expect((await routeRow(id)).seats).toBe(4);
+  });
+
+  it("a removed route still can't change", async () => {
+    const id = check(await publish(driver)) as string;
+    await driver.db.from("routes").update({ is_active: false }).eq("id", id);
+    expect((await driver.db.from("routes").update({ seats: 5 }).eq("id", id)).error?.message).toContain(LOCKED);
+  });
+
+  it("a booking cancelled later still locks it: the passenger's history keeps the ride", async () => {
+    const id = check(await publish(driver)) as string;
+    await bookOn(id, "cancelled");
+    expect((await driver.db.from("routes").update({ seats: 5 }).eq("id", id)).error?.message).toContain(LOCKED);
+  });
+});
+
+describe("a booked route is locked (spec B4)", () => {
   let id: string;
   beforeAll(async () => {
     id = check(await publish(driver)) as string;
+    await bookOn(id);
   });
 
   it.each([
