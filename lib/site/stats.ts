@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 
 export type SiteStats = { members: number; routes: number };
 
-// Site-wide totals for the login page (public_stats in 0017_public_stats_routes.sql).
+// Site-wide totals for the login page (public_stats in 0041_public_stats_routes_with_rides.sql).
 // Returns null if the database can't be reached — the page then leaves the row out.
 export async function getSiteStats(): Promise<SiteStats | null> {
   try {

@@ -49,7 +49,7 @@ At the bottom of the menu, a card announces the daily passenger email: “**חד
 
 ### Ride groups
 
-A ride group is an origin–destination pair, such as “בית שמש, רמה ג ← ירושלים, הר חוצבים”. Both ends come from one list of places that admins keep; each place is a city and a neighborhood or area inside it (migrations 0038–0040). Cards show a place's city with its neighborhood on the line under it; lists and dropdowns show “city, neighborhood”. Only admins create groups. Every route belongs to one group, and passengers search by the places at either end (C1). Each known city has a map area, and some places a smaller one of their own, so a driver marking stops on the map can't place a pin far outside the route's region.
+A ride group is an origin–destination pair, such as “בית שמש, רמה ג ← ירושלים, הר חוצבים”. Both ends come from one list of places that admins keep; each place is a city and a neighborhood or area inside it (migrations 0038–0040). A card that shows one place at a time (search results, the ride page, admin's place list) shows its city with its neighborhood on the line under it; a route (“origin ← destination”, on ride cards and rows) shows each place on one line as “city, **neighborhood**”; dropdowns show “city, neighborhood”. The neighborhood is always in bold. Only admins create groups. Every route belongs to one group, and passengers search by the places at either end (C1). Each known city has a map area, and some places a smaller one of their own, so a driver marking stops on the map can't place a pin far outside the route's region.
 
 ### Routes
 
@@ -97,7 +97,7 @@ Open for booking → Cancelled for this date → Shown as cancelled · never cha
 
 | Screen | Address | Who | What it shows |
 |---|---|---|---|
-| Sign-in | `/login` | Anyone | Google sign-in, or a personal code for approved addresses (A6), consent to the terms of use and the privacy policy, site totals (members and active routes, refreshed hourly). Opens the onboarding window for new users. |
+| Sign-in | `/login` | Anyone | Google sign-in, or a personal code for approved addresses (A6), consent to the terms of use and the privacy policy, site totals (members, and shown groups with at least one ride that wasn't cancelled and hasn't taken place; refreshed hourly). Opens the onboarding window for new users. |
 | Terms of use | `/terms` | Anyone | The terms text, including the cancellation policy. |
 | Privacy policy | `/privacy` | Anyone | The policy text, including the mailing and messages section. |
 | Ride search | `/` | All | Greeting, filter bar (“מאיפה” and “לאן” with a swap button, date, departure from/until, ride type), result cards for the next 7 days. Each recurring route appears as one card with a chip per date showing free seats. |
@@ -109,7 +109,7 @@ Open for booking → Cancelled for this date → Shown as cancelled · never cha
 | New route | `/routes/new` | Driver | Route editor: group (with a search box), type, days or date, time, seats, price, note, stops, map. With `?copy=[id]`, “שכפול נסיעה”: the same editor filled from another of her routes (F2). Reached from “הוספת מסלול” on the dashboard. |
 | Edit route | `/routes/[id]` | Driver | Same editor. Fully editable while nobody has booked the route; once booked, everything is locked except the note and adding new stops. |
 | Profile | `/profile` | All | Name, phone, email (read-only, from her sign-in), optional vehicle (model, colour, seats), and the daily passenger email (D7). Admins also see group management here. |
-| Group management | `/admin/groups` | Admin | Site-wide totals (H5). Groups with how many active routes each has; add, change places, hide/show, delete. The list of places (H6). Personal-code addresses (H4). The group, place and address lists fold away under their titles. |
+| Group management | `/admin/groups` | Admin | Site-wide totals (H5). Groups with how many active routes each has; add, change places, hide/show, delete. The list of places (H6). Personal-code addresses (H4). The group, place and address lists fold away under their titles; “קבוצה חדשה” and “מקום חדש” sit at the end of their list's title row and work while it's folded. |
 | Not found | any unknown address | Anyone | “הדף לא נמצא”, with a link home. |
 
 ## 4. Scenarios
@@ -350,7 +350,7 @@ Nothing; searches aren't recorded.
 **Passenger side**
 
 - Without a date: rides from today through the next 6 days. With a date: that day only.
-- Filters: “מאיפה” (from) and “לאן” (to), each one or more cities or places — a whole city (“בית שמש (כל העיר)”) covers every place in it; rides are found only in the direction picked, and “החלפת כיוון” swaps the two for the ride back. Also ride type, and departure from and until (inclusive). An older link with `?group=` still narrows to those groups.
+- Filters: “מאיפה” (from) and “לאן” (to), each one or more cities or places — a whole city (“בית שמש (כל העיר)”) covers every place in it; rides are found only in the direction picked, and “החלפת כיוון” swaps the two for the ride back. The list shows each city's whole-city option with its places indented under it by neighborhood only (“רמה ג”); while she types, matches show in full (“בית שמש, רמה ג”), since their city may be filtered out. Also ride type, and departure from and until (inclusive). An older link with `?group=` still narrows to those groups.
 - Results are sorted by date then time; each route is one card. The heading shows how many were found (“N תוצאות”), with or without filters.
 - No results, including picks with no group between them: “לא נמצאו נסיעות מתאימות”, with “נסי לשנות את המקומות, התאריך או השעה.”
 - The ⓘ beside “מאיפה” reads “נהגת? להוספת מסלולי נסיעה מעיר לעיר יש ליצור קשר”.
@@ -494,7 +494,11 @@ Not applicable.
 
 **Where it shows**
 
-`/dashboard`. Each ride card: passenger list with contact details, “התחנות של היום” grouping who gets on and off where, and the map.
+`/dashboard`. Each ride card:
+
+- A gray header: the departure time in large type, the route, and two chips — the ride type and “N מתוך M מקומות” (lime when full). The fold arrow is at the far end; on phones the cancel button goes on the line under the route.
+- “טרמפיסטיות רשומות ופרטי קשר”: one row per passenger with her name and, under it, “איסוף: … · הורדה: …” (plus “נוספה על ידך” for a guest, D4). Her phone and email are shown as buttons, each with its icon and the number or address, that call or write to her (a guest has no email); on phones they go on the line under her name. “הוספת טרמפיסטית” is the last row of the list.
+- “התחנות של היום”: one line of the booked stops in route order, pickups then drop-offs, each with who gets on or off there, and the איסוף / הורדה legend. The map beside it has no legend of its own; it shows its own only when no one has booked yet.
 
 **Rules:** removed routes don't appear. Cancelled dates still appear, marked “בוטלה לתאריך זה”.
 
@@ -860,7 +864,7 @@ An unused group simply disappears from the filter.
 
 **Result**
 
-A new place can be picked as a group's origin or destination. A renamed place renames every group that uses it, everywhere, including past bookings. Each row shows how many groups use the place.
+A new place can be picked as a group's origin or destination. A renamed place renames every group that uses it, everywhere, including past bookings. Each row shows how many groups use the place. The places are listed by city, each city folding open to its neighborhoods; “פתיחת הכל” and “סגירת הכל” above the list open or fold every city.
 
 **Where it shows**
 

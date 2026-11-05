@@ -4,6 +4,7 @@ import { GroupName } from "@/components/ui/PlaceName";
 import { CollapsiblePanel } from "@/components/ui/CollapsiblePanel";
 import { StatCard } from "@/components/ui/StatCard";
 import { GroupActions } from "@/components/admin/GroupActions";
+import { GroupDialog } from "@/components/admin/GroupDialog";
 import { carIconProps, iconProps } from "@/components/ui/icon";
 
 // Ride group management (SRS §8) — stats and the group list from the design.
@@ -20,7 +21,7 @@ export function GroupsSection({ groups, places, users }: { groups: AdminGroup[];
         <StatCard icon={<Route {...iconProps} size={20} />} value={groups.filter((g) => g.is_active).length} label="קבוצות פעילות" tone="green" />
       </div>
 
-      <CollapsiblePanel title="כל הקבוצות" subtitle="רק מנהלת יכולה ליצור, לערוך או למחוק קבוצות">
+      <CollapsiblePanel title="כל הקבוצות" subtitle="רק מנהלת יכולה ליצור, לערוך או למחוק קבוצות" action={<GroupDialog places={places} />}>
         {groups.length === 0 ? (
           <div className="empty-state"><strong>עדיין אין קבוצות</strong><span>צרי את הקבוצה הראשונה — מוצא ויעד מרשימת המקומות.</span></div>
         ) : (

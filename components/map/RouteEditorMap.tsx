@@ -7,8 +7,9 @@ import { MapContainer, Marker, Tooltip, useMap, useMapEvents } from "react-leafl
 import { MapPin } from "lucide-react";
 import type { Area } from "@/lib/utils/places";
 import { iconProps } from "@/components/ui/icon";
+import { StopLegend } from "@/components/ui/StopLegend";
 import { isPlaced } from "@/lib/rides/types";
-import { MapLegend, MapTiles, RoutePath, stopPinIcon, useMapKey } from "./mapParts";
+import { MapTiles, RoutePath, stopPinIcon, useMapKey } from "./mapParts";
 
 // `id` is set for a stop already saved on the route.
 type EditorStop = { id?: string; kind: "pickup" | "dropoff"; label: string; lat: number | null; lng: number | null };
@@ -73,7 +74,7 @@ export default function RouteEditorMap({ stops, area, lockSaved, placing, onPlac
           לחצי על המפה במקום {placing === "pickup" ? "תחנת האיסוף" : "תחנת ההורדה"}
         </div>
       )}
-      <MapLegend />
+      <StopLegend className="map-legend" />
     </div>
   );
 }

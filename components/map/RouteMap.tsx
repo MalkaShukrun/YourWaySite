@@ -4,7 +4,8 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { MapContainer, Marker, Tooltip } from "react-leaflet";
 import { isPlaced, type Stop } from "@/lib/rides/types";
-import { FitWhenResized, MapLegend, MapTiles, RoutePath, stopPinIcon, useMapKey } from "./mapParts";
+import { StopLegend } from "@/components/ui/StopLegend";
+import { FitWhenResized, MapTiles, RoutePath, stopPinIcon, useMapKey } from "./mapParts";
 
 // Interactive map (React Leaflet + OpenStreetMap) showing only the driver's
 // route and her designated pickup / drop-off pins (SRS §4.2). Marking stops
@@ -38,7 +39,7 @@ export default function RouteMap({ stops, selectedIds = [], legend = true }: { s
         {markers(pickups)}
         {markers(dropoffs)}
       </MapContainer>
-      {legend && <MapLegend />}
+      {legend && <StopLegend className="map-legend" />}
     </div>
   );
 }

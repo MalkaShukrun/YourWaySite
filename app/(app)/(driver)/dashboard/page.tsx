@@ -9,7 +9,7 @@ import { getDriverDay } from "@/lib/driver/data";
 import { firstNameOf } from "@/lib/utils/format";
 import { DashboardDatePicker } from "@/components/driver/DashboardDatePicker";
 import { DriverRideCard } from "@/components/driver/DriverRideCard";
-import { WeekDays } from "@/components/driver/WeekDays";
+import { FoldAll } from "@/components/ui/FoldAll";
 import { StatCard } from "@/components/ui/StatCard";
 import { iconProps } from "@/components/ui/icon";
 
@@ -79,7 +79,7 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
           </section>
         </>
       ) : (
-        <WeekDays actions={actions}>{rideDays.map(({ day, rides }) => (
+        <FoldAll className="week-days-actions" actions={actions}>{rideDays.map(({ day, rides }) => (
           <details className="week-day" key={day} open={day === openDay}>
             <summary className={`week-day-head ${day === today ? "today" : ""}`}>
               {formatRideDate(day)}{day === today && <span>היום</span>}
@@ -92,7 +92,7 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
               ))}
             </div>
           </details>
-        ))}</WeekDays>
+        ))}</FoldAll>
       )}
     </>
   );

@@ -62,12 +62,3 @@ export function stopPinIcon(kind: Stop["kind"], number: number, selected = false
     iconAnchor: [16, 16],
   });
 }
-
-export function MapLegend() {
-  return (
-    <div className="map-legend" dir="rtl">
-      <span><i className="pickup-dot"></i>איסוף</span>
-      <span><i className="dropoff-dot"></i>הורדה</span>
-    </div>
-  );
-}

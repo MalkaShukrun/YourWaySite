@@ -4,7 +4,6 @@ import { requireAdmin } from "@/lib/auth/session";
 import { getAdminGroups, getAdminStats, getPlaces } from "@/lib/admin/data";
 import { AdminStatsSection } from "@/components/admin/AdminStatsSection";
 import { GroupsSection } from "@/components/admin/GroupsSection";
-import { GroupDialog } from "@/components/admin/GroupDialog";
 import { PlacesSection } from "@/components/admin/PlacesSection";
 import { OtpEmailsSection } from "@/components/admin/OtpEmailsSection";
 
@@ -33,7 +32,6 @@ async function AdminGroups() {
           <p>אזור מנהלת מערכת</p>
           <h1>ניהול קבוצות נסיעה</h1>
         </div>
-        <GroupDialog places={places} />
       </div>
       <AdminStatsSection stats={stats} />
       <GroupsSection groups={groups} places={places} users={stats.users} />

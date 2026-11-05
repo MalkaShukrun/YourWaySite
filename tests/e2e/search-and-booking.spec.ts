@@ -65,6 +65,24 @@ test.describe("search (spec C1)", () => {
     await expect(card(page, group.label)).toHaveCount(0);
   });
 
+  test("lists a city's places under it by neighborhood, and in full while typing", async ({ page, seed, signIn }) => {
+    const driver = await seed.user("Driver");
+    const group = await namedGroup(seed);
+    await seed.route(driver, { groupId: group.id, date: israelDate(2) });
+    await signIn(page, await seed.user("Passenger"));
+
+    await page.goto("/");
+    const field = page.getByRole("combobox", { name: "מאיפה" });
+    await field.click();
+    // Named in full for screen readers either way.
+    const place = page.getByRole("listbox", { name: "מאיפה" }).getByRole("option", { name: group.origin, exact: true });
+    await expect(place).toHaveText("מרכז");
+    await expect(place).toHaveClass(/nested/);
+    await field.fill(group.city);
+    await expect(place).toHaveText(group.origin);
+    await expect(place).not.toHaveClass(/nested/);
+  });
+
   test("with a date, shows that day only, even beyond the week", async ({ page, seed, signIn }) => {
     const driver = await seed.user("Driver");
     const group = await namedGroup(seed);

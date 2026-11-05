@@ -229,7 +229,7 @@ function SearchList({ label, icon, note, options, unfiltered = options, display,
                 role="option"
                 tabIndex={-1}
                 aria-selected={selected}
-                aria-label={nested && option.label}
+                aria-label={nested ? option.label : undefined}
                 className={`${selected ? "selected" : ""} ${index === active ? "active" : ""} ${nested ? "nested" : ""}`}
                 onMouseDown={(event) => event.preventDefault()} // keep focus in the field
                 onMouseEnter={() => setActive(index)}

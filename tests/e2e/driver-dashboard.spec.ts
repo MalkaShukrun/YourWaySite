@@ -42,14 +42,22 @@ test.describe("the week (spec D1)", () => {
     await page.goto(`/dashboard?date=${date}`);
     const card = rideCard(page, label);
     await openCard(card);
-    await expect(card).toContainText("1 מתוך 3 מקומות");
+    await expect(card.locator(".today-time")).toHaveText("23:55");
+    await expect(card.locator(".ride-chip")).toHaveText(["נסיעה חד־פעמית", "1 מתוך 3 מקומות"]);
+    await expect(card.locator(".ride-chip.full")).toHaveCount(0);
     const row = card.locator(".passenger-row");
     await expect(row).toContainText("רחל נוסעת");
-    await expect(row).toContainText(passenger.phone!);
-    await expect(row).toContainText(passenger.email);
+    await expect(row).toContainText("איסוף: Pickup A · הורדה: Dropoff B");
+    const call = row.getByRole("link", { name: "חיוג אל רחל נוסעת" });
+    await expect(call).toHaveAttribute("href", `tel:${passenger.phone}`);
+    await expect(call).toHaveText(passenger.phone!);
+    const write = row.getByRole("link", { name: "מייל אל רחל נוסעת" });
+    await expect(write).toHaveAttribute("href", `mailto:${passenger.email}`);
+    await expect(write).toHaveText(passenger.email);
     await expect(row.getByRole("button", { name: "הסרה" })).toHaveCount(0); // she booked herself (spec D6)
-    await expect(card.locator(".daily-stops")).toContainText("Pickup A");
-    await expect(card.locator(".daily-stops")).toContainText("Dropoff B");
+    // One line of stops, pickups first, with one legend for the stops and the map.
+    await expect(card.locator(".daily-stop strong")).toHaveText(["Pickup A", "Dropoff B"]);
+    await expect(card.locator(".stop-legend, .map-legend")).toHaveCount(1);
   });
 
   test("shows the week's totals", async ({ page, seed, signIn }) => {
@@ -95,15 +103,7 @@ test.describe("the week (spec D1)", () => {
     await page.getByRole("button", { name: "סגירת הכל" }).click();
     await expect(page.locator("details.week-day[open]")).toHaveCount(0);
   });
-
-  // Removed routes don't appear (spec D1).
-  test("leaves out removed routes", async ({ page, seed, signIn }) => {
-    const { driver, route, date, label } = await driverWithRide(seed);
-    await driver.db.from("routes").update({ is_active: false }).eq("id", route.id);
-    await signIn(page, driver);
-    await page.goto(`/dashboard?date=${date}`);
-    await expect(rideCard(page, label)).toHaveCount(0);
-  });
+  // Removed routes are left out by driver_rides itself (tests/integration/driver-day.test.ts).
 });
 
 test.describe("cancelling a date (spec D2)", () => {
@@ -158,7 +158,8 @@ test.describe("passengers added by hand (spec D4–D6)", () => {
     await expect(toast(page, "שרה אורחת נוספה לנסיעה")).toBeVisible();
     const row = card.locator(".passenger-row").filter({ hasText: "שרה אורחת" });
     await expect(row).toContainText("נוספה על ידך");
-    await expect(row).toContainText("052-765-4321");
+    await expect(row.getByRole("link", { name: "חיוג אל שרה אורחת" })).toHaveText("052-765-4321");
+    await expect(row.getByRole("link", { name: "מייל אל שרה אורחת" })).toHaveCount(0); // a guest has no email
     await expect(card).toContainText("1 מתוך 3 מקומות");
   });
 
@@ -264,7 +265,7 @@ test.describe("passengers added by hand (spec D4–D6)", () => {
     await expect(card).toContainText("0 מתוך 3 מקומות");
   });
 
-  test("the add form isn't offered on a full ride", async ({ page, seed, signIn }) => {
+  test("a full ride is marked full, and the add form isn't offered", async ({ page, seed, signIn }) => {
     const { driver, route, date, label } = await driverWithRide(seed, { seats: 1 });
     await seed.book(await seed.user("Passenger"), route, date);
     await signIn(page, driver);
@@ -272,6 +273,7 @@ test.describe("passengers added by hand (spec D4–D6)", () => {
     const card = rideCard(page, label);
     await openCard(card);
     await expect(card.locator(".passenger-row")).toHaveCount(1);
+    await expect(card.locator(".ride-chip.full")).toHaveText("1 מתוך 1 מקומות");
     await expect(card.getByRole("button", { name: "הוספת טרמפיסטית" })).toHaveCount(0);
   });
 

@@ -97,7 +97,7 @@ a.nav-item { text-decoration: none; }
 @media (max-width: 780px) { .week-day { padding: 14px 12px; } }
 .week-day + .week-day { margin-top: 20px; }
 .week-days-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; margin-bottom: 14px; }
-.week-days-actions > .btn { min-height: 36px; padding: 0 12px; font-size: 15px; }
+.fold-all > .btn { min-height: 36px; padding: 0 12px; font-size: 15px; }
 /* The week picker and "הוספת מסלול" sit at the end of the row, after "open / collapse all". */
 .week-days-actions .dashboard-actions { margin-inline-start: 8px; }
 .week-days-actions .date-picker:has(.date-picker-button) .dropdown-options.calendar { left: 0; right: auto; }
@@ -202,6 +202,11 @@ a.nav-item { text-decoration: none; }
 .panel-title-toggle { position: relative; }
 .panel-toggle { width: 34px; height: 34px; flex: 0 0 auto; display: grid; place-items: center; padding: 0; border: 0; background: transparent; cursor: pointer; }
 .panel-toggle::after { content: ""; position: absolute; inset: 0; }
+/* The arrow, then the panel's own button at the end of the row. Positioned and
+   after the arrow, so it's drawn over the arrow's row-wide click area; no
+   z-index, so the dialog it opens still covers the whole page. */
+.panel-title-toggle .panel-toggle { margin-inline-start: auto; }
+.panel-action { position: relative; flex: 0 0 auto; margin-inline-start: 12px; }
 .panel.open .today-chevron { transform: rotate(180deg); }
 .panel.collapsed .panel-title { border-bottom: 0; }
 .group-row.is-hidden strong { color: #8A968F; }
@@ -263,12 +268,26 @@ a.nav-item { text-decoration: none; }
 .group-name { display: inline-flex; flex-wrap: wrap; align-items: flex-start; column-gap: .4em; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-/* The place list on group management. */
-.panel-toolbar { padding: 16px 24px 0; }
-.place-row { grid-template-columns: 44px minmax(0, 1fr) auto; }
+/* The place list on group management: a city that folds open to its
+   neighborhoods, each lined up under the city's name. */
+.places-fold-all { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 12px 24px; border-bottom: 1px solid var(--line); }
+.place-city-group { border-bottom: 1px solid var(--line); }
+.place-city-group:last-child { border-bottom: 0; }
+.place-city-head { grid-template-columns: 44px minmax(0, 1fr) auto; cursor: pointer; list-style: none; user-select: none; }
+.place-city-head::-webkit-details-marker { display: none; }
+.place-city-group:not([open]) > .place-city-head { border-bottom: 0; }
+.place-city-group[open] .week-day-chevron { transform: rotate(180deg); }
+.place-row { grid-template-columns: minmax(0, 1fr) auto; padding-inline-start: 81px; }
+.place-row > div:first-child { display: flex; flex-direction: column; }
+.place-row > div:first-child span:not(.visually-hidden) { color: #59665F; font-size: 16px; }
 .group-dialog-fields .dropdown { width: 100%; }
-@media (max-width: 780px) { .place-row { grid-template-columns: 42px minmax(0, 1fr); } }
-.panel:has(.panel-toolbar) { margin-top: 18px; }
+@media (max-width: 780px) {
+  .places-fold-all { padding: 12px 17px; }
+  .place-city-head { grid-template-columns: 42px minmax(0, 1fr) auto; }
+  .place-row { grid-template-columns: minmax(0, 1fr); padding-inline-start: 72px; }
+  .place-row > .row-actions, .place-row > .confirm-inline { grid-column: 1; }
+}
+.panel + .panel:has(.panel-action) { margin-top: 18px; }
 
 /* Search: "מאיפה" and "לאן" side by side, with the swap button between them
    (components/passenger/SearchPanel.tsx). */

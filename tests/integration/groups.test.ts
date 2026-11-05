@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { CHECK_FAILED, createWorld, DENIED, DUPLICATE, IN_USE, rideDay, type User, type World } from "./support/world";
+import { CHECK_FAILED, createWorld, daysFromToday, DENIED, DUPLICATE, IN_USE, rideDay, type User, type World } from "./support/world";
 
 // Ride groups (spec §2, H1–H3): only admins manage them; everyone signed in reads them.
 
@@ -177,10 +177,28 @@ describe("hiding (spec H2)", () => {
 
   it("the sign-in page's route total counts shown groups only", async () => {
     const total = async () => Number(((await w.anon.rpc("public_stats").single()).data as { routes: number }).routes);
-    const id = await w.group();
+    const { groupId } = await w.route(await w.user("Driver"));
     const before = await total();
-    await admin.db.from("ride_groups").update({ is_active: false }).eq("id", id);
+    await admin.db.from("ride_groups").update({ is_active: false }).eq("id", groupId);
     expect(await total()).toBe(before - 1);
+  });
+
+  // 0041: a group counts only while it has a ride that wasn't cancelled and hasn't taken place.
+  it("the sign-in page's route total leaves out groups with no active ride", async () => {
+    const total = async () => Number(((await w.anon.rpc("public_stats").single()).data as { routes: number }).routes);
+    const driver = await w.user("Driver");
+    const before = await total();
+
+    await w.group();
+    await w.route(driver, { date: daysFromToday(-1) });
+    await w.route(driver, { isActive: false });
+    const cancelled = await w.route(driver, { date: daysFromToday(3) });
+    await w.service.from("ride_exceptions").insert({ route_id: cancelled.id, ride_date: daysFromToday(3), cancelled: true });
+    expect(await total()).toBe(before);
+
+    await w.route(driver, { kind: "recurring" });
+    await w.route(driver, { date: daysFromToday(3) });
+    expect(await total()).toBe(before + 2);
   });
 
   // Hidden groups stay in the database: their routes keep running for the driver.

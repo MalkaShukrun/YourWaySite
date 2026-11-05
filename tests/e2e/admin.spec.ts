@@ -102,7 +102,7 @@ test.describe("changing a group (spec H1)", () => {
 });
 
 test.describe("places (0040)", () => {
-  test("an admin adds a place, shown as its city with the neighborhood under it", async ({ page, seed, signIn }) => {
+  test("an admin adds a place, shown under its city",async ({ page, seed, signIn }) => {
     const city = newCity(seed);
     await signIn(page, await seed.user("Admin", { admin: true }));
     await page.goto("/admin/groups");
@@ -117,8 +117,9 @@ test.describe("places (0040)", () => {
       await dialog.getByRole("button", { name: "הוספת המקום" }).click();
       await expect(toast(page, "המקום נוסף לרשימה")).toBeVisible();
 
+      const cityGroup = page.locator(".place-city-group").filter({ has: page.locator(".place-city-head", { hasText: city }) });
+      await expect(cityGroup.locator(".place-city-head")).toContainText("מקום אחד");
       const row = placeRow(page, `${city}, רמה ג`);
-      await expect(row.locator(".place-city")).toHaveText(city);
       await expect(row.locator(".place-area")).toHaveText("רמה ג");
       await expect(row).toContainText("אין קבוצות");
 
@@ -161,6 +162,23 @@ test.describe("places (0040)", () => {
     await placeRow(page, unused).getByRole("button", { name: "מחיקה" }).click();
     await page.getByRole("button", { name: "כן, למחוק" }).click();
     await expect(placeRow(page, unused)).toHaveCount(0);
+  });
+
+  test("'סגירת הכל' folds every city and 'פתיחת הכל' opens them", async ({ page, seed, signIn }) => {
+    const name = newName(seed);
+    await seed.place(name);
+    await signIn(page, await seed.user("Admin", { admin: true }));
+    await page.goto("/admin/groups");
+    const cities = page.locator(".place-city-group");
+    await expect(placeRow(page, name)).toBeVisible();
+
+    await page.getByRole("button", { name: "סגירת הכל" }).click();
+    await expect(cities.and(page.locator("[open]"))).toHaveCount(0);
+    await expect(placeRow(page, name)).toBeHidden();
+
+    await page.getByRole("button", { name: "פתיחת הכל" }).click();
+    await expect(cities.and(page.locator(":not([open])"))).toHaveCount(0);
+    await expect(placeRow(page, name)).toBeVisible();
   });
 });
 
@@ -239,6 +257,12 @@ test("the group list folds away and opens again", async ({ page, seed, signIn })
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
   await expect(row).toBeHidden();
+
+  // "קבוצה חדשה" sits on the title row; it opens its dialog, not the list.
+  const dialog = await openCreate(page);
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "סגירה" }).click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
 
   await page.locator(".panel-title-toggle", { hasText: "כל הקבוצות" }).click();
   await expect(row).toBeVisible();
