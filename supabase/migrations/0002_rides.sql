@@ -380,8 +380,22 @@ grant execute on function public.search_rides, public.get_ride, public.book_ride
 
 -- ─── Starter groups ──────────────────────────────────────────────────────────
 
-insert into public.ride_groups (origin, destination) values
-  ('בית שמש', 'ירושלים'),
-  ('בית שמש', 'הר חוצבים'),
-  ('רמת בית שמש', 'ירושלים')
+-- Only into an empty table, so running this again doesn't bring back groups an
+-- admin deleted or renamed.
+insert into public.ride_groups (origin, destination)
+select * from (values
+  ('גבעת שאול', 'בית שמש רמה א'),
+  ('גבעת שאול', 'בית שמש רמה ג'),
+  ('גבעת שאול', 'בית שמש רמה ד'),
+  ('הר חוצבים', 'בית שמש רמה א'),
+  ('הר חוצבים', 'בית שמש רמה ג'),
+  ('הר חוצבים', 'בית שמש רמה ד'),
+  ('בית שמש רמה א', 'גבעת שאול'),
+  ('בית שמש רמה ג', 'גבעת שאול'),
+  ('בית שמש רמה ד', 'גבעת שאול'),
+  ('בית שמש רמה א', 'הר חוצבים'),
+  ('בית שמש רמה ג', 'הר חוצבים'),
+  ('בית שמש רמה ד', 'הר חוצבים')
+) v (origin, destination)
+where not exists (select 1 from public.ride_groups)
 on conflict (origin, destination) do nothing;

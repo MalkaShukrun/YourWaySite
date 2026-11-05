@@ -15,9 +15,17 @@ describe("groupArea", () => {
   });
 
   it("is a place's own box when the other is inside it", () => {
-    expect(groupArea("ירושלים", "הר חוצבים")).toEqual([
+    expect(groupArea("ירושלים", "ירושלים, הר חוצבים")).toEqual([
       [31.7, 35.1],
       [31.88, 35.26],
+    ]);
+  });
+
+  it("uses the city's box for a place without its own", () => {
+    expect(groupArea("ירושלים, גבעת שאול", "בית שמש, רמה א")).toEqual(groupArea("ירושלים", "בית שמש"));
+    expect(groupArea("בית שמש, רמה ג", "ירושלים, הר חוצבים")).toEqual([
+      [31.685, 34.965],
+      [31.808, 35.22],
     ]);
   });
 

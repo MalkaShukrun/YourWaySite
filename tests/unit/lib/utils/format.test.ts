@@ -9,6 +9,7 @@ import {
   RIDE_WEEKDAYS,
   routeKindLabel,
   seatsText,
+  splitPlace,
   WEEKDAY_LETTERS,
   weekdaysLabel,
 } from "@/lib/utils/format";
@@ -85,5 +86,17 @@ describe("weekdays", () => {
   it("labels a route's weekdays", () => {
     expect(weekdaysLabel([0, 2, 4])).toBe("א׳ · ג׳ · ה׳");
     expect(weekdaysLabel([])).toBe("");
+  });
+});
+
+// A place's name is "city, neighborhood" (0038–0040); cards show the two on separate lines.
+describe("splitPlace", () => {
+  it("splits at the first comma", () => {
+    expect(splitPlace("בית שמש, רמה ג")).toEqual({ city: "בית שמש", neighborhood: "רמה ג" });
+    expect(splitPlace("ירושלים, קניון מלחה, כניסה ב")).toEqual({ city: "ירושלים", neighborhood: "קניון מלחה, כניסה ב" });
+  });
+
+  it("is a city alone when there's no comma", () => {
+    expect(splitPlace("בני ברק")).toEqual({ city: "בני ברק", neighborhood: "" });
   });
 });

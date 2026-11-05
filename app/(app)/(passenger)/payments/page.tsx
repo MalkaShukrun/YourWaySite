@@ -5,11 +5,12 @@ import { requireUser } from "@/lib/auth/session";
 import { formatRideDate, formatTime, israelNow, israelToday, recentMonths } from "@/lib/utils/dates";
 import { getMyBookings } from "@/lib/rides/data";
 import { isCharged } from "@/lib/rides/bookings";
-import { formatPrice, groupLabel } from "@/lib/utils/format";
+import { formatPrice } from "@/lib/utils/format";
 import { DriverContact } from "@/components/passenger/DriverContact";
 import { MonthFilter } from "@/components/passenger/MonthFilter";
 import { PaidToggle } from "@/components/passenger/PaidToggle";
 import { iconProps } from "@/components/ui/icon";
+import { GroupName } from "@/components/ui/PlaceName";
 
 export const metadata: Metadata = { title: "התשלומים שלי" };
 
@@ -70,7 +71,7 @@ async function Payments({ searchParams }: Pick<PageProps<"/payments">, "searchPa
               </div>
               <div className="activity-route">
                 <Route {...iconProps} size={20} />
-                <div><strong>{groupLabel(b.origin, b.destination)}</strong></div>
+                <div><strong><GroupName origin={b.origin} destination={b.destination} /></strong></div>
               </div>
               <div className="row-actions">
                 <DriverContact name={b.driver_name} phone={b.driver_phone} email={b.driver_email} />

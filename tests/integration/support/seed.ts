@@ -48,6 +48,7 @@ export function createWorld({ url, anonKey, serviceKey }: LocalSupabase) {
   const tag = randomUUID().slice(0, 8);
   const userIds: string[] = [];
   const groupIds: string[] = [];
+  const placeIds: string[] = [];
 
   return {
     service,
@@ -83,9 +84,31 @@ export function createWorld({ url, anonKey, serviceKey }: LocalSupabase) {
       return { id: created.data.user.id, email };
     },
 
-    async group({ origin = `IT ${tag} ${randomUUID().slice(0, 4)}`, destination = "Test", active = true } = {}) {
+    // A place on the list (0040), by its name, "city, neighborhood": the one
+    // already there, or a new one.
+    async place(name: string) {
+      const comma = name.indexOf(",");
+      const row = { city: name.slice(0, comma).trim(), neighborhood: name.slice(comma + 1).trim() };
+      const find = async () => (await service.from("places").select("id").match(row).maybeSingle()).data?.id as string | undefined;
+      const found = await find();
+      if (found) return found;
+      const { data, error } = await service.from("places").insert(row).select("id").single();
+      // Another test may have just added it.
+      if (error?.code === DUPLICATE) return (await find())!;
+      const { id } = check({ data, error });
+      placeIds.push(id);
+      return id as string;
+    },
+
+    // A group between two places, each named "city, neighborhood".
+    async group({ origin = `IT ${tag} ${randomUUID().slice(0, 4)}, מרכז`, destination = "Test, מרכז", active = true } = {}) {
+      const [originId, destinationId] = await Promise.all([this.place(origin), this.place(destination)]);
       const { id } = check(
-        await service.from("ride_groups").insert({ origin, destination, is_active: active }).select("id").single(),
+        await service
+          .from("ride_groups")
+          .insert({ origin_place_id: originId, destination_place_id: destinationId, is_active: active })
+          .select("id")
+          .single(),
       );
       groupIds.push(id);
       return id as string;
@@ -169,6 +192,8 @@ export function createWorld({ url, anonKey, serviceKey }: LocalSupabase) {
       // Deleting the users removes their profiles, routes, stops and bookings with them.
       await Promise.all(userIds.map((id) => service.auth.admin.deleteUser(id)));
       if (groupIds.length) await service.from("ride_groups").delete().in("id", groupIds);
+      // One at a time: a place another test still uses stays.
+      await Promise.all(placeIds.map((id) => service.from("places").delete().eq("id", id)));
     },
   };
 }

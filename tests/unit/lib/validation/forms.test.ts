@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { contactSchema } from "@/lib/validation/contact";
 import { groupSchema } from "@/lib/validation/group";
 import { addPassengerSchema } from "@/lib/validation/passenger";
+import { placeSchema } from "@/lib/validation/place";
 import { isUuid, ISO_DATE_PATTERN, PHONE_PATTERN, TIME_PATTERN } from "@/lib/validation/patterns";
 import { profileSchema, type ProfileValues } from "@/lib/validation/profile";
 import { ID } from "../../helpers/fixtures";
@@ -114,22 +115,41 @@ describe("addPassengerSchema", () => {
   });
 });
 
-// Ride groups (spec H1).
+// Ride groups (spec H1): two places from the list.
 describe("groupSchema", () => {
-  const check = (origin: string, destination: string) => messages(groupSchema.safeParse({ origin, destination }));
+  const check = (originId: string, destinationId: string) => messages(groupSchema.safeParse({ originId, destinationId }));
 
-  it("accepts two different places of 2–40 characters", () => {
-    expect(check("בית שמש", "ירושלים")).toEqual([]);
+  it("accepts two different places", () => {
+    expect(check(ID.place, ID.place2)).toEqual([]);
+  });
+
+  it("needs both places", () => {
+    expect(check("", ID.place2)).toEqual(["יש לבחור נקודת מוצא"]);
+    expect(check(ID.place, "")).toEqual(["יש לבחור יעד"]);
+  });
+
+  it("refuses the same place twice", () => {
+    expect(check(ID.place, ID.place)).toEqual(["היעד חייב להיות שונה מנקודת המוצא"]);
+  });
+});
+
+// A place on the list (0040): a city and a neighborhood or area in it.
+describe("placeSchema", () => {
+  const check = (city: string, neighborhood: string) => messages(placeSchema.safeParse({ city, neighborhood }));
+
+  it("accepts a city and a neighborhood of 2–40 characters, trimmed", () => {
+    expect(placeSchema.parse({ city: " בית שמש ", neighborhood: " רמה ג" })).toEqual({ city: "בית שמש", neighborhood: "רמה ג" });
     expect(check("אב", "א".repeat(40))).toEqual([]);
   });
 
-  it("refuses names that are too short or too long", () => {
-    expect(check("א", "ירושלים")).toEqual(["לפחות 2 תווים"]);
+  it("needs both, each 2–40 characters", () => {
+    expect(check("א", "רמה ג")).toEqual(["לפחות 2 תווים"]);
+    expect(check("בית שמש", " ")).toEqual(["לפחות 2 תווים"]);
     expect(check("בית שמש", "א".repeat(41))).toEqual(["עד 40 תווים"]);
   });
 
-  it("refuses the same place twice, even with extra spaces", () => {
-    expect(check("ירושלים", " ירושלים ")).toEqual(["היעד חייב להיות שונה מנקודת המוצא"]);
+  it("refuses a comma in the city, so its name splits back the same", () => {
+    expect(check("בית שמש, רמה", "ג׳")).toEqual(["בלי פסיק בשם העיר"]);
   });
 });
 

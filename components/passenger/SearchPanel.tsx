@@ -2,22 +2,25 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Car, Info, MapPin, Repeat, RotateCcw, Search } from "lucide-react";
+import { ArrowLeftRight, Car, Info, MapPin, Repeat, RotateCcw, Search, SlidersHorizontal } from "lucide-react";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { MultiSelect, Select } from "@/components/ui/Select";
 import { TimePicker } from "@/components/ui/TimePicker";
 import type { RideGroup, RideKind } from "@/lib/rides/types";
-import { groupLabel } from "@/lib/utils/format";
+import { placeOptions } from "@/lib/rides/search";
 import { carIconProps, iconProps } from "@/components/ui/icon";
 import { rememberSearch } from "@/components/passenger/BackToSearchLink";
 
-const ROUTE_HINT = "להוספת מסלולי נסיעה מעיר לעיר יש ליצור קשר";
+const ROUTE_HINT = "נהגת? להוספת מסלולי נסיעה מעיר לעיר יש ליצור קשר";
 
-type Filters = { groupIds?: string[]; date?: string; kind?: RideKind; from?: string; to?: string };
+type Filters = { groupIds?: string[]; origins?: string[]; destinations?: string[]; date?: string; kind?: RideKind; from?: string; to?: string };
 
-function searchHref({ groupIds, date, from, to, kind }: { groupIds?: string[]; date?: string; from?: string; to?: string; kind?: string }) {
+// ?origin= and ?destination= hold the place picks; ?group= only comes from older links.
+function searchHref({ groupIds, origins, destinations, date, from, to, kind }: Omit<Filters, "kind"> & { kind?: string }) {
   const params = new URLSearchParams();
   for (const id of groupIds ?? []) params.append("group", id);
+  for (const pick of origins ?? []) params.append("origin", pick);
+  for (const pick of destinations ?? []) params.append("destination", pick);
   if (date) params.set("date", date);
   if (from) params.set("from", from);
   if (to) params.set("to", to);
@@ -32,15 +35,20 @@ const KIND_OPTIONS = [
   { value: "one_time", label: "נסיעות חד־פעמיות" },
 ];
 
-// Smart filter bar (SRS §4.1): group, date, departure time range, ride type.
+// Smart filter bar (SRS §4.1): from and to (a city, or places in it), date;
+// under "עוד סינונים", departure time range and ride type.
 export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; initial: Filters; today: string }) {
   const router = useRouter();
-  const [groupIds, setGroupIds] = useState(initial.groupIds ?? []);
+  const [origins, setOrigins] = useState(initial.origins ?? []);
+  const [destinations, setDestinations] = useState(initial.destinations ?? []);
   const [date, setDate] = useState(initial.date ?? "");
   const [from, setFrom] = useState(initial.from ?? "");
   const [to, setTo] = useState(initial.to ?? "");
   const [kind, setKind] = useState<string>(initial.kind ?? "");
-  const groupOptions = groups.map((g) => ({ value: g.id, label: groupLabel(g.origin, g.destination) }));
+  // Departure times and ride type wait behind "עוד סינונים" — open when a link already sets one.
+  const [moreOpen, setMoreOpen] = useState(Boolean(initial.from || initial.to || initial.kind));
+  const moreCount = [from, to, kind].filter(Boolean).length;
+  const options = placeOptions(groups);
 
   // The search shown now — the ride page's back link returns to it.
   const shownHref = searchHref(initial);
@@ -48,15 +56,17 @@ export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; i
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    router.push(searchHref({ groupIds, date, from, to, kind }));
+    router.push(searchHref({ origins, destinations, date, from, to, kind }));
   }
 
   const hasFilters = Boolean(
-    groupIds.length || date || from || to || kind || initial.groupIds?.length || initial.date || initial.from || initial.to || initial.kind,
+    origins.length || destinations.length || date || from || to || kind ||
+      initial.groupIds?.length || initial.origins?.length || initial.destinations?.length || initial.date || initial.from || initial.to || initial.kind,
   );
 
   function clear() {
-    setGroupIds([]);
+    setOrigins([]);
+    setDestinations([]);
     setDate("");
     setFrom("");
     setTo("");
@@ -78,44 +88,78 @@ export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; i
         </div>
       </div>
       <form className="filters" onSubmit={submit}>
-        <div className="field field-wide">
-          <span className="field-label-hint">
-            מסלול
-            <span className="hint" tabIndex={0} aria-label={ROUTE_HINT}>
-              <Info {...iconProps} size={16} />
-              <span className="hint-bubble" role="tooltip">{ROUTE_HINT}</span>
+        <div className="filter-places">
+          <div className="field">
+            <span className="field-label-hint">
+              מאיפה
+              <span className="hint" tabIndex={0} aria-label={ROUTE_HINT}>
+                <Info {...iconProps} size={16} />
+                <span className="hint-bubble" role="tooltip">{ROUTE_HINT}</span>
+              </span>
             </span>
-          </span>
-          <MultiSelect label="מסלול" values={groupIds} onChange={setGroupIds} options={groupOptions} allLabel="כל המסלולים" icon={<MapPin {...iconProps} size={20} />} />
+            <MultiSelect label="מאיפה" values={origins} onChange={setOrigins} options={options} allLabel="מכל מקום" icon={<MapPin {...iconProps} size={20} />} />
+          </div>
+          {/* For the ride back: origin and destination trade places. */}
+          <button
+            type="button"
+            className="btn btn-secondary swap-places"
+            aria-label="החלפת כיוון"
+            title="החלפת כיוון"
+            onClick={() => {
+              setOrigins(destinations);
+              setDestinations(origins);
+            }}
+          >
+            <ArrowLeftRight {...iconProps} size={18} />
+          </button>
+          <div className="field">
+            <span>לאן</span>
+            <MultiSelect label="לאן" values={destinations} onChange={setDestinations} options={options} allLabel="לכל מקום" icon={<MapPin {...iconProps} size={20} />} />
+          </div>
         </div>
         <div className="field">
           <span>תאריך</span>
           <DatePicker label="תאריך" value={date} onChange={setDate} today={today} min={today} placeholder="כל השבוע" clearable />
         </div>
-        <div className="field filter-time">
-          <span>יציאה משעה</span>
-          <TimePicker label="יציאה משעה" value={from} onChange={setFrom} placeholder="כל שעה" />
-        </div>
-        <div className="field filter-time">
-          <span>עד שעה</span>
-          <TimePicker label="עד שעה" value={to} onChange={setTo} placeholder="כל שעה" />
-        </div>
-        <div className="field">
-          <span>סוג נסיעה</span>
-          <Select label="סוג נסיעה" value={kind} onChange={setKind} options={KIND_OPTIONS} icon={<Repeat {...iconProps} size={20} />} searchable />
-        </div>
         <div className="search-actions">
-          {hasFilters && (
-            <button type="button" className="btn btn-secondary search-clear" onClick={clear}>
-              <RotateCcw {...iconProps} size={18} />
-              ניקוי
-            </button>
-          )}
+          <button
+            type="button"
+            className={`btn btn-secondary search-more${moreOpen ? " open" : ""}`}
+            aria-expanded={moreOpen}
+            aria-controls="search-more-filters"
+            onClick={() => setMoreOpen(!moreOpen)}
+          >
+            <SlidersHorizontal {...iconProps} size={18} />
+            עוד סינונים
+            {moreCount > 0 && <span className="search-more-count">{moreCount}</span>}
+          </button>
           <button type="submit" className="btn btn-primary search-button">
             <Search {...iconProps} size={20} />
             חיפוש נסיעה
           </button>
         </div>
+        {moreOpen && (
+          <div className="filters-more" id="search-more-filters">
+            <div className="field">
+              <span>יציאה משעה</span>
+              <TimePicker label="יציאה משעה" value={from} onChange={setFrom} placeholder="כל שעה" />
+            </div>
+            <div className="field">
+              <span>עד שעה</span>
+              <TimePicker label="עד שעה" value={to} onChange={setTo} placeholder="כל שעה" />
+            </div>
+            <div className="field">
+              <span>סוג נסיעה</span>
+              <Select label="סוג נסיעה" value={kind} onChange={setKind} options={KIND_OPTIONS} icon={<Repeat {...iconProps} size={20} />} searchable />
+            </div>
+          </div>
+        )}
+        {hasFilters && (
+          <button type="button" className="btn btn-secondary search-clear" onClick={clear}>
+            <RotateCcw {...iconProps} size={18} />
+            ניקוי
+          </button>
+        )}
       </form>
     </section>
   );

@@ -5,7 +5,7 @@ import { greetingFor, isIsoDate, israelHour, israelToday } from "@/lib/utils/dat
 import { getRideGroups, searchRides } from "@/lib/rides/data";
 import type { RideKind } from "@/lib/rides/types";
 import { firstNameOf } from "@/lib/utils/format";
-import { groupByRoute, groupIdsFrom } from "@/lib/rides/search";
+import { groupByRoute, groupIdsFrom, placePicksFrom, searchedGroups } from "@/lib/rides/search";
 import { TIME_PATTERN } from "@/lib/validation/patterns";
 import { SearchPanel } from "@/components/passenger/SearchPanel";
 import { RideCard } from "@/components/passenger/RideCard";
@@ -45,6 +45,8 @@ async function readFilters(searchParams: SearchParams) {
   if (from && to && from > to) [from, to] = [to, from];
   return {
     groupIds: groupIdsFrom(params.group),
+    origins: placePicksFrom(params.origin),
+    destinations: placePicksFrom(params.destination),
     date: isIsoDate(date) && date >= (await israelToday()) ? date : undefined,
     kind: kind === "recurring" || kind === "one_time" ? (kind as RideKind) : undefined,
     from,
@@ -72,8 +74,10 @@ async function Search({ searchParams }: { searchParams: SearchParams }) {
 }
 
 async function Results({ searchParams }: { searchParams: SearchParams }) {
-  const [user, filters] = await Promise.all([requireUser(), readFilters(searchParams)]);
-  const rides = await searchRides(filters);
+  const [user, filters, groups] = await Promise.all([requireUser(), readFilters(searchParams), getRideGroups()]);
+  // The groups between the picked places; when none is, there's nothing to search.
+  const groupIds = searchedGroups(groups, filters);
+  const rides = groupIds?.length === 0 ? [] : await searchRides({ ...filters, groupIds });
   const routes = groupByRoute(rides);
 
   return (
@@ -82,7 +86,7 @@ async function Results({ searchParams }: { searchParams: SearchParams }) {
       {rides.length === 0 ? (
         <div className="panel empty-state">
           <strong>לא נמצאו נסיעות מתאימות</strong>
-          <span>נסי לשנות את התאריך, השעה או המסלול.</span>
+          <span>נסי לשנות את המקומות, התאריך או השעה.</span>
         </div>
       ) : (
         <div className="trip-grid">

@@ -9,9 +9,9 @@ import { choose, chooseTime, expectNotFound, israelDate, openForm, toast } from 
 
 // A group named for this test, so its cards are easy to find.
 async function namedGroup(seed: Seed) {
-  const origin = `E2E ${seed.tag} ${Math.random().toString(36).slice(2, 6)}`;
-  const id = await seed.group({ origin, destination: "יעד" });
-  return { id, label: `${origin} ← יעד` };
+  const origin = `E2E ${seed.tag} ${Math.random().toString(36).slice(2, 6)}, מרכז`;
+  const id = await seed.group({ origin, destination: "יעד, מרכז" });
+  return { id, label: `${origin} ← יעד, מרכז` };
 }
 
 const routeCard = (page: Page, label: string) => page.locator(".route-card").filter({ hasText: label });

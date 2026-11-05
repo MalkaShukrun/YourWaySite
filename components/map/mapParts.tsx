@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
-import { Polyline, TileLayer } from "react-leaflet";
+import { Polyline, TileLayer, useMap } from "react-leaflet";
 import type { Stop } from "@/lib/rides/types";
 
 // Pieces shared by the route map and the route editor's map.
@@ -16,6 +16,26 @@ export function useMapKey() {
   const [key, setKey] = useState(0);
   useEffect(() => () => setKey((k) => k + 1), []);
   return key;
+}
+
+// A map made while its box is hidden or still growing (a folded ride card)
+// sizes itself to that box and draws only a corner. Redraws it, framed on
+// `bounds` again, whenever the box changes size.
+export function FitWhenResized({ bounds }: { bounds: L.LatLngBounds }) {
+  const map = useMap();
+  const boundsRef = useRef(bounds);
+  useEffect(() => {
+    boundsRef.current = bounds;
+  });
+  useEffect(() => {
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize();
+      if (map.getSize().x > 0) map.fitBounds(boundsRef.current);
+    });
+    observer.observe(map.getContainer());
+    return () => observer.disconnect();
+  }, [map]);
+  return null;
 }
 
 export function MapTiles() {

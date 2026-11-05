@@ -7,19 +7,31 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/session";
 import { firstIssue, GENERIC_ERROR } from "@/lib/utils/action-errors";
 import { groupSchema, type GroupValues } from "@/lib/validation/group";
+import { placeSchema, type PlaceValues } from "@/lib/validation/place";
 import { otpEmailSchema } from "@/lib/validation/otp-email";
 import { generateCode, hashCode } from "@/lib/auth/personal-code";
 
-// Group management (SRS §8). RLS also limits ride_groups writes to admins.
+// Group management (SRS §8). RLS also limits ride_groups and places writes to admins.
 
 const GROUP_NOT_FOUND = "הקבוצה לא נמצאה.";
+const PLACE_NOT_FOUND = "המקום לא נמצא.";
+const GROUP_EXISTS = "הקבוצה הזו כבר קיימת.";
+const PLACE_EXISTS = "המקום הזה כבר ברשימה.";
+const GROUP_IN_USE = "יש מסלולים בקבוצה הזו — אפשר להסתיר אותה במקום למחוק.";
+const PLACE_IN_USE = "יש קבוצות עם המקום הזה, ולכן אי אפשר למחוק אותו.";
 
-// By Postgres error code: unique violation, then foreign-key violation.
-function messageFor(error: { code?: string }) {
-  if (error.code === "23505") return "הקבוצה הזו כבר קיימת.";
-  if (error.code === "23503") return "יש מסלולים בקבוצה הזו — אפשר להסתיר אותה במקום למחוק.";
+// By Postgres error code: unique violation, then foreign-key violation — on a
+// delete, rows still use it; on a group write, a picked place was deleted.
+function messageFor(error: { code?: string }, duplicate: string, foreignKey: string) {
+  if (error.code === "23505") return duplicate;
+  if (error.code === "23503") return foreignKey;
   return GENERIC_ERROR;
 }
+
+const groupRow = ({ originId, destinationId }: GroupValues) => ({
+  origin_place_id: originId,
+  destination_place_id: destinationId,
+});
 
 export async function createGroup(values: GroupValues) {
   await requireAdmin();
@@ -27,15 +39,15 @@ export async function createGroup(values: GroupValues) {
   if (!parsed.success) return { error: firstIssue(parsed.error) };
 
   const supabase = await createClient();
-  const { error } = await supabase.from("ride_groups").insert(parsed.data);
-  if (error) return { error: messageFor(error) };
+  const { error } = await supabase.from("ride_groups").insert(groupRow(parsed.data));
+  if (error) return { error: messageFor(error, GROUP_EXISTS, PLACE_NOT_FOUND) };
 
   refresh();
   return {};
 }
 
-// Rename a group. Routes keep pointing at it, so drivers and passengers see
-// the new name everywhere.
+// Change a group's places. Routes keep pointing at it, so drivers and
+// passengers see the new name everywhere.
 export async function updateGroup(groupId: string, values: GroupValues) {
   await requireAdmin();
   if (!z.uuid().safeParse(groupId).success) return { error: GROUP_NOT_FOUND };
@@ -43,8 +55,8 @@ export async function updateGroup(groupId: string, values: GroupValues) {
   if (!parsed.success) return { error: firstIssue(parsed.error) };
 
   const supabase = await createClient();
-  const { error } = await supabase.from("ride_groups").update(parsed.data).eq("id", groupId);
-  if (error) return { error: messageFor(error) };
+  const { error } = await supabase.from("ride_groups").update(groupRow(parsed.data)).eq("id", groupId);
+  if (error) return { error: messageFor(error, GROUP_EXISTS, PLACE_NOT_FOUND) };
 
   refresh();
   return {};
@@ -60,7 +72,7 @@ export async function setGroupActive(groupId: string, active: boolean) {
 
   const supabase = await createClient();
   const { error } = await supabase.from("ride_groups").update({ is_active: active }).eq("id", groupId);
-  if (error) return { error: messageFor(error) };
+  if (error) return { error: messageFor(error, GROUP_EXISTS, GROUP_IN_USE) };
 
   refresh();
   return {};
@@ -73,7 +85,49 @@ export async function deleteGroup(groupId: string) {
 
   const supabase = await createClient();
   const { error } = await supabase.from("ride_groups").delete().eq("id", groupId);
-  if (error) return { error: messageFor(error) };
+  if (error) return { error: messageFor(error, GROUP_EXISTS, GROUP_IN_USE) };
+
+  refresh();
+  return {};
+}
+
+// The list of places groups go from and to (0040).
+export async function createPlace(values: PlaceValues) {
+  await requireAdmin();
+  const parsed = placeSchema.safeParse(values);
+  if (!parsed.success) return { error: firstIssue(parsed.error) };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("places").insert(parsed.data);
+  if (error) return { error: messageFor(error, PLACE_EXISTS, PLACE_IN_USE) };
+
+  refresh();
+  return {};
+}
+
+// Renaming a place renames every group that uses it.
+export async function updatePlace(placeId: string, values: PlaceValues) {
+  await requireAdmin();
+  if (!z.uuid().safeParse(placeId).success) return { error: PLACE_NOT_FOUND };
+  const parsed = placeSchema.safeParse(values);
+  if (!parsed.success) return { error: firstIssue(parsed.error) };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("places").update(parsed.data).eq("id", placeId);
+  if (error) return { error: messageFor(error, PLACE_EXISTS, PLACE_IN_USE) };
+
+  refresh();
+  return {};
+}
+
+// Only places no group uses can be deleted.
+export async function deletePlace(placeId: string) {
+  await requireAdmin();
+  if (!z.uuid().safeParse(placeId).success) return { error: PLACE_NOT_FOUND };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("places").delete().eq("id", placeId);
+  if (error) return { error: messageFor(error, PLACE_EXISTS, PLACE_IN_USE) };
 
   refresh();
   return {};

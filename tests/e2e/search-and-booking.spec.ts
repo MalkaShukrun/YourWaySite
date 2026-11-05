@@ -7,9 +7,10 @@ import { choose, israelDate, shortDate, toast } from "./support/ui";
 
 // A group named for this test, so its cards are easy to find.
 async function namedGroup(seed: Seed, options: { active?: boolean } = {}) {
-  const origin = `E2E ${seed.tag} ${Math.random().toString(36).slice(2, 6)}`;
-  const id = await seed.group({ origin, destination: "יעד", ...options });
-  return { id, label: `${origin} ← יעד` };
+  const city = `E2E ${seed.tag} ${Math.random().toString(36).slice(2, 6)}`;
+  const origin = `${city}, מרכז`;
+  const id = await seed.group({ origin, destination: "יעד, מרכז", ...options });
+  return { id, city, origin, label: `${origin} ← יעד, מרכז` };
 }
 
 const card = (page: Page, label: string) => page.locator(".trip-card").filter({ hasText: label.split(" ← ")[0] });
@@ -21,16 +22,17 @@ async function openRide(page: Page, routeId: string, date: string) {
 }
 
 test.describe("search (spec C1)", () => {
-  test("filters by route group, keeps the filters in the address, and shows one card per route", async ({ page, seed, signIn }) => {
+  test("filters by where from and where to, keeps the filters in the address, and shows one card per route", async ({ page, seed, signIn }) => {
     const driver = await seed.user("Driver", { fullName: "דנה נהגת" });
     const group = await namedGroup(seed);
     await seed.route(driver, { groupId: group.id, kind: "recurring", weekdays: [0, 1, 2, 3, 4, 5], date: null, time: "23:59", price: 15, notes: "מחכה 5 דקות" });
     await signIn(page, await seed.user("Passenger"));
 
     await page.goto("/");
-    await choose(page, "מסלול", group.label);
+    await choose(page, "מאיפה", group.origin);
+    await choose(page, "לאן", "יעד, מרכז");
     await page.getByRole("button", { name: "חיפוש נסיעה" }).click();
-    await expect(page).toHaveURL(new RegExp(`\\?group=${group.id}$`));
+    await expect(page).toHaveURL(/\?origin=[0-9a-f-]{36}&destination=[0-9a-f-]{36}$/);
 
     const result = card(page, group.label);
     await expect(result).toHaveCount(1); // every date of the route on one card
@@ -40,6 +42,27 @@ test.describe("search (spec C1)", () => {
     await expect(result).toContainText("₪15");
     await expect(result).toContainText("מחכה 5 דקות");
     expect(await result.locator(".trip-dates a").count()).toBeGreaterThanOrEqual(5); // a chip per date in the week
+    // The card shows each place's city, with its neighborhood under it.
+    await expect(result.locator(".route-names .place-city").first()).toHaveText(group.city);
+    await expect(result.locator(".route-names .place-area").first()).toHaveText("מרכז");
+  });
+
+  test("a whole city covers its places, and the swap button turns the search around", async ({ page, seed, signIn }) => {
+    const driver = await seed.user("Driver");
+    const group = await namedGroup(seed);
+    await seed.route(driver, { groupId: group.id, date: israelDate(2) });
+    await signIn(page, await seed.user("Passenger"));
+
+    await page.goto("/");
+    await choose(page, "מאיפה", `${group.city} (כל העיר)`);
+    await page.getByRole("button", { name: "חיפוש נסיעה" }).click();
+    await expect(card(page, group.label)).toHaveCount(1);
+
+    // Now to that city: the ride goes the other way, so it isn't found.
+    await page.getByRole("button", { name: "החלפת כיוון" }).click();
+    await page.getByRole("button", { name: "חיפוש נסיעה" }).click();
+    await expect(page).toHaveURL(/\?destination=city%3A/);
+    await expect(card(page, group.label)).toHaveCount(0);
   });
 
   test("with a date, shows that day only, even beyond the week", async ({ page, seed, signIn }) => {
@@ -73,6 +96,19 @@ test.describe("search (spec C1)", () => {
     await expect(cards.first()).toContainText("חד־פעמית");
   });
 
+  test("departure times and ride type wait behind the more-filters button", async ({ page, seed, signIn }) => {
+    await signIn(page, await seed.user("Passenger"));
+    await page.goto("/");
+    const more = page.getByRole("button", { name: /^עוד סינונים/ });
+    await expect(more).toHaveAttribute("aria-expanded", "false");
+    await expect(page.getByRole("button", { name: /^יציאה משעה/ })).toHaveCount(0);
+
+    await more.click();
+    await expect(more).toHaveAttribute("aria-expanded", "true");
+    await expect(page.getByRole("button", { name: /^יציאה משעה/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^עד שעה/ })).toBeVisible();
+  });
+
   test("a reversed time range is swapped, and a past date is ignored", async ({ page, seed, signIn }) => {
     await signIn(page, await seed.user("Passenger"));
     await page.goto("/?from=09:00&to=07:00");
@@ -103,9 +139,9 @@ test.describe("search (spec C1)", () => {
 
     await page.goto(`/?group=${group.id}`);
     await expect(page.getByText("לא נמצאו נסיעות מתאימות")).toBeVisible();
-    // The hidden group isn't even in the filter.
-    await page.getByRole("combobox", { name: "מסלול", exact: true }).click();
-    await expect(page.getByRole("listbox", { name: "מסלול" }).getByRole("option", { name: hidden.label })).toHaveCount(0);
+    // The hidden group's places aren't even in the filter.
+    await page.getByRole("combobox", { name: "מאיפה", exact: true }).click();
+    await expect(page.getByRole("listbox", { name: "מאיפה" }).getByRole("option", { name: hidden.origin })).toHaveCount(0);
   });
 
   test("a full date shows 'מלאה', and a card with every date full can't be opened", async ({ page, seed, signIn }) => {

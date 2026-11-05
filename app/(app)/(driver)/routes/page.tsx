@@ -5,12 +5,13 @@ import { CalendarDays, Clock, Copy, Plus, Users } from "lucide-react";
 import { format } from "date-fns";
 import { requireUser } from "@/lib/auth/session";
 import { formatRideDate, formatTime, israelNow } from "@/lib/utils/dates";
-import { formatPrice, groupLabel, routeKindLabel, weekdaysLabel } from "@/lib/utils/format";
+import { formatPrice, routeKindLabel, weekdaysLabel } from "@/lib/utils/format";
 import { getMyRoutes, routeTab } from "@/lib/driver/data";
 import type { DriverRoute } from "@/lib/driver/types";
 import { ArchiveRouteButton } from "@/components/driver/ArchiveRouteButton";
 import { Toast } from "@/components/ui/Toast";
 import { iconProps } from "@/components/ui/icon";
+import { GroupName } from "@/components/ui/PlaceName";
 
 export const metadata: Metadata = { title: "המסלולים שלי" };
 
@@ -86,7 +87,7 @@ function RouteCard({ route, tab }: { route: DriverRoute; tab: "active" | "histor
             {routeKindLabel(route.kind)}
           </span>
         </div>
-        <h2>{groupLabel(route.origin, route.destination)}</h2>
+        <h2><GroupName origin={route.origin} destination={route.destination} /></h2>
         <p>
           <CalendarDays {...iconProps} size={19} />
           {route.kind === "recurring"

@@ -5,6 +5,7 @@ import type { RideSummary } from "@/lib/rides/types";
 import { avatarColorFor, formatPrice, initialsOf, kindLabel } from "@/lib/utils/format";
 import { iconProps } from "@/components/ui/icon";
 import { RideDateChips } from "@/components/passenger/RideDateChips";
+import { PlaceName } from "@/components/ui/PlaceName";
 
 const rideHref = (ride: RideSummary) => `/ride/${ride.route_id}?date=${ride.ride_date}`;
 
@@ -31,8 +32,8 @@ export function RideCard({ rides, own = false }: { rides: RideSummary[]; own?: b
         <div className="route-node end"><MapPin {...iconProps} size={13} /></div>
       </div>
       <div className="route-names">
-        <div><span>יציאה מ־</span><strong>{first.origin}</strong></div>
-        <div><span>יעד</span><strong>{first.destination}</strong></div>
+        <div><span>יציאה מ־</span><strong><PlaceName name={first.origin} /></strong></div>
+        <div><span>יעד</span><strong><PlaceName name={first.destination} /></strong></div>
       </div>
       <div className="trip-info">
         <div>

@@ -15,14 +15,14 @@ test("the driver gets tomorrow's passenger by email", async ({ browser, page, se
   const to = process.env.EMAIL_TEST_TO;
   if (!to) throw new Error("Set EMAIL_TEST_TO in .env.local");
 
-  const origin = `בדיקה ${seed.tag}`;
-  const groupId = await seed.group({ origin, destination: "ירושלים" });
+  const origin = `בדיקה ${seed.tag}, מרכז`;
+  const groupId = await seed.group({ origin, destination: "ירושלים, גבעת שאול" });
   const driver = await seed.user("Driver", { fullName: "נהגת לבדיקה" });
   await signIn(page, driver);
 
   // The driver publishes a recurring route, Sunday to Friday.
   await openForm(page, "/routes/new", "שמירת המסלול");
-  await choose(page, "קבוצת נסיעה", `${origin} ← ירושלים`);
+  await choose(page, "קבוצת נסיעה", `${origin} ← ירושלים, גבעת שאול`);
   const days = page.getByRole("group", { name: "ימים בשבוע" }).getByRole("button");
   for (let i = 0; i < 6; i++) {
     if ((await days.nth(i).getAttribute("aria-pressed")) !== "true") await days.nth(i).click();

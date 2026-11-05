@@ -33,12 +33,25 @@ a.nav-item { text-decoration: none; }
 .empty-state strong { color: var(--ink); font-size: 18px; }
 .empty-state .btn { margin-top: 6px; }
 .search-placeholder { min-height: 200px; }
-/* Search panel: the fields fill the first row; search + clear sit on a row below them */
+/* Search panel: places, date and the buttons share the first row; "עוד סינונים"
+   opens the departure times and ride type on a row below them, and "ניקוי"
+   sits at the end of that row */
 .page-content.page-wide { max-width: 1520px; }
-@media (min-width: 1101px) { .filters { grid-template-columns: minmax(0, 1.48fr) minmax(0, 1fr) minmax(0, .7fr) minmax(0, .7fr) minmax(0, .87fr); } }
-.search-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px; }
-.search-clear { min-height: 45px; }
-@media (max-width: 780px) { .search-actions .btn { flex: 1; } }
+.search-actions { display: flex; justify-content: flex-end; gap: 12px; }
+.search-clear, .search-more { min-height: 45px; }
+.search-more.open { border-color: #9BBC9E; background: #F4FAF1; }
+.search-more-count { min-width: 21px; height: 21px; padding: 0 6px; border-radius: 11px; background: var(--green); color: #fff; font-size: 13px; display: inline-grid; place-items: center; }
+.filters-more { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 260px)); gap: 12px; padding-top: 12px; border-top: 1px dashed #dedfd9; }
+.search-clear { grid-column: -2 / -1; justify-self: end; }
+/* The date stays on one line however narrow its field. */
+.filters .date-picker .dropdown-trigger > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 780px) {
+  .search-actions { flex-wrap: wrap; }
+  .search-actions .btn { flex: 1; }
+  .search-actions .search-button { flex-basis: 100%; }
+  .filters-more { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .filters-more > .field:last-child { grid-column: 1 / -1; }
+}
 .btn.is-disabled { color: #8a958f; cursor: not-allowed; }
 
 /* A route's dates, on its search card (components/passenger/RideDateChips.tsx)
@@ -73,7 +86,8 @@ a.nav-item { text-decoration: none; }
 /* Driver Hub */
 .today-list { display: flex; flex-direction: column; gap: 20px; }
 .today-toggle { flex: 1; display: flex; align-items: center; gap: 13px; border: 0; background: transparent; padding: 0; color: inherit; font: inherit; text-align: right; cursor: pointer; }
-.today-chevron { color: #66736C; transition: transform .2s; }
+/* At the far end of the header, the same place on every card. */
+.today-chevron { flex: 0 0 auto; margin-inline-start: auto; color: #66736C; transition: transform .2s; }
 .today-card.open .today-chevron { transform: rotate(180deg); }
 .today-card.collapsed .today-header { border-bottom: 0; }
 /* Each day is one card holding its rides' cards. */
@@ -97,7 +111,7 @@ a.nav-item { text-decoration: none; }
 .week-day[open] .week-day-chevron { transform: rotate(180deg); }
 .week-day-head span { color: var(--green-dark); background: var(--lime); border-radius: 999px; padding: 2px 10px; font-size: 14px; }
 .week-day-head span.departed { color: #59665F; background: #EEF1EF; }
-.passenger-empty { margin: 0; padding: 18px 25px; color: #59665F; }
+.passenger-empty { margin: 0; padding: 12px 25px 16px; color: #59665F; }
 .today-card .daily-route-preview { margin-bottom: 22px; }
 .confirm-inline { display: inline-flex; align-items: center; gap: 6px; color: #59665F; font-size: 16px; }
 .form-alert { margin: -12px 0 18px; padding: 11px 14px; border-radius: 10px; background: #f9ebe8; color: #a8584e; font-weight: 700; }
@@ -239,3 +253,42 @@ a.nav-item { text-decoration: none; }
 .otp-code-note { flex-basis: 100%; grid-column: 1 / -1; margin: 0; font-size: 15px; }
 .otp-code-note strong { font-size: 18px; letter-spacing: 1px; }
 .otp-email-row strong { overflow-wrap: anywhere; }
+
+/* A place on a card: its city, with its neighborhood on the line under it. */
+.place-name { display: inline-flex; flex-direction: column; vertical-align: top; }
+.place-area { font-size: .95em; font-weight: 700; color: #3F4D46; }
+/* In a route ("origin ← destination") each place's neighborhood sits beside its city. */
+.place-name.inline { display: inline; }
+.place-name.inline .place-area { font-size: 1em; }
+.group-name { display: inline-flex; flex-wrap: wrap; align-items: flex-start; column-gap: .4em; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* The place list on group management. */
+.panel-toolbar { padding: 16px 24px 0; }
+.place-row { grid-template-columns: 44px minmax(0, 1fr) auto; }
+.group-dialog-fields .dropdown { width: 100%; }
+@media (max-width: 780px) { .place-row { grid-template-columns: 42px minmax(0, 1fr); } }
+.panel:has(.panel-toolbar) { margin-top: 18px; }
+
+/* Search: "מאיפה" and "לאן" side by side, with the swap button between them
+   (components/passenger/SearchPanel.tsx). */
+.filter-places { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 12px; align-items: end; }
+.swap-places { width: 45px; min-height: 45px; padding: 0; justify-content: center; }
+/* On a wide screen the places join the filter bar's own columns, so "מאיפה",
+   "לאן" and the date come out the same width. */
+@media (min-width: 1101px) {
+  .filters { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) minmax(0, 1fr) auto; }
+  .filter-places { display: contents; }
+  /* "ניקוי" shares the row of the extra filters, below the search button. */
+  .filters-more, .search-clear { grid-row: 2; }
+}
+@media (min-width: 781px) and (max-width: 1100px) { .filter-places { grid-column: 1 / -1; } }
+/* On a phone the two are too narrow side by side: one above the other, the
+   swap button beside both. */
+@media (max-width: 780px) {
+  .filter-places { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; }
+  .filter-places > .field:last-child { grid-column: 1; }
+  .swap-places { grid-column: 2; grid-row: 1 / 3; align-self: center; transform: rotate(90deg); }
+}
+/* A city's places, indented under its "(כל העיר)" option. */
+.dropdown-options button.nested { padding-right: 31px; }

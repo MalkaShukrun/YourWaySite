@@ -9,6 +9,7 @@ import { avatarColorFor, initialsOf, kindLabel, seatsText } from "@/lib/utils/fo
 import { BookingForm } from "@/components/passenger/BookingForm";
 import { BackToSearchLink } from "@/components/passenger/BackToSearchLink";
 import { carIconProps, iconProps } from "@/components/ui/icon";
+import { PlaceName } from "@/components/ui/PlaceName";
 import { isUuid } from "@/lib/validation/patterns";
 
 export const metadata: Metadata = { title: "פרטי נסיעה" };
@@ -92,10 +93,10 @@ async function RideDetailsView({ params, searchParams }: PageProps<"/ride/[id]">
             )}
           </div>
           <div className="detail-route">
-            <div><span>יציאה</span><h1>{ride.origin}</h1><small>{formatTime(ride.out_time)}</small></div>
+            <div><span>יציאה</span><h1><PlaceName name={ride.origin} /></h1><small>{formatTime(ride.out_time)}</small></div>
             <div className="detail-route-line"><i></i><Car {...carIconProps} size={20} /><i></i></div>
             <div>
-              <span>יעד</span><h1>{ride.destination}</h1>
+              <span>יעד</span><h1><PlaceName name={ride.destination} /></h1>
             </div>
           </div>
           <div className="detail-meta">

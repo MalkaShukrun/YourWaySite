@@ -4,14 +4,14 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { MapContainer, Marker, Tooltip } from "react-leaflet";
 import { isPlaced, type Stop } from "@/lib/rides/types";
-import { MapLegend, MapTiles, RoutePath, stopPinIcon, useMapKey } from "./mapParts";
+import { FitWhenResized, MapLegend, MapTiles, RoutePath, stopPinIcon, useMapKey } from "./mapParts";
 
 // Interactive map (React Leaflet + OpenStreetMap) showing only the driver's
 // route and her designated pickup / drop-off pins (SRS §4.2). Marking stops
 // on the map is optional, so stops without a location are left out — their
 // numbers still match the stop list. Callers leave the map out when no stop
-// is marked.
-export default function RouteMap({ stops, selectedIds = [] }: { stops: Stop[]; selectedIds?: string[] }) {
+// is marked, and its legend when they show one beside it.
+export default function RouteMap({ stops, selectedIds = [], legend = true }: { stops: Stop[]; selectedIds?: string[]; legend?: boolean }) {
   const mapKey = useMapKey();
   const pickups = stops.filter((s) => s.kind === "pickup");
   const dropoffs = stops.filter((s) => s.kind === "dropoff");
@@ -33,11 +33,12 @@ export default function RouteMap({ stops, selectedIds = [] }: { stops: Stop[]; s
     <div className="large-map route-map" dir="ltr">
       <MapContainer key={mapKey} bounds={bounds} scrollWheelZoom={false} style={{ height: "100%", width: "100%" }}>
         <MapTiles />
+        <FitWhenResized bounds={bounds} />
         <RoutePath positions={path} />
         {markers(pickups)}
         {markers(dropoffs)}
       </MapContainer>
-      <MapLegend />
+      {legend && <MapLegend />}
     </div>
   );
 }

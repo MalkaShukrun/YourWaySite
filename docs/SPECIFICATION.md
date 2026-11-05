@@ -2,8 +2,8 @@
 
 *How the ride-sharing app behaves today, written from the code: every rule the screens and the database enforce, and what the driver and the passenger each see in each situation.*
 
-- **Source:** the `YourWaySite` code and database migrations 0001–0037
-- **As of:** 3 November 2026
+- **Source:** the `YourWaySite` code and database migrations 0001–0040
+- **As of:** 5 November 2026
 - **Interface language:** Hebrew; labels below are quoted as they appear on screen
 
 **Contents**
@@ -11,7 +11,7 @@
 1. [Overview](#1-overview)
 2. [Core concepts and rules](#2-core-concepts-and-rules)
 3. [Screens and where things appear](#3-screens-and-where-things-appear)
-4. [Scenarios](#4-scenarios) (37): [A. Accounts and access](#a-accounts-and-access) · [B. Publishing routes](#b-publishing-routes) · [C. Finding and booking a ride](#c-finding-and-booking-a-ride) · [D. The driver's day](#d-the-drivers-day) · [E. A passenger cancels](#e-a-passenger-cancels) · [F. Removing routes](#f-removing-routes) · [G. After the ride](#g-after-the-ride) · [H. Admin: ride groups](#h-admin-ride-groups) · [I. Support and errors](#i-support-and-errors)
+4. [Scenarios](#4-scenarios) (38): [A. Accounts and access](#a-accounts-and-access) · [B. Publishing routes](#b-publishing-routes) · [C. Finding and booking a ride](#c-finding-and-booking-a-ride) · [D. The driver's day](#d-the-drivers-day) · [E. A passenger cancels](#e-a-passenger-cancels) · [F. Removing routes](#f-removing-routes) · [G. After the ride](#g-after-the-ride) · [H. Admin: ride groups](#h-admin-ride-groups) · [I. Support and errors](#i-support-and-errors)
 5. [Who sees what](#5-who-sees-what)
 6. [Booking and ride states](#6-booking-and-ride-states)
 7. [Messages reference](#7-messages-reference)
@@ -27,7 +27,7 @@ YourWay connects women who drive regular or one-off trips with women looking for
 |---|---|---|
 | **Passenger** | Searches rides, books seats, cancels, tracks payments. | Ride search, `/` |
 | **Driver** | Publishes routes, sees each day's passengers, cancels a date, adds passengers by hand. | Same account; switches to driver mode |
-| **Admin** | Everything above, plus creating and managing ride groups (origin → destination pairs), giving out personal sign-in codes and seeing the site-wide totals. | Group management, `/admin/groups` |
+| **Admin** | Everything above, plus creating and managing ride groups (origin → destination pairs) and the list of places they go between, giving out personal sign-in codes and seeing the site-wide totals. | Group management, `/admin/groups` |
 
 There is one account type. Any signed-in user can act as a passenger or as a driver. Being an admin is a flag on the profile; it is set in the database for the owner's account and can't be set from the app.
 
@@ -49,7 +49,7 @@ At the bottom of the menu, a card announces the daily passenger email: “**חד
 
 ### Ride groups
 
-A ride group is an origin–destination pair, such as “בית שמש ← ירושלים”. Only admins create them. Every route belongs to one group, and passengers search by group. Each known place has a map area, so a driver marking stops on the map can't place a pin far outside the route's region.
+A ride group is an origin–destination pair, such as “בית שמש, רמה ג ← ירושלים, הר חוצבים”. Both ends come from one list of places that admins keep; each place is a city and a neighborhood or area inside it (migrations 0038–0040). Cards show a place's city with its neighborhood on the line under it; lists and dropdowns show “city, neighborhood”. Only admins create groups. Every route belongs to one group, and passengers search by the places at either end (C1). Each known city has a map area, and some places a smaller one of their own, so a driver marking stops on the map can't place a pin far outside the route's region.
 
 ### Routes
 
@@ -100,7 +100,7 @@ Open for booking → Cancelled for this date → Shown as cancelled · never cha
 | Sign-in | `/login` | Anyone | Google sign-in, or a personal code for approved addresses (A6), consent to the terms of use and the privacy policy, site totals (members and active routes, refreshed hourly). Opens the onboarding window for new users. |
 | Terms of use | `/terms` | Anyone | The terms text, including the cancellation policy. |
 | Privacy policy | `/privacy` | Anyone | The policy text, including the mailing and messages section. |
-| Ride search | `/` | All | Greeting, filter bar (route groups, date, departure from/until, ride type), result cards for the next 7 days. Each recurring route appears as one card with a chip per date showing free seats. |
+| Ride search | `/` | All | Greeting, filter bar (“מאיפה” and “לאן” with a swap button, date, departure from/until, ride type), result cards for the next 7 days. Each recurring route appears as one card with a chip per date showing free seats. |
 | Ride details and booking | `/ride/[id]?date=` | All | Day picker (recurring), pickup and drop-off choice, price total, booking button, route map, driver card (contact details only after booking), vehicle, note. |
 | My rides | `/my-rides` | Passenger | Tabs “נסיעות קרובות” (upcoming) and “היסטוריה” (past, newest first). Each row: time, date, route, price, stops, driver contact, cancel button, and “הנהגת ביטלה את הנסיעה” when the driver cancelled. |
 | Payments | `/payments` | Passenger | Month picker (this month and the 3 before), totals for the month (total, paid, left to pay), one row per charged ride with a paid/unpaid toggle, and an all-time unpaid balance per driver. |
@@ -109,7 +109,7 @@ Open for booking → Cancelled for this date → Shown as cancelled · never cha
 | New route | `/routes/new` | Driver | Route editor: group (with a search box), type, days or date, time, seats, price, note, stops, map. With `?copy=[id]`, “שכפול נסיעה”: the same editor filled from another of her routes (F2). Reached from “הוספת מסלול” on the dashboard. |
 | Edit route | `/routes/[id]` | Driver | Same editor. Fully editable while nobody has booked the route; once booked, everything is locked except the note and adding new stops. |
 | Profile | `/profile` | All | Name, phone, email (read-only, from her sign-in), optional vehicle (model, colour, seats), and the daily passenger email (D7). Admins also see group management here. |
-| Group management | `/admin/groups` | Admin | Site-wide totals (H5). Groups with how many active routes each has; add, rename, hide/show, delete. Personal-code addresses (H4). The group and address lists fold away under their titles. |
+| Group management | `/admin/groups` | Admin | Site-wide totals (H5). Groups with how many active routes each has; add, change places, hide/show, delete. The list of places (H6). Personal-code addresses (H4). The group, place and address lists fold away under their titles. |
 | Not found | any unknown address | Anyone | “הדף לא נמצא”, with a link home. |
 
 ## 4. Scenarios
@@ -350,9 +350,10 @@ Nothing; searches aren't recorded.
 **Passenger side**
 
 - Without a date: rides from today through the next 6 days. With a date: that day only.
-- Filters: one or more route groups, ride type, departure from and until (inclusive).
+- Filters: “מאיפה” (from) and “לאן” (to), each one or more cities or places — a whole city (“בית שמש (כל העיר)”) covers every place in it; rides are found only in the direction picked, and “החלפת כיוון” swaps the two for the ride back. Also ride type, and departure from and until (inclusive). An older link with `?group=` still narrows to those groups.
 - Results are sorted by date then time; each route is one card. The heading shows how many were found (“N תוצאות”), with or without filters.
-- No results: “לא נמצאו נסיעות מתאימות”.
+- No results, including picks with no group between them: “לא נמצאו נסיעות מתאימות”, with “נסי לשנות את המקומות, התאריך או השעה.”
+- The ⓘ beside “מאיפה” reads “נהגת? להוספת מסלולי נסיעה מעיר לעיר יש ליצור קשר”.
 
 **Where it shows**
 
@@ -773,23 +774,23 @@ Nothing; the driver never sees payment marks.
 
 ### H. Admin
 
-#### H1. An admin adds or renames a group
+#### H1. An admin adds a group or changes its places
 
-**Trigger:** On group management she enters an origin and destination.
+**Trigger:** On group management she picks an origin and a destination from the list of places (H6).
 
 **Driver side**
 
-A new group becomes selectable in the route editor. A renamed group shows its new name on all existing routes.
+A new group becomes selectable in the route editor. A group given another place shows its new name on all existing routes.
 
 **Passenger side**
 
-The group appears in the search filter; renamed groups show their new name everywhere, including past bookings.
+The group appears in the search filter; a changed group shows its new name everywhere, including past bookings.
 
 **Where it shows**
 
 `/admin/groups`, route editor, search filter, every ride card and booking row.
 
-**Rules:** names 2–40 characters; origin and destination must differ; a duplicate is refused with “הקבוצה הזו כבר קיימת.” A place without a map area can still be used, but its map isn't limited.
+**Rules:** origin and destination must be different places (“היעד חייב להיות שונה מנקודת המוצא”; two neighborhoods of one city are different places); a duplicate is refused with “הקבוצה הזו כבר קיימת.” With fewer than two places on the list, the dialog says “קודם הוסיפי לפחות שני מקומות לרשימת המקומות.” and can't be saved. A place in a city without a map area can still be used, but its map isn't limited.
 
 #### H2. An admin hides a group
 
@@ -853,6 +854,20 @@ An unused group simply disappears from the filter.
 
 **Rules:** only admins can read the totals. Each active booking counts as one passenger on one ride, guests included, so a round trip counts twice. Dates the driver cancelled aren't counted. Today's rides include every scheduled ride, booked or not; a ride counts as departed only if it had at least one passenger, since a ride that left empty leaves no record. A route is active as in its driver's “מסלולים פעילים” tab: not removed, and not a one-time ride that took place or was cancelled for its date. The totals leave out routes in hidden groups, which can't be booked; a hidden group's row still shows its own count. Days follow Israel time.
 
+#### H6. An admin keeps the list of places
+
+**Trigger:** On group management, under “מקומות”, she adds a place (“מקום חדש”: a city and a neighborhood or area), renames one, or deletes one.
+
+**Result**
+
+A new place can be picked as a group's origin or destination. A renamed place renames every group that uses it, everywhere, including past bookings. Each row shows how many groups use the place.
+
+**Where it shows**
+
+`/admin/groups`; through the groups, every screen that shows a group.
+
+**Rules:** city and neighborhood are each 2–40 characters, and the city has no comma; spaces around them are trimmed. A place already on the list is refused with “המקום הזה כבר ברשימה.” Only a place no group uses can be deleted (it asks first, and the delete button appears only then); the database refuses the rest with “יש קבוצות עם המקום הזה, ולכן אי אפשר למחוק אותו.” Only admins change the list; everyone signed in can read it (migration 0040).
+
 ### I. Support and errors
 
 #### I1. A user sends a message through the contact form
@@ -902,6 +917,7 @@ In place of the page.
 | Guests the driver added | Name and phone she entered | No | No |
 | Paid / unpaid marks | No | Own only | No |
 | Site totals (members, active routes) | Yes | Yes | Yes, including signed-out visitors; totals only |
+| Ride groups and the list of places | Yes | Yes | Every signed-in user; only admins change them (H1, H6) |
 | Site-wide ride totals (H5) and the personal-code list (H4) | No | No | Admins only; codes are stored only as a hash, so nobody can read them |
 
 ## 6. Booking and ride states

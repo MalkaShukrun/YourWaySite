@@ -7,11 +7,12 @@ import { formatRideDate, formatTime, israelNow } from "@/lib/utils/dates";
 import { getMyBookings } from "@/lib/rides/data";
 import type { MyBooking } from "@/lib/rides/types";
 import { splitByDeparture } from "@/lib/rides/bookings";
-import { formatPrice, groupLabel } from "@/lib/utils/format";
+import { formatPrice } from "@/lib/utils/format";
 import { CancelBookingButton } from "@/components/passenger/CancelBookingButton";
 import { DriverContact } from "@/components/passenger/DriverContact";
 import { Toast } from "@/components/ui/Toast";
 import { iconProps } from "@/components/ui/icon";
+import { GroupName } from "@/components/ui/PlaceName";
 
 export const metadata: Metadata = { title: "הנסיעות שלי" };
 
@@ -75,7 +76,7 @@ function BookingRow({ booking, upcoming }: { booking: MyBooking; upcoming: boole
       <div className="activity-route">
         <Route {...iconProps} size={20} />
         <div>
-          <strong>{groupLabel(booking.origin, booking.destination)}</strong>
+          <strong><GroupName origin={booking.origin} destination={booking.destination} /></strong>
           <span>{formatPrice(booking.price)}</span>
         </div>
       </div>

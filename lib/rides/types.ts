@@ -2,7 +2,17 @@
 
 export type RideKind = "recurring" | "one_time";
 
-export type RideGroup = { id: string; origin: string; destination: string };
+// A group with its two places (0040): each end's city and place, so the
+// search can find it by either.
+export type RideGroup = {
+  id: string;
+  origin: string;
+  destination: string;
+  origin_city: string;
+  origin_place_id: string;
+  destination_city: string;
+  destination_place_id: string;
+};
 
 export type RideSummary = {
   route_id: string;

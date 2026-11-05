@@ -1,20 +1,23 @@
 import "server-only";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { MyBooking, RideDetails, RideGroup, RideKind, RideSummary, Stop } from "@/lib/rides/types";
 
 // Data Access Layer for rides. All reads go through Postgres functions
 // (supabase/migrations/0002_rides.sql) that check auth.uid() themselves.
 
-export async function getRideGroups(): Promise<RideGroup[]> {
+// Wrapped in cache() so the search's filter bar and its results share one
+// lookup per request.
+export const getRideGroups = cache(async (): Promise<RideGroup[]> => {
   const supabase = await createClient();
   const { data } = await supabase
     .from("ride_groups")
-    .select("id, origin, destination")
+    .select("id, origin, destination, origin_city, origin_place_id, destination_city, destination_place_id")
     .eq("is_active", true)
     .order("origin")
     .order("destination");
   return data ?? [];
-}
+});
 
 type SearchFilters = {
   groupIds?: string[]; // any of these groups; none = all

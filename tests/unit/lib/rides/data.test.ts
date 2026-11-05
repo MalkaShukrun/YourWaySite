@@ -70,7 +70,7 @@ describe("getRideGroups", () => {
     sb.mock.onTable("ride_groups", { data: [{ id: ID.group, origin: "א", destination: "ב" }] });
     expect(await getRideGroups()).toHaveLength(1);
     expect(sb.mock.callsOn("ride_groups")).toEqual([
-      ["select", ["id, origin, destination"]],
+      ["select", ["id, origin, destination, origin_city, origin_place_id, destination_city, destination_place_id"]],
       ["eq", ["is_active", true]],
       ["order", ["origin"]],
       ["order", ["destination"]],

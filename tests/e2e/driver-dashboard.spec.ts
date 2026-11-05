@@ -10,10 +10,10 @@ type Setup = { driver: User; route: Route; date: string; label: string };
 // A driver with one ride on `date`, in a group named for this test.
 async function driverWithRide(seed: Seed, { date = rideDay(2), seats = 3, time = "23:55" } = {}): Promise<Setup> {
   const driver = await seed.user("Driver");
-  const origin = `E2E ${seed.tag} ${Math.random().toString(36).slice(2, 6)}`;
-  const groupId = await seed.group({ origin, destination: "יעד" });
+  const origin = `E2E ${seed.tag} ${Math.random().toString(36).slice(2, 6)}, מרכז`;
+  const groupId = await seed.group({ origin, destination: "יעד, מרכז" });
   const route = await seed.route(driver, { groupId, date, seats, time });
-  return { driver, route, date, label: `${origin} ← יעד` };
+  return { driver, route, date, label: `${origin} ← יעד, מרכז` };
 }
 
 const rideCard = (page: Page, label: string) => page.locator(".today-card").filter({ hasText: label });

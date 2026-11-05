@@ -6,7 +6,7 @@ import { usePopover } from "./usePopover";
 import { pickSummary, toggleValue } from "./multiSelect";
 import { iconProps } from "@/components/ui/icon";
 
-type SelectOption = { value: string; label: string };
+type SelectOption = { value: string; label: string; nested?: string }; // nested: its short label, shown indented under the option before it
 
 type Props = {
   value: string;
@@ -219,6 +219,8 @@ function SearchList({ label, icon, note, options, unfiltered = options, display,
         <div className="dropdown-options" role="listbox" aria-multiselectable={multiple || undefined} id={listId} aria-label={label}>
           {matches.map((option, index) => {
             const selected = isSelected(option);
+            // Indented only under its parent; a filtered list may leave the parent out.
+            const nested = term ? undefined : option.nested;
             return (
               <button
                 key={option.value || "all"}
@@ -227,12 +229,13 @@ function SearchList({ label, icon, note, options, unfiltered = options, display,
                 role="option"
                 tabIndex={-1}
                 aria-selected={selected}
-                className={`${selected ? "selected" : ""} ${index === active ? "active" : ""}`}
+                aria-label={nested && option.label}
+                className={`${selected ? "selected" : ""} ${index === active ? "active" : ""} ${nested ? "nested" : ""}`}
                 onMouseDown={(event) => event.preventDefault()} // keep focus in the field
                 onMouseEnter={() => setActive(index)}
                 onClick={() => pick(option)}
               >
-                <span>{option.label}</span>
+                <span>{nested ?? option.label}</span>
                 {selected && <Check {...iconProps} size={16} />}
               </button>
             );

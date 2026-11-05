@@ -38,7 +38,7 @@ button { cursor: pointer; }
 .route-names > div:first-child { text-align: right; }
 .route-names > div:last-child { text-align: left; }
 .payment-summary > div, .stat-card > div { text-align: center; }
-.driver-contact-links a, .inline-driver-contact a, .passenger-call, .passenger-email { text-align: center; }
+.driver-contact-links a, .inline-driver-contact a, .passenger-contact { text-align: center; }
 .booking-note, .auth-card, .auth-card h1, .auth-card h2, .auth-card > p { text-align: center; }
 .auth-brand, .auth-brand h1, .auth-brand p { text-align: right; }
 .modal-icon { text-align: center; }
@@ -194,10 +194,15 @@ button { cursor: pointer; }
 .stat-card span:last-child { color: #59665F; font-size: 16px; margin-top: 5px; }
 .today-card, .panel { background: #fff; border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 4px 18px rgba(40,65,56,.035); overflow: hidden; }
 .today-card.cancelled { opacity: .73; }
-.today-header { display: flex; align-items: center; justify-content: space-between; padding: 22px 25px; border-bottom: 1px solid var(--line); }
+/* The ride's summary is gray; its passengers and stops below are on white. */
+.today-header { display: flex; align-items: center; justify-content: space-between; padding: 22px 25px; background: #f3f5f4; border-bottom: 1px solid var(--line); }
 .today-status-actions { display: flex; align-items: center; gap: 13px; }
 .today-status-actions .btn-ghost { min-height: 34px; font-size: 16px; }
-.today-route { display: flex; align-items: center; gap: 13px; }
+.today-route { display: flex; align-items: center; gap: 16px; }
+.today-time { flex: 0 0 auto; color: var(--ink); font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.ride-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
+.today-route .ride-chip { white-space: nowrap; padding: 2px 10px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: #59665F; font-size: 14px; font-weight: 600; }
+.today-route .ride-chip.full { border-color: transparent; background: var(--lime); color: var(--green-dark); }
 .route-badge { width: 44px; height: 44px; color: var(--green); background: var(--green-soft); border-radius: 12px; display: grid; place-items: center; }
 .today-route span { color: #66736C; font-size: 16px; }
 .today-route h2 { font-size: 19px; margin: 1px 0; }
@@ -207,38 +212,41 @@ button { cursor: pointer; }
 .status-pill.danger { background: #f9ebe8; color: #a8584e; }
 .status-pill.danger i { background: #c46055; }
 input[type="time"] { direction: ltr; }
-.passengers-head { padding: 7px 25px 13px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.passengers-head { padding: 18px 25px 4px; }
 .passengers-head h3 { margin: 0; font-size: 18px; }
-.passenger-row { min-height: 72px; display: grid; grid-template-columns: 25px 40px 1fr auto; align-items: center; gap: 11px; padding: 10px 25px; }
+.passenger-row { min-height: 64px; display: grid; grid-template-columns: 25px 40px 1fr auto; align-items: center; gap: 11px; padding: 8px 25px; }
 .passenger-number { width: 23px; height: 23px; border-radius: 50%; background: #f3f5f4; color: #59665F; display: grid; place-items: center; font-size: 16px; }
 .passenger-name { display: flex; flex-direction: column; }
 .passenger-name strong { font-size: 16px; }
 .passenger-name span { font-size: 16px; color: #66736C; direction: ltr; text-align: right; }
 .passenger-name small { font-size: 14px; color: #66736C; }
-.add-passenger { flex-basis: 100%; border-radius: 12px; background: #f6f8f7; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+/* "הוספת טרמפיסטית" closes the list, as a light row; its form opens there. */
+.passenger-add { padding: 6px 25px 4px; }
+.passenger-add > .btn-secondary { width: 100%; border-style: dashed; color: #59665F; font-weight: 600; }
+.add-passenger { border-radius: 12px; background: #f6f8f7; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
 .add-passenger > div:first-child { display: flex; flex-direction: column; }
 .add-passenger > div:first-child strong { font-size: 16px; color: #48554f; }
 .add-passenger > div:first-child span { font-size: 15px; color: #66736C; }
 .add-passenger-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
 .add-passenger-actions { display: flex; gap: 8px; }
 .row-actions { display: flex; gap: 7px; }
-.passenger-call { direction: ltr; font-size: 16px; padding-inline: 11px; }
-.passenger-email { direction: ltr; font-size: 16px; padding-inline: 11px; text-transform: lowercase; }
+/* Call and email as icons; the number and address show on hover. */
+.passenger-contact { width: 40px; min-height: 40px; padding: 0; }
 .daily-route-preview { margin: 18px 24px 4px; display: grid; grid-template-columns: minmax(260px, .65fr) minmax(0, 1.35fr); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
 .daily-route-preview:not(:has(.daily-map)), .daily-route-preview:not(:has(.daily-stops)) { grid-template-columns: 1fr; }
-.daily-map .large-map { height: 100%; min-height: 320px; }
-.daily-stops { background: #FAFBFA; padding: 18px; }
-.daily-stops > div:first-child { margin-bottom: 12px; }
+.daily-map .large-map { height: 100%; min-height: 260px; }
+.daily-stops { background: #fff; padding: 18px; }
+.daily-stops-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; margin-bottom: 12px; }
 .daily-stops h3 { margin: 0; font-size: 18px; }
+.stop-legend { display: flex; gap: 12px; }
+.stop-legend span { display: flex; align-items: center; gap: 5px; color: #59665F; font-size: 15px; }
+.stop-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 .stop-group-label { display: flex; align-items: center; gap: 6px; color: #66736C; font-size: 16px; font-weight: 700; margin: 12px 0 5px; }
 .stop-group-label i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 .pickup-label i { background: var(--green); }
 .dropoff-label i { background: #C2703D; }
-/* Pickups and drop-offs side by side; stacked on phones. */
-.daily-stop-groups { display: flex; gap: 0 48px; }
-.daily-stop-groups > div { flex: 0 1 auto; min-width: 0; }
 .daily-stop { display: grid; grid-template-columns: 28px 1fr; align-items: start; gap: 9px; padding: 6px 0 8px; position: relative; }
-/* Only stops followed by another stop of the same group are joined, from the number down to the next one. */
+/* Each stop is joined to the next, from its number down to the next one's. */
 .daily-stop:has(+ .daily-stop):after { content: ""; position: absolute; right: 13px; top: 36px; bottom: -4px; border-right: 1px dashed #A8B4AE; }
 .daily-stop > span { flex: 0 0 auto; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: white; background: var(--green); font-size: 16px; font-weight: 700; z-index: 1; }
 .daily-stop > div { display: flex; flex-direction: column; min-width: 0; flex: 1; }
@@ -495,7 +503,7 @@ fieldset.editor-section { min-width: 0; margin: 0; border-top: 0; border-inline:
 @media (max-width: 1100px) {
   .trip-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .filters { grid-template-columns: 1.4fr 1fr; }
-  .search-button { min-height: 45px; margin-top: 3px; }
+  .search-button { min-height: 45px; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .detail-layout { grid-template-columns: 1fr; }
   .booking-card { position: static; }
@@ -524,7 +532,6 @@ fieldset.editor-section { min-width: 0; margin: 0; border-top: 0; border-inline:
   .search-card { padding: 21px 17px; border-radius: 17px; }
   .search-art { display: none; }
   .filters { grid-template-columns: 1fr; }
-  .filters > .filter-time { display: none; }
   .trip-grid { grid-template-columns: minmax(0, 1fr); }
   .results-head { align-items: center; }
   .results-head .btn { width: 41px; padding: 0; font-size: 0; }
@@ -539,19 +546,20 @@ fieldset.editor-section { min-width: 0; margin: 0; border-top: 0; border-inline:
   .stat-card { padding: 13px; }
   .stat-icon { width: 38px; height: 38px; }
   .passenger-row { grid-template-columns: 25px 39px 1fr auto; padding: 11px 14px; }
-  .passengers-head { padding-inline: 14px; }
+  .passengers-head, .passenger-add { padding-inline: 14px; }
   .add-passenger-fields { grid-template-columns: 1fr; }
   .add-passenger-actions .btn { flex: 1; }
   .row-actions { grid-column: 4; grid-row: 1 / 3; }
-  .passenger-call { width: 39px; padding: 0; }
-  .passenger-call span { display: none; }
-  .passenger-email { max-width: 125px; overflow: hidden; text-overflow: ellipsis; }
-  .today-header { padding: 18px; }
-  .today-status-actions { align-items: flex-end; flex-direction: column; gap: 4px; }
+  /* The ride takes the whole width; its cancel button goes on the line under it. */
+  .today-header { padding: 18px; flex-wrap: wrap; row-gap: 6px; }
+  .today-header > .today-toggle { flex-basis: 100%; min-width: 0; }
+  .today-route { gap: 12px; min-width: 0; }
+  .today-time { font-size: 21px; }
+  .today-status-actions { margin-inline-start: auto; gap: 4px; }
+  .today-status-actions:empty { display: none; }
   .today-status-actions .btn-ghost { min-height: 28px; padding: 0; font-size: 15px; }
   .daily-route-preview { margin: 14px; grid-template-columns: 1fr; }
   .daily-map .large-map { height: 230px; min-height: 0; }
-  .daily-stop-groups { flex-direction: column; }
   .routes-grid { grid-template-columns: 1fr; }
   .activity-row { grid-template-columns: 1fr auto; gap: 12px; }
   .activity-route { grid-row: 2; }

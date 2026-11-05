@@ -5,6 +5,14 @@ export function groupLabel(origin: string, destination: string) {
   return `${origin} ← ${destination}`;
 }
 
+// A group's place is named "city, neighborhood" (0038–0040), and a city never
+// has a comma, so the name splits back at its first one.
+export function splitPlace(name: string) {
+  const comma = name.indexOf(",");
+  if (comma < 0) return { city: name.trim(), neighborhood: "" };
+  return { city: name.slice(0, comma).trim(), neighborhood: name.slice(comma + 1).trim() };
+}
+
 export function firstNameOf(name: string) {
   return name.split(/\s+/)[0];
 }

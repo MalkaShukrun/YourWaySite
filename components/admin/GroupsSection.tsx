@@ -1,6 +1,6 @@
 import { Car, Route, UserCheck, Users } from "lucide-react";
-import { activeRouteTotals, type AdminGroup } from "@/lib/admin/data";
-import { groupLabel } from "@/lib/utils/format";
+import { activeRouteTotals, type AdminGroup, type Place } from "@/lib/admin/data";
+import { GroupName } from "@/components/ui/PlaceName";
 import { CollapsiblePanel } from "@/components/ui/CollapsiblePanel";
 import { StatCard } from "@/components/ui/StatCard";
 import { GroupActions } from "@/components/admin/GroupActions";
@@ -8,7 +8,7 @@ import { carIconProps, iconProps } from "@/components/ui/icon";
 
 // Ride group management (SRS §8) — stats and the group list from the design.
 // Render only for admins (the caller checks with requireAdmin and loads the groups).
-export function GroupsSection({ groups, users }: { groups: AdminGroup[]; users: number }) {
+export function GroupsSection({ groups, places, users }: { groups: AdminGroup[]; places: Place[]; users: number }) {
   const active = activeRouteTotals(groups);
 
   return (
@@ -22,7 +22,7 @@ export function GroupsSection({ groups, users }: { groups: AdminGroup[]; users: 
 
       <CollapsiblePanel title="כל הקבוצות" subtitle="רק מנהלת יכולה ליצור, לערוך או למחוק קבוצות">
         {groups.length === 0 ? (
-          <div className="empty-state"><strong>עדיין אין קבוצות</strong><span>צרי את הקבוצה הראשונה — מוצא ויעד.</span></div>
+          <div className="empty-state"><strong>עדיין אין קבוצות</strong><span>צרי את הקבוצה הראשונה — מוצא ויעד מרשימת המקומות.</span></div>
         ) : (
           groups.map((group) => {
             const activeRouteCount = group.routes.filter((r) => r.is_active).length;
@@ -30,12 +30,13 @@ export function GroupsSection({ groups, users }: { groups: AdminGroup[]; users: 
               <div key={group.id} className={`group-row ${group.is_active ? "" : "is-hidden"}`}>
                 <span className="route-badge"><Route {...iconProps} size={20} /></span>
                 <div>
-                  <strong>{groupLabel(group.origin, group.destination)}</strong>
+                  <strong><GroupName origin={group.origin} destination={group.destination} /></strong>
                   <span>{activeRouteCount === 0 ? "אין מסלולים פעילים" : activeRouteCount === 1 ? "מסלול פעיל אחד" : `${activeRouteCount} מסלולים פעילים`}</span>
                 </div>
                 <span className={`status-pill ${group.is_active ? "" : "danger"}`}><i></i>{group.is_active ? "פעילה" : "מוסתרת"}</span>
                 <GroupActions
-                  group={{ id: group.id, origin: group.origin, destination: group.destination }}
+                  group={{ id: group.id, originId: group.origin_place_id, destinationId: group.destination_place_id }}
+                  places={places}
                   active={group.is_active}
                   routeCount={group.routes.length}
                 />

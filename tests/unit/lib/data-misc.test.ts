@@ -116,8 +116,10 @@ describe("getAdminGroups", () => {
 describe("activeRouteTotals", () => {
   const group = (is_active: boolean, routes: [driver: string, active: boolean][]) => ({
     id: ID.group,
-    origin: "בית שמש",
-    destination: "ירושלים",
+    origin: "בית שמש, רמה ג",
+    destination: "ירושלים, גבעת שאול",
+    origin_place_id: ID.place,
+    destination_place_id: ID.place2,
     is_active,
     routes: routes.map(([driver_id, active]) => ({ driver_id, is_active: active })),
   });
