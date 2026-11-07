@@ -63,7 +63,10 @@ function DailyChart({ metric, days }: { metric: Metric; days: DailyStats[] }) {
   return (
     <figure className="daily-chart">
       <figcaption>
-        <div><h3>{metric.title}</h3><span>{metric.subtitle}</span></div>
+        <div>
+          <h3>{metric.title}</h3>
+          <span>{metric.subtitle}</span>
+        </div>
         <div className="daily-summary">
           <span>{metric.last === "today" ? "היום" : "אתמול"} <strong>{last}</strong></span>
           <span>

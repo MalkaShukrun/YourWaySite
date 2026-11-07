@@ -21,7 +21,7 @@ export function Header({ userSlot }: { userSlot: ReactNode }) {
         <Link href="/" className={mode === "passenger" ? "active" : ""}>אני הטרמפיסטית</Link>
         <Link href="/dashboard" className={mode === "driver" ? "active" : ""}>אני הנהגת</Link>
       </div>
-      <div className="header-actions"><Announcement compact /><ContactButton />{userSlot}</div>
+      <div className="header-actions"><Announcement mode={mode} compact /><ContactButton />{userSlot}</div>
     </header>
   );
 }

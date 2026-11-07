@@ -43,7 +43,7 @@ The interface has a passenger mode and a driver mode, each with its own menu. Op
 
 On phones the menu becomes a bottom tab bar with short labels.
 
-At the bottom of the menu, a card announces the daily passenger email: “**חדש!** קבלי התראות במייל על הטרמפיסטיות שלך, בתזמון שאפשר להתאים בפרופיל.” It opens the profile. On phones, where the menu is a tab bar, it is a pulsing bell in the top bar instead.
+At the bottom of the menu, cards announce the emails of the current mode. Passenger mode, one card for the ride emails (A7): “**חדש!** מעכשיו תקבלי מייל כשאת נרשמת לנסיעה או מבטלת, וכשהנהגת מבטלת נסיעה שלך. אפשר להפסיק בפרופיל.” Driver mode, two cards: the daily passenger email (D7), “**חדש!** קבלי התראות במייל על הטרמפיסטיות שלך, בתזמון שאפשר להתאים בפרופיל.”, and under it the ride emails (A7), “**חדש!** מעכשיו תקבלי מייל כשטרמפיסטית מבטלת הרשמה לנסיעה שלך. אפשר להפסיק בפרופיל.” Each opens the profile. On phones, where the menu is a tab bar, one pulsing bell in the top bar stands for them all.
 
 ## 2. Core concepts and rules
 

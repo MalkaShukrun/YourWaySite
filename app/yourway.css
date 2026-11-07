@@ -72,11 +72,20 @@ button { cursor: pointer; }
 .side-announce strong { font-weight: 800; }
 /* Phones only: there the sidebar, and its card, are hidden. */
 .header-announce { display: none; }
-.announce-bell { position: relative; flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--lime); color: var(--green-dark); display: grid; place-items: center; animation: announce-pulse 2.4s ease-in-out infinite; }
+.announce-bell { position: relative; flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--lime); color: var(--green-dark); display: grid; place-items: center; }
 .announce-bell::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--lime); z-index: -1; animation: announce-ring 2.4s ease-out infinite; }
-@keyframes announce-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+/* The bell swings from its top, dying down like a rung bell, then rests until the next ring. */
+.announce-bell svg { transform-origin: 50% 10%; animation: announce-swing 2.4s ease-in-out infinite; }
+@keyframes announce-swing {
+  0%, 60%, 100% { transform: rotate(0); }
+  10% { transform: rotate(18deg); }
+  20% { transform: rotate(-16deg); }
+  30% { transform: rotate(11deg); }
+  40% { transform: rotate(-7deg); }
+  50% { transform: rotate(3deg); }
+}
 @keyframes announce-ring { 0% { transform: scale(1); opacity: .7; } 70%, 100% { transform: scale(1.7); opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .announce-bell, .announce-bell::after { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .announce-bell::after, .announce-bell svg { animation: none; } }
 .contact-button { min-height: 40px; padding: 0 14px; }
 .form-grid.contact-dialog-fields { grid-template-columns: 1fr; }
 .textarea-shell { padding: 10px 13px; align-items: stretch; }

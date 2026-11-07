@@ -37,7 +37,7 @@ export function Sidebar({ adminSlot }: { adminSlot: ReactNode }) {
         <NavLink item={profileNavItem} pathname={pathname} />
         {adminSlot}
       </nav>
-      <Announcement />
+      <Announcement mode={mode} />
     </aside>
   );
 }

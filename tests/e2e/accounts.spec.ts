@@ -188,11 +188,18 @@ test.describe("modes (spec §1, A4)", () => {
     await page.goto("/");
     await expect(sideNav(page).locator(".nav-label")).toHaveText("אזור טרמפיסטית");
     for (const name of ["מציאת נסיעה", "הנסיעות שלי", "מעקב תשלומים"]) await expect(sideNav(page).getByRole("link", { name })).toBeVisible();
+    // Each mode announces its own email news.
+    const announcements = page.locator(".side-announce");
+    await expect(announcements).toHaveCount(1);
+    await expect(announcements).toContainText("וכשהנהגת מבטלת נסיעה שלך");
 
     await page.getByRole("group", { name: "בחירת מצב" }).getByRole("link", { name: "אני הנהגת" }).click();
     await expect(page).toHaveURL(/\/dashboard$/);
     await expect(sideNav(page).locator(".nav-label")).toHaveText("אזור נהגת");
     for (const name of ["לוח נהגת שבועי", "המסלולים שלי"]) await expect(sideNav(page).getByRole("link", { name })).toBeVisible();
+    await expect(announcements).toHaveCount(2);
+    await expect(announcements.first()).toContainText("על הטרמפיסטיות שלך, בתזמון שאפשר להתאים");
+    await expect(announcements.last()).toContainText("כשטרמפיסטית מבטלת הרשמה לנסיעה שלך");
 
     await page.getByRole("group", { name: "בחירת מצב" }).getByRole("link", { name: "אני הטרמפיסטית" }).click();
     await expect(page).toHaveURL(/\/$/);
