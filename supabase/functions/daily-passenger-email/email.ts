@@ -13,39 +13,14 @@ export type DailyEmail = {
   since?: string; // Only on an update: when her previous email was sent.
 };
 
-type Deps = {
-  claim: () => Promise<DailyEmail[]>;
-  send: (email: DailyEmail) => Promise<void>;
-  release: (email: DailyEmail) => Promise<void>;
-  wait: () => Promise<void>;
-};
-
-// Sends every claimed email, one at a time so Gmail doesn't see a burst.
-// A failed send is released, so the next run tries that driver again, for the same date.
-export async function sendDailyEmails({ claim, send, release, wait }: Deps) {
-  const emails = await claim();
-  let sent = 0;
-  for (const [index, email] of emails.entries()) {
-    if (index > 0) await wait();
-    try {
-      await send(email);
-      sent += 1;
-    } catch (error) {
-      console.error("daily-passenger-email: send failed", email.driver_id, error);
-      await release(email);
-    }
-  }
-  return { sent, failed: emails.length - sent };
-}
-
 // "2026-11-02" → "יום שני, 2 בנובמבר"
-function formatDate(isoDate: string) {
+export function formatDate(isoDate: string) {
   return new Intl.DateTimeFormat("he-IL", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" })
     .format(new Date(`${isoDate}T00:00:00Z`));
 }
 
 // Names and stops are what users typed.
-function escapeHtml(value: string) {
+export function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 }
 

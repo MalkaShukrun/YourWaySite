@@ -9,18 +9,26 @@ import { carIconProps, iconProps } from "@/components/ui/icon";
 
 // Ride group management (SRS §8) — stats and the group list from the design.
 // Render only for admins (the caller checks with requireAdmin and loads the groups).
-export function GroupsSection({ groups, places, users }: { groups: AdminGroup[]; places: Place[]; users: number }) {
+
+// The users, routes and groups totals; the page puts the email counts and the
+// daily charts under them.
+export function GroupStats({ groups, users }: { groups: AdminGroup[]; users: number }) {
   const active = activeRouteTotals(groups);
 
   return (
-    <>
-      <div className="admin-stats">
-        <StatCard icon={<UserCheck {...iconProps} size={20} />} value={users} label="משתמשות במערכת" tone="purple" />
-        <StatCard icon={<Car {...carIconProps} size={20} />} value={active.routes} label="מסלולים פעילים" tone="blue" />
-        <StatCard icon={<Users {...iconProps} size={20} />} value={active.drivers} label="נהגות עם מסלולים" tone="purple" />
-        <StatCard icon={<Route {...iconProps} size={20} />} value={groups.filter((g) => g.is_active).length} label="קבוצות פעילות" tone="green" />
-      </div>
+    <div className="admin-stats">
+      <StatCard icon={<UserCheck {...iconProps} size={20} />} value={users} label="משתמשות במערכת" tone="purple" />
+      <StatCard icon={<Car {...carIconProps} size={20} />} value={active.routes} label="מסלולים פעילים" tone="blue" />
+      <StatCard icon={<Users {...iconProps} size={20} />} value={active.drivers} label="נהגות עם מסלולים" tone="purple" />
+      <StatCard icon={<Route {...iconProps} size={20} />} value={groups.filter((g) => g.is_active).length} label="קבוצות פעילות" tone="green" />
+    </div>
+  );
+}
 
+// The group list, with adding, editing, hiding and deleting.
+export function GroupsSection({ groups, places }: { groups: AdminGroup[]; places: Place[] }) {
+  return (
+    <>
       <CollapsiblePanel title="כל הקבוצות" subtitle="רק מנהלת יכולה ליצור, לערוך או למחוק קבוצות" action={<GroupDialog places={places} />}>
         {groups.length === 0 ? (
           <div className="empty-state"><strong>עדיין אין קבוצות</strong><span>צרי את הקבוצה הראשונה — מוצא ויעד מרשימת המקומות.</span></div>

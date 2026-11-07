@@ -104,6 +104,29 @@ test.describe("daily passenger email (spec D7)", () => {
   });
 });
 
+test.describe("emails about her rides (spec A7)", () => {
+  test("they're on until she turns them off, and stay off", async ({ page, seed, signIn }) => {
+    const user = await seed.user("Member");
+    await signIn(page, user);
+    const saved = async () =>
+      (await seed.service.from("profiles").select("ride_emails_enabled").eq("id", user.id).single()).data;
+    const toggle = page.getByRole("button", { name: "מיילים על הנסיעות שלי" });
+
+    await openForm(page, "/profile", "שמירת הגדרות ההתראות");
+    await expect(toggle).toHaveAttribute("aria-pressed", "true");
+    await expect(toggle).toHaveText("פעיל");
+
+    await toggle.click();
+    await expect(toggle).toHaveText("כבוי");
+    await page.getByRole("button", { name: "שמירת הגדרות ההתראות" }).click();
+    await expect(toast(page, "הגדרות ההתראות נשמרו")).toBeVisible();
+    expect(await saved()).toEqual({ ride_emails_enabled: false });
+
+    await page.reload();
+    await expect(toggle).toHaveAttribute("aria-pressed", "false");
+  });
+});
+
 test.describe("profile (spec A3)", () => {
   test("shows her details with a read-only email, saves changes and keeps them", async ({ page, seed, signIn }) => {
     const user = await seed.user("Profile", { fullName: "רחל לוי" });

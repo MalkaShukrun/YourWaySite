@@ -88,6 +88,31 @@ export async function getAdminStats(): Promise<AdminStats> {
   return data;
 }
 
+export type EmailStats = { ride_emails: number; daily_email: number; daily_email_updates: number };
+
+// How many members have each email on (0045_admin_email_stats.sql). The
+// function returns them to admins only.
+export async function getEmailStats(): Promise<EmailStats> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("admin_email_stats").single<EmailStats>();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export type DailyStats = { day: string; new_users: number; visitors: number; non_driver_visitors: number; passengers: number };
+
+// The day the admin page's daily charts start.
+const DAILY_STATS_FROM = "2026-10-27";
+
+// One row a day from DAILY_STATS_FROM to today (0042_daily_visits.sql,
+// 0044_daily_passengers.sql). The function returns them to admins only.
+export async function getDailyStats(): Promise<DailyStats[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("admin_daily_stats", { p_from: DAILY_STATS_FROM });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
 // The addresses approved for sign-in with a personal code. RLS: admins only.
 export async function getOtpEmails(): Promise<{ email: string }[]> {
   const supabase = await createClient();

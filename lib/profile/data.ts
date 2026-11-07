@@ -1,7 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { formatTime } from "@/lib/utils/dates";
-import type { DailyEmailValues, ProfileValues } from "@/lib/validation/profile";
+import type { DailyEmailValues, ProfileValues, RideEmailsValues } from "@/lib/validation/profile";
 
 // Data Access Layer for the profile screen (SRS §1.3). RLS limits the row
 // to its owner.
@@ -38,6 +38,18 @@ export async function getDailyEmailValues(userId: string): Promise<DailyEmailVal
     updates: Boolean(p?.daily_email_updates_enabled),
     time: formatTime(p?.daily_email_time ?? "20:00"),
   };
+}
+
+// The emails about her own rides, for the profile screen.
+export async function getRideEmailsValues(userId: string): Promise<RideEmailsValues> {
+  const supabase = await createClient();
+  const { data: p } = await supabase
+    .from("profiles")
+    .select("ride_emails_enabled")
+    .eq("id", userId)
+    .maybeSingle();
+
+  return { enabled: p?.ride_emails_enabled ?? true };
 }
 
 // The profile's vehicle columns; all null once the user removes the car.

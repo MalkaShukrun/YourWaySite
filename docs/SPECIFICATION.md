@@ -2,8 +2,8 @@
 
 *How the ride-sharing app behaves today, written from the code: every rule the screens and the database enforce, and what the driver and the passenger each see in each situation.*
 
-- **Source:** the `YourWaySite` code and database migrations 0001–0040
-- **As of:** 5 November 2026
+- **Source:** the `YourWaySite` code and database migrations 0001–0045
+- **As of:** 7 November 2026
 - **Interface language:** Hebrew; labels below are quoted as they appear on screen
 
 **Contents**
@@ -11,7 +11,7 @@
 1. [Overview](#1-overview)
 2. [Core concepts and rules](#2-core-concepts-and-rules)
 3. [Screens and where things appear](#3-screens-and-where-things-appear)
-4. [Scenarios](#4-scenarios) (38): [A. Accounts and access](#a-accounts-and-access) · [B. Publishing routes](#b-publishing-routes) · [C. Finding and booking a ride](#c-finding-and-booking-a-ride) · [D. The driver's day](#d-the-drivers-day) · [E. A passenger cancels](#e-a-passenger-cancels) · [F. Removing routes](#f-removing-routes) · [G. After the ride](#g-after-the-ride) · [H. Admin: ride groups](#h-admin-ride-groups) · [I. Support and errors](#i-support-and-errors)
+4. [Scenarios](#4-scenarios) (43): [A. Accounts and access](#a-accounts-and-access) · [B. Publishing routes](#b-publishing-routes) · [C. Finding and booking a ride](#c-finding-and-booking-a-ride) · [D. The driver's day](#d-the-drivers-day) · [E. A passenger cancels](#e-a-passenger-cancels) · [F. Removing routes](#f-removing-routes) · [G. After the ride](#g-after-the-ride) · [H. Admin](#h-admin) · [I. Support and errors](#i-support-and-errors)
 5. [Who sees what](#5-who-sees-what)
 6. [Booking and ride states](#6-booking-and-ride-states)
 7. [Messages reference](#7-messages-reference)
@@ -108,7 +108,7 @@ Open for booking → Cancelled for this date → Shown as cancelled · never cha
 | My routes | `/routes` | Driver | Tabs “מסלולים פעילים” (active), “היסטוריה” (one-time rides that departed) and “מסלולים מבוטלים” (one-time rides cancelled for their date). Every card has “שכפול נסיעה” (F2, F3). |
 | New route | `/routes/new` | Driver | Route editor: group (with a search box), type, days or date, time, seats, price, note, stops, map. With `?copy=[id]`, “שכפול נסיעה”: the same editor filled from another of her routes (F2). Reached from “הוספת מסלול” on the dashboard. |
 | Edit route | `/routes/[id]` | Driver | Same editor. Fully editable while nobody has booked the route; once booked, everything is locked except the note and adding new stops. |
-| Profile | `/profile` | All | Name, phone, email (read-only, from her sign-in), optional vehicle (model, colour, seats), and the daily passenger email (D7). Admins also see group management here. |
+| Profile | `/profile` | All | Name, phone, email (read-only, from her sign-in), optional vehicle (model, colour, seats), the emails about her rides (A7) and the daily passenger email (D7). Admins also see group management here. |
 | Group management | `/admin/groups` | Admin | Site-wide totals (H5). Groups with how many active routes each has; add, change places, hide/show, delete. The list of places (H6). Personal-code addresses (H4). The group, place and address lists fold away under their titles; “קבוצה חדשה” and “מקום חדש” sit at the end of their list's title row and work while it's folded. |
 | Not found | any unknown address | Anyone | “הדף לא נמצא”, with a link home. |
 
@@ -221,6 +221,27 @@ Her session cookies are removed, even if Google already ended the session, and s
 `/login`, under the Google button.
 
 **Rules:** the code is 8 digits and permanent, like a password. Any wrong address or code shows “המייל או הקוד שגויים.”, so the page doesn't show who is approved. An address gets 10 attempts an hour. An approved address that also has Google can use either way in, and both reach the same account.
+
+#### A7. A member gets emails about her rides
+
+**Trigger:** Something happens to a ride she booked or drives. The setting is under “מיילים על הנסיעות שלי” on “הפרופיל שלי”: a button that shows its state (“פעיל” or “כבוי”) switches it, and “שמירת הגדרות ההתראות” saves it, with “הגדרות ההתראות נשמרו”.
+
+**Driver side**
+
+- When a passenger cancels a booking on her ride: “נוסעת ביטלה הרשמה: …”, with the passenger's name, her boarding stop and a link to that day on the dashboard (E1).
+- Nothing when she cancels a date or adds or removes a guest herself: she knows.
+
+**Passenger side**
+
+- When she books: “נרשמת לנסיעה: …”, with the ride, her stops, the price and the driver's name and phone (C3, C4).
+- When she cancels: “ההרשמה בוטלה: …”, without the driver's phone (E1).
+- When the driver cancels a date she booked, or removes the route: “הנהגת ביטלה את הנסיעה: …”, with the driver's name and phone and that she won't be charged (D2, F1).
+
+**Where it shows**
+
+Her mailbox, at her sign-in address. Each email links to “הנסיעות שלי” (or the dashboard) and to the profile, to change the settings.
+
+**Rules:** the emails are on until she turns them off. They go out on the same 5-minute run as D7, so they arrive within about 5 minutes, and what happened between two runs comes in one email per kind: several dates booked at once are one email. An email is left out when its news is already stale at the run: a booking cancelled since, or whose date the driver cancelled since, gets no booking email (the cancellation email still goes); a ride that already left gets none. Turning the emails off also stops those already waiting. Passengers the driver added have no account, so nothing is sent to them or about them. A failed send is tried again every 5 minutes until the ride leaves. There is no reminder before a ride.
 
 ### B. Publishing routes
 
@@ -387,13 +408,14 @@ Nothing.
 
 - The passenger appears on that day's ride card with her name, phone, email and stops.
 - The ride's free seats go down; the week's booked count goes up.
-- No notification is sent.
+- No email is sent to her as it happens; her daily email's update (D7) can list it.
 
 **Passenger side**
 
 - She is taken to my rides with “הנסיעה נוספה בהצלחה לנסיעות שלי”.
 - The driver's phone and email now show on the ride page and in my rides.
 - The ride page now says “את רשומה לנסיעה”.
+- Within about 5 minutes she gets an email, “נרשמת לנסיעה: …”, with the ride, her stops, the price and the driver's name and phone (A7).
 
 **Where it shows**
 
@@ -411,7 +433,7 @@ She appears on each booked date's ride card.
 
 **Passenger side**
 
-- All succeed: same as C3.
+- All succeed: same as C3. One email lists every date she booked: “נרשמת ל־N נסיעות” (A7).
 - Some fail: she stays on the page with “נרשמת ל־X מתוך N הימים. לא נרשמת ל: …”, listing each failed date and why. The successful dates are booked.
 - All fail: the reasons are listed and nothing is booked.
 
@@ -517,7 +539,7 @@ Not applicable.
 - Booked passengers see “הנהגת ביטלה את הנסיעה” on the ride in my rides, and can no longer cancel it themselves.
 - The date disappears from search and can't be booked.
 - It is never charged in payments.
-- No notification is sent; she finds out in my rides.
+- Within about 5 minutes she gets an email, “הנהגת ביטלה את הנסיעה: …”, with the driver's name and phone and that she won't be charged (A7).
 
 **Where it shows**
 
@@ -618,7 +640,7 @@ Nothing changes. A passenger the driver added shows the name and phone the drive
 
 Profile; the driver's mailbox.
 
-**Rules:** every user sees the setting; only a driver with passengers gets an email. No email if she has no passengers tomorrow: a ride with none is left out, and so is a cancelled date. The list is a snapshot of the moment it was sent. Only a new booking by a passenger sends an update: a passenger the driver added, a cancellation or a cancelled date doesn't. Updates for a date continue, for rides that haven't left yet, until her daily email for the next date is sent (at her time on the ride day itself); while her daily email waits for a retry, the retry carries the new passengers instead. A failed send is tried again every 5 minutes, for the same ride date, until the end of that date; a retry that goes out on the ride day itself says “להיום” and lists only the rides that haven't left yet.
+**Rules:** every user sees the setting; only a driver with passengers gets an email. No email if she has no passengers tomorrow: a ride with none is left out, and so is a cancelled date. The list is a snapshot of the moment it was sent. Only a new booking by a passenger sends an update: a passenger the driver added, a cancellation or a cancelled date doesn't (a passenger's cancellation has its own email, A7). Updates for a date continue, for rides that haven't left yet, until her daily email for the next date is sent (at her time on the ride day itself); while her daily email waits for a retry, the retry carries the new passengers instead. A failed send is tried again every 5 minutes, for the same ride date, until the end of that date; a retry that goes out on the ride day itself says “להיום” and lists only the rides that haven't left yet.
 
 ### E. A passenger cancels
 
@@ -629,13 +651,14 @@ Profile; the driver's mailbox.
 **Driver side**
 
 - The passenger disappears from that ride card; the seat is free again.
-- No notification is sent.
+- Within about 5 minutes she gets an email, “נוסעת ביטלה הרשמה: …”, with the passenger's name and boarding stop and a link to that day on the dashboard (A7).
 
 **Passenger side**
 
 - “ההרשמה בוטלה והמקום התפנה”.
 - The ride leaves my rides and is never charged.
 - She no longer sees the driver's phone and email for it.
+- Within about 5 minutes she gets an email, “ההרשמה בוטלה: …”, without the driver's phone (A7).
 
 **Where it shows**
 
@@ -689,6 +712,7 @@ No cancel button is shown; there's nothing to cancel and nothing is charged.
 **Passenger side**
 
 - Every upcoming booked date is marked as cancelled by the driver: “הנהגת ביטלה את הנסיעה” in my rides.
+- Each booked passenger gets the email of D2, one per passenger listing all her cancelled dates (A7).
 - Those dates are never charged.
 - The route leaves search.
 
@@ -855,8 +879,11 @@ An unused group simply disappears from the filter.
 - To date: rides that departed with passengers (“נסיעות שיצאו עם טרמפיסטיות”) and passengers who traveled (“טרמפיסטיות שנסעו עד היום”).
 - Users in the system (“משתמשות במערכת”): those who finished sign-up.
 - Active routes (“מסלולים פעילים”), the drivers who have one (“נהגות עם מסלולים”), and visible groups (“קבוצות פעילות”). Each group row shows its own count of active routes.
+- Who has each email on (migration 0045): the emails about her own rides (“טרמפיסטיות שמקבלות מייל על הצטרפות וביטול נסיעה”, A7), the driver's daily email (“נהגות שמקבלות מייל יומי על הטרמפיסטיות שמצטרפות”, D7), and its update about a new passenger (“נהגות שמקבלות מייל עדכון על נוסעת חדשה”). Only users who finished sign-up count. The ride emails are on until a user turns them off, so they include users who never opened the setting; the update counts only while the daily email is on too, since it's sent only with it.
 
 **Rules:** only admins can read the totals. Each active booking counts as one passenger on one ride, guests included, so a round trip counts twice. Dates the driver cancelled aren't counted. Today's rides include every scheduled ride, booked or not; a ride counts as departed only if it had at least one passenger, since a ride that left empty leaves no record. A route is active as in its driver's “מסלולים פעילים” tab: not removed, and not a one-time ride that took place or was cancelled for its date. The totals leave out routes in hidden groups, which can't be booked; a hidden group's row still shows its own count. Days follow Israel time.
+
+**Daily activity (“פעילות יומית”, migrations 0042 and 0044):** under the totals, four bar charts with one bar a day from 27.10.2026 to today: new users (“משתמשות חדשות”), users who came in without a route (“נוסעות שהן לא נהגות”), everyone who came in (“כל מי שנכנסה לאתר”), and passengers who traveled (“טרמפיסטיות שנסעו עם נהגת”). Each shows today's number and the total (new users) or daily average; the passengers chart shows yesterday's number and the average over whole days instead, since today's passengers and the total are already on the cards above; hovering or focusing a bar shows its date and number, and “הצגה כטבלה” lists every day. Only users who finished sign-up count. A user comes in on a day she opens the site while signed in, whether she typed her password that day or was still signed in; the app records it the first time each day. A user is without a route on a day if she hadn't added any route by the end of it, removed ones included. Passengers are counted on the ride's date as in “טרמפיסטיות שנסעו עד היום”: each active booking on a ride that has left, guests included, so a round trip counts twice, and a date the driver cancelled is left out; today counts only rides that have left so far. Unlike visits, every past day is complete. Days before 0042 was run are rebuilt from what Supabase Auth kept (sign-ins, token refreshes, sessions), which is partial, so they may count fewer people than came in.
 
 #### H6. An admin keeps the list of places
 
@@ -915,8 +942,8 @@ In place of the page.
 | Information | The driver | A booked passenger | Other users |
 |---|---|---|---|
 | Driver's name, vehicle, routes, note | Yes | Yes | Yes |
-| Driver's phone and email | Own | While her booking is active (including dates the driver cancelled) | No |
-| Passenger's name, phone, email | For passengers booked on her rides (also in her daily email, D7, which stays in her mailbox) | Own only | No |
+| Driver's phone and email | Own | While her booking is active (including dates the driver cancelled); the phone also in her booking and cancelled-date emails (A7), which stay in her mailbox | No |
+| Passenger's name, phone, email | For passengers booked on her rides (also in her daily email, D7, which stays in her mailbox). When one cancels, her name and boarding stop by email (A7) | Own only | No |
 | Who else is booked on a ride | Yes | No, only the number of free seats | No |
 | Guests the driver added | Name and phone she entered | No | No |
 | Paid / unpaid marks | No | Own only | No |
@@ -963,7 +990,7 @@ In place of the page.
 
 | Topic | Current behaviour |
 |---|---|
-| Notifications and mailing | Only the optional daily email of tomorrow's passengers, for drivers (D7). Bookings, cancellations and date cancellations are not sent to anyone as they happen; each side sees them on its own screens on the next load. Coordination is by phone. |
+| Notifications and mailing | Email only, within about 5 minutes, never instantly: the emails about her own rides (A7), and the optional daily email of tomorrow's passengers, for drivers (D7). No reminders before a ride, no push notifications, SMS or WhatsApp, and nothing about passengers the driver added. Coordination is by phone. |
 | Reports, suspending accounts, removing others' rides | No screens. Reports arrive through the contact form or by email; the terms reserve these rights, and they are carried out by hand in the database. |
 | Consent records | The sign-in consent to the terms and the privacy policy isn't saved, and existing users aren't asked again. |
 | Paid subscriptions | None. The terms allow adding paid features later. |

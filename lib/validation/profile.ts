@@ -50,3 +50,10 @@ export const dailyEmailSchema = z.object({
 });
 
 export type DailyEmailValues = z.infer<typeof dailyEmailSchema>;
+
+// Emails about her own rides as they happen: bookings and cancellations (spec A7).
+export const rideEmailsSchema = z.object({
+  enabled: z.boolean(),
+});
+
+export type RideEmailsValues = z.infer<typeof rideEmailsSchema>;

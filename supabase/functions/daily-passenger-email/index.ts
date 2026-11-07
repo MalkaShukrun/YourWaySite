@@ -1,10 +1,13 @@
-// Supabase Edge Function: emails drivers their passengers for tomorrow. pg_cron
+// Supabase Edge Function: emails drivers their passengers for tomorrow, and
+// members the emails about their own rides (0043_ride_emails.sql). pg_cron
 // calls it every 5 minutes (supabase/snippets/daily_passenger_email_cron.sql).
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set by Supabase; CRON_SECRET,
 // GMAIL_USER, GMAIL_APP_PASSWORD and SITE_URL with `supabase secrets set`.
 
-import { buildEmail, sendDailyEmails, type DailyEmail } from "./email.ts";
+import { buildEmail, type DailyEmail } from "./email.ts";
 import { gmailSender } from "./mailer.ts";
+import { buildRideEmail, type RideEmail } from "./ride-emails.ts";
+import { sendEmails } from "./send.ts";
 
 // The editor checks this file as plain TypeScript, without Deno's own types.
 declare const Deno: {
@@ -27,19 +30,19 @@ const rest = (path: string, init: RequestInit) =>
     },
   });
 
-async function claimFrom(fn: string) {
+async function claimFrom<T>(fn: string) {
   const response = await rest(`rpc/${fn}`, { method: "POST", body: "{}" });
   if (!response.ok) throw new Error(`claim failed: ${fn} ${response.status} ${await response.text()}`);
-  return (await response.json()) as DailyEmail[];
+  return (await response.json()) as T[];
 }
 
 // The daily emails first: a driver claimed for one now has nothing new for an
 // update. Those are already marked as sent, so a failed update claim mustn't
 // stop them going out.
-async function claim() {
-  const daily = await claimFrom("claim_daily_passenger_emails");
+async function claimDaily() {
+  const daily = await claimFrom<DailyEmail>("claim_daily_passenger_emails");
   try {
-    return [...daily, ...(await claimFrom("claim_passenger_update_emails"))];
+    return [...daily, ...(await claimFrom<DailyEmail>("claim_passenger_update_emails"))];
   } catch (error) {
     console.error("daily-passenger-email:", error);
     return daily;
@@ -49,7 +52,7 @@ async function claim() {
 // A daily email keeps its ride date for the retry, so a send that fails just
 // before midnight is still tried after it (0035). An update goes back to its
 // previous sent time, so the next run finds the same new passengers (0036).
-async function release(email: DailyEmail) {
+async function releaseDaily(email: DailyEmail) {
   const query = `id=eq.${email.driver_id}&daily_email_sent_for=eq.${email.ride_date}`;
   const response = await rest(`profiles?${query}`, {
     method: "PATCH",
@@ -58,27 +61,58 @@ async function release(email: DailyEmail) {
   if (!response.ok) console.error("daily-passenger-email: release failed", email.driver_id, response.status);
 }
 
-const israelToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date());
-
-async function send(email: DailyEmail) {
-  await sendMail({ to: email.driver_email, ...buildEmail(email, env("SITE_URL"), israelToday()) });
+// A ride email's rows wait again, for the next run (0043).
+async function releaseRide(email: RideEmail) {
+  const response = await rest(`email_outbox?id=in.(${email.ids.join(",")})`, {
+    method: "PATCH",
+    body: JSON.stringify({ sent_at: null }),
+  });
+  if (!response.ok) console.error("daily-passenger-email: release failed", email.ids, response.status);
 }
 
+const israelToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date());
+
+const wait = () => new Promise<void>((resolve) => setTimeout(resolve, 600));
+
+const sendDaily = () =>
+  sendEmails({
+    claim: claimDaily,
+    send: async (email: DailyEmail) => {
+      await sendMail({ to: email.driver_email, ...buildEmail(email, env("SITE_URL"), israelToday()) });
+    },
+    release: releaseDaily,
+    wait,
+    label: (email) => email.driver_id,
+  });
+
+const sendRides = () =>
+  sendEmails({
+    claim: () => claimFrom<RideEmail>("claim_ride_emails"),
+    send: async (email: RideEmail) => {
+      await sendMail({ to: email.to_email, ...buildRideEmail(email, env("SITE_URL")) });
+    },
+    release: releaseRide,
+    wait,
+    label: (email) => `${email.kind} ${email.ids.join(",")}`,
+  });
+
+// Each kind goes out even when the other fails; the answer is 500 if either did.
 Deno.serve(async (request) => {
   const secret = env("CRON_SECRET");
   if (!secret || request.headers.get("Authorization") !== `Bearer ${secret}`) {
     return new Response("Unauthorized", { status: 401 });
   }
-  try {
-    const result = await sendDailyEmails({
-      claim,
-      send,
-      release,
-      wait: () => new Promise((resolve) => setTimeout(resolve, 600)),
-    });
-    return Response.json(result);
-  } catch (error) {
-    console.error("daily-passenger-email:", error);
-    return new Response("Failed", { status: 500 });
+  const total = { sent: 0, failed: 0 };
+  let ok = true;
+  for (const run of [sendDaily, sendRides]) {
+    try {
+      const result = await run();
+      total.sent += result.sent;
+      total.failed += result.failed;
+    } catch (error) {
+      console.error("daily-passenger-email:", error);
+      ok = false;
+    }
   }
+  return ok ? Response.json(total) : new Response("Failed", { status: 500 });
 });

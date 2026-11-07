@@ -25,17 +25,19 @@ Ride-sharing and group transportation app. Next.js (App Router) + Supabase.
    ```
    Open http://localhost:3000 — you'll be sent to `/login`.
 
-## Daily passenger email
+## Daily passenger email and ride emails
 
-For now only admins have it: they turn it on in their profile and pick a time. A Supabase Edge Function
-(`supabase/functions/daily-passenger-email`), called by `pg_cron` every 5 minutes, sends each
-one tomorrow's passengers from a Gmail account. It needs no domain, and Gmail allows about
-500 emails a day. It stays off until all of this is done:
+Drivers turn the daily email on in their profile and pick a time. Every member also gets emails
+about her own rides — booked, cancelled, the driver cancelled, a passenger cancelled (to the
+driver) — unless she turns them off (spec A7, `0043_ride_emails.sql`).
+A Supabase Edge Function (`supabase/functions/daily-passenger-email`), called by `pg_cron` every
+5 minutes, sends them all from a Gmail account. It needs no domain, and Gmail allows about
+500 emails a day for all of them together. Nothing is sent until all of this is done:
 
 1. **Gmail** — turn on 2-Step Verification on the sending account, then create an App Password
    at https://myaccount.google.com/apppasswords.
-2. **Database** — run `supabase/migrations/0031_daily_passenger_email.sql`, `0034_daily_email_all_drivers.sql`, `0035_daily_email_retry_after_midnight.sql` and `0036_passenger_update_emails.sql` (or `setup.sql`).
-3. **Function** — deploy it and set its secrets. `CRON_SECRET` is any long random string:
+2. **Database** — run `supabase/migrations/0031_daily_passenger_email.sql`, `0034_daily_email_all_drivers.sql`, `0035_daily_email_retry_after_midnight.sql`, `0036_passenger_update_emails.sql` and `0043_ride_emails.sql` (or `setup.sql`). Bookings queue their emails from then on.
+3. **Function** — deploy it and set its secrets (deploy it again after changing its code). `CRON_SECRET` is any long random string:
    ```bash
    npx supabase login
    npx supabase link --project-ref <PROJECT_REF>

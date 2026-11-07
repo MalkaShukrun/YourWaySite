@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./support/fixtures";
 import type { Seed } from "../integration/support/seed";
-import { choose, israelDate, toast } from "./support/ui";
+import { choose, israelDate, shortDate, toast } from "./support/ui";
 
 // Group management (spec H1–H3) and its list of places (0040).
 
@@ -316,4 +316,22 @@ test("shows the totals and the group list", async ({ page, seed, signIn }) => {
     await expect(page.locator(".stat-card").filter({ hasText: label })).toBeVisible();
   }
   await expect(page.getByRole("heading", { name: "כל הקבוצות" })).toBeVisible();
+});
+
+test("shows the daily charts from 27.10, and counts the admin's own visit today (0042)", async ({ page, seed, signIn }) => {
+  const admin = await seed.user("Admin", { admin: true });
+  const visitsToday = async () =>
+    (await seed.service.from("daily_visits").select("day").eq("user_id", admin.id).eq("day", israelDate(0))).data?.length;
+  expect(await visitsToday()).toBe(0);
+
+  await signIn(page, admin);
+  await page.goto("/admin/groups");
+  await expect(page.getByRole("heading", { name: "פעילות יומית" })).toBeVisible();
+  for (const title of ["משתמשות חדשות", "נוסעות שהן לא נהגות", "כל מי שנכנסה לאתר"]) {
+    await expect(page.locator(".daily-chart").filter({ hasText: title })).toBeVisible();
+  }
+  const bars = page.locator(".daily-chart").first().locator(".daily-bars li");
+  await expect(bars.first()).toHaveAttribute("aria-label", /27\.10/);
+  await expect(bars.last()).toHaveAttribute("aria-label", new RegExp(`^${shortDate(israelDate(0))}:`));
+  expect(await visitsToday()).toBe(1);
 });

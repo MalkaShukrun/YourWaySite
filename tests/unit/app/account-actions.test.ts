@@ -6,7 +6,7 @@ import { runAction } from "../helpers/run-action";
 import { ID } from "../helpers/fixtures";
 
 // Onboarding and sign-out (app/(auth)/login/actions.ts, spec A1, A5) and the
-// profile screen (app/(app)/profile/actions.ts, spec A3).
+// profile screen (app/(app)/profile/actions.ts, spec A3, A7, D7).
 
 const sb = vi.hoisted(() => ({
   mock: null as unknown as ReturnType<typeof createSupabaseMock>,
@@ -25,7 +25,7 @@ vi.mock("next/headers", () => ({
 }));
 sb.mock = createSupabaseMock();
 const { completeProfile, signOut } = await import("@/app/(auth)/login/actions");
-const { saveProfile } = await import("@/app/(app)/profile/actions");
+const { saveDailyEmail, saveProfile, saveRideEmails } = await import("@/app/(app)/profile/actions");
 
 const values = (overrides: Partial<ProfileValues> = {}): ProfileValues => ({
   fullName: " רחל לוי ",
@@ -158,5 +158,49 @@ describe("saveProfile (spec A3)", () => {
   it("shows a general message when saving fails", async () => {
     sb.mock.onTable("profiles", { error: { message: "down" } });
     expect(await saveProfile(values())).toEqual({ error: "לא הצלחנו לשמור את הפרטים. נסי שוב בעוד רגע." });
+  });
+});
+
+describe("saveRideEmails (spec A7)", () => {
+  it("saves the switch and refreshes", async () => {
+    expect(await saveRideEmails({ enabled: false })).toEqual({});
+    expect(sb.mock.callsOn("profiles")).toEqual([
+      ["update", [{ ride_emails_enabled: false }]],
+      ["eq", ["id", ID.user]],
+    ]);
+    expect(refresh).toHaveBeenCalledOnce();
+  });
+
+  it("refuses a value that isn't on or off", async () => {
+    expect(await saveRideEmails({ enabled: "yes" as never })).toHaveProperty("error");
+    expect(sb.mock.client.from).not.toHaveBeenCalled();
+  });
+
+  it("shows a general message when saving fails", async () => {
+    sb.mock.onTable("profiles", { error: { message: "down" } });
+    expect(await saveRideEmails({ enabled: true })).toEqual({ error: "לא הצלחנו לשמור את ההגדרות. נסי שוב בעוד רגע." });
+  });
+});
+
+describe("saveDailyEmail (spec D7)", () => {
+  it("saves both switches and the time, and refreshes", async () => {
+    expect(await saveDailyEmail({ enabled: true, updates: true, time: "07:30" })).toEqual({});
+    expect(sb.mock.callsOn("profiles")).toEqual([
+      ["update", [{ daily_email_enabled: true, daily_email_updates_enabled: true, daily_email_time: "07:30" }]],
+      ["eq", ["id", ID.user]],
+    ]);
+    expect(refresh).toHaveBeenCalledOnce();
+  });
+
+  it("refuses a time off the 5-minute steps", async () => {
+    expect(await saveDailyEmail({ enabled: true, updates: false, time: "07:32" })).toEqual({ error: "יש לבחור שעה בקפיצות של 5 דקות" });
+    expect(sb.mock.client.from).not.toHaveBeenCalled();
+  });
+
+  it("shows a general message when saving fails", async () => {
+    sb.mock.onTable("profiles", { error: { message: "down" } });
+    expect(await saveDailyEmail({ enabled: false, updates: false, time: "20:00" })).toEqual({
+      error: "לא הצלחנו לשמור את ההגדרות. נסי שוב בעוד רגע.",
+    });
   });
 });

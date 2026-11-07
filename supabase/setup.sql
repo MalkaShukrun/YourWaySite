@@ -1,5 +1,5 @@
 -- YourWay — full database setup. Paste this whole file into Supabase → SQL Editor → Run.
--- Generated from supabase/migrations/0001–0041. Safe to run more than once.
+-- Generated from supabase/migrations/0001–0045. Safe to run more than once.
 
 
 -- ════════ supabase/migrations/0001_profiles.sql ════════
@@ -4011,3 +4011,400 @@ $$;
 
 revoke execute on function public.public_stats from public;
 grant execute on function public.public_stats to anon, authenticated;
+
+
+-- ════════ supabase/migrations/0042_daily_visits.sql ════════
+-- YourWay — the admin page's daily charts: new members, and who came in each day.
+-- Run after 0041_public_stats_routes_with_rides.sql. Safe to run again.
+--
+-- A visit is a day a signed-in member opened the site, by Israel's date. The
+-- app records the first one each day (record_visit, called from proxy.ts), so a
+-- member who stays signed in counts on every day she comes back, not only on
+-- the day she typed her password. Days before this migration are rebuilt from
+-- what Supabase Auth kept: sign-ins and token refreshes in its audit log, and
+-- when each current session started and was last used. That history is
+-- partial — Auth deletes old refresh tokens and ended sessions — so those days
+-- may count fewer people than came in.
+
+create table if not exists public.daily_visits (
+  day     date not null,
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  primary key (day, user_id)
+);
+
+-- No policies: only the functions below read and write it.
+alter table public.daily_visits enable row level security;
+
+create or replace function public.record_visit()
+returns void
+language sql volatile
+security definer set search_path = ''
+as $$
+  insert into public.daily_visits (day, user_id)
+  select public.israel_today(), p.id from public.profiles p where p.id = auth.uid()
+  on conflict do nothing
+$$;
+
+revoke execute on function public.record_visit from anon, public;
+grant execute on function public.record_visit to authenticated;
+
+-- One row a day from p_from to today. Members who finished sign-up only, as
+-- in admin_stats; a new member counts on the day she first signed in. A
+-- member without a route is one who hadn't added any by the end of that day,
+-- removed ones included: she wasn't a driver yet.
+create or replace function public.admin_daily_stats(p_from date)
+returns table (
+  day                  date,
+  new_users            bigint,
+  visitors             bigint,
+  non_driver_visitors  bigint
+)
+language sql stable
+security definer set search_path = ''
+as $$
+  select
+    d.day,
+    (select count(*) from public.profiles p
+     where p.phone is not null and (p.created_at at time zone 'Asia/Jerusalem')::date = d.day),
+    (select count(*) from public.daily_visits v
+     join public.profiles p on p.id = v.user_id
+     where v.day = d.day and p.phone is not null),
+    (select count(*) from public.daily_visits v
+     join public.profiles p on p.id = v.user_id
+     where v.day = d.day and p.phone is not null
+       and not exists (select 1 from public.routes r
+                       where r.driver_id = v.user_id
+                         and (r.created_at at time zone 'Asia/Jerusalem')::date <= d.day))
+  from (select g::date as day from generate_series(p_from, public.israel_today(), interval '1 day') g) d
+  where public.is_admin()
+  order by d.day
+$$;
+
+revoke execute on function public.admin_daily_stats from anon, public;
+grant execute on function public.admin_daily_stats to authenticated;
+
+-- Rebuild the days since the charts start (27.10.2026) from Auth's records.
+-- Each source is read on its own, so a table this project's Auth version
+-- doesn't have is skipped.
+do $$
+declare
+  since constant date := date '2026-10-27';
+begin
+  -- The day each member signed up.
+  insert into public.daily_visits (day, user_id)
+  select (p.created_at at time zone 'Asia/Jerusalem')::date, p.id
+  from public.profiles p
+  where (p.created_at at time zone 'Asia/Jerusalem')::date >= since
+  on conflict do nothing;
+
+  begin
+    insert into public.daily_visits (day, user_id)
+    select distinct (a.created_at at time zone 'Asia/Jerusalem')::date, p.id
+    from auth.audit_log_entries a
+    join public.profiles p on p.id::text = a.payload ->> 'actor_id'
+    where a.payload ->> 'action' in ('login', 'token_refreshed', 'user_signedup')
+      and (a.created_at at time zone 'Asia/Jerusalem')::date >= since
+    on conflict do nothing;
+  exception when others then
+    raise notice 'daily_visits: skipped the auth audit log (%)', sqlerrm;
+  end;
+
+  begin
+    insert into public.daily_visits (day, user_id)
+    select distinct (t.at at time zone 'Asia/Jerusalem')::date, p.id
+    from auth.sessions s
+    cross join lateral (values (s.created_at), (s.updated_at)) t (at)
+    join public.profiles p on p.id = s.user_id
+    where (t.at at time zone 'Asia/Jerusalem')::date >= since
+    on conflict do nothing;
+  exception when others then
+    raise notice 'daily_visits: skipped auth sessions (%)', sqlerrm;
+  end;
+
+  begin
+    insert into public.daily_visits (day, user_id)
+    select distinct (t.created_at at time zone 'Asia/Jerusalem')::date, p.id
+    from auth.refresh_tokens t
+    join public.profiles p on p.id::text = t.user_id
+    where (t.created_at at time zone 'Asia/Jerusalem')::date >= since
+    on conflict do nothing;
+  exception when others then
+    raise notice 'daily_visits: skipped auth refresh tokens (%)', sqlerrm;
+  end;
+end $$;
+
+
+-- ════════ supabase/migrations/0043_ride_emails.sql ════════
+-- YourWay — emails about a member's own rides, as they happen.
+-- Run after 0042_daily_visits.sql. Safe to run again.
+--
+-- Until now only the driver's daily email (D7) was sent. Now each change to a
+-- booking is queued here by the database, and the Edge Function that sends the
+-- daily email (supabase/functions/daily-passenger-email) sends the queue on
+-- its 5-minute run (spec A7):
+--
+-- - booked: a passenger booked a ride — to her, with the driver's phone.
+-- - cancelled: she cancelled her booking — to her.
+-- - passenger_cancelled: the same cancellation — to the ride's driver.
+-- - ride_cancelled: the driver cancelled the date, or removed the route
+--   (0018) — to each booked passenger.
+--
+-- A passenger the driver added has no account, so nothing is sent to her or
+-- about her. The emails are on until the member turns them off on her profile
+-- (ride_emails_enabled).
+
+alter table public.profiles add column if not exists ride_emails_enabled boolean not null default true;
+
+grant update (ride_emails_enabled) on public.profiles to authenticated;
+
+do $$ begin
+  create type public.ride_email_kind as enum ('booked', 'cancelled', 'passenger_cancelled', 'ride_cancelled');
+exception when duplicate_object then null; end $$;
+
+-- One row per booking an email is about. sent_at is when it was claimed for
+-- sending; a failed send sets it back to null. Who gets it and what it says
+-- are decided when it is claimed, so turning the emails off stops those
+-- already waiting too.
+create table if not exists public.email_outbox (
+  id         bigint generated always as identity primary key,
+  kind       public.ride_email_kind not null,
+  recipient  uuid not null references public.profiles (id) on delete cascade,
+  booking_id uuid not null references public.bookings (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  sent_at    timestamptz
+);
+
+create index if not exists email_outbox_waiting on public.email_outbox (recipient) where sent_at is null;
+
+-- No policies: only the functions below read and write it.
+alter table public.email_outbox enable row level security;
+revoke all on public.email_outbox from anon, authenticated;
+
+-- ─── Queuing ─────────────────────────────────────────────────────────────────
+
+-- A passenger books (book_ride), or cancels (cancel_booking).
+create or replace function public.queue_booking_emails()
+returns trigger
+language plpgsql
+security definer set search_path = ''
+as $$
+begin
+  if new.added_by_driver then return null; end if;
+  if tg_op = 'INSERT' then
+    if new.status = 'active' then
+      insert into public.email_outbox (kind, recipient, booking_id) values ('booked', new.passenger_id, new.id);
+    end if;
+  elsif old.status = 'active' and new.status = 'cancelled' then
+    insert into public.email_outbox (kind, recipient, booking_id)
+    select 'cancelled'::public.ride_email_kind, new.passenger_id, new.id
+    union all
+    select 'passenger_cancelled'::public.ride_email_kind, r.driver_id, new.id from public.routes r where r.id = new.route_id;
+  end if;
+  return null;
+end;
+$$;
+
+revoke execute on function public.queue_booking_emails from anon, authenticated, public;
+
+drop trigger if exists bookings_queue_emails on public.bookings;
+create trigger bookings_queue_emails
+  after insert or update of status on public.bookings
+  for each row execute function public.queue_booking_emails();
+
+-- The driver cancels a date, or removing the route cancels its booked dates
+-- (cancel_off_schedule_bookings, 0018). A date already cancelled sends nothing again.
+create or replace function public.queue_ride_cancelled_emails()
+returns trigger
+language plpgsql
+security definer set search_path = ''
+as $$
+begin
+  if new.cancelled and (tg_op = 'INSERT' or not old.cancelled) then
+    insert into public.email_outbox (kind, recipient, booking_id)
+    select 'ride_cancelled', b.passenger_id, b.id
+    from public.bookings b
+    where b.route_id = new.route_id and b.ride_date = new.ride_date
+      and b.status = 'active' and not b.added_by_driver;
+  end if;
+  return null;
+end;
+$$;
+
+revoke execute on function public.queue_ride_cancelled_emails from anon, authenticated, public;
+
+drop trigger if exists ride_exceptions_queue_emails on public.ride_exceptions;
+create trigger ride_exceptions_queue_emails
+  after insert or update of cancelled on public.ride_exceptions
+  for each row execute function public.queue_ride_cancelled_emails();
+
+-- ─── Sending ─────────────────────────────────────────────────────────────────
+
+-- Claims what is waiting for up to 50 members and returns one email per member
+-- and kind, listing its rides by date and time: a passenger who booked several
+-- dates at once gets one email. Everything claimed is marked as sent,
+-- including what is no longer sent: a ride that already left, a member who
+-- turned the emails off, and — for a booking — a booking cancelled since, or a
+-- date the driver cancelled since. A ride's details are those a booked
+-- passenger sees: the driver's phone goes only to a passenger whose booking is
+-- active (or whose date the driver cancelled), and the driver gets a
+-- passenger's name only. ids are the rows, for releasing a failed send. Rows
+-- sent over 30 days ago are deleted.
+create or replace function public.claim_ride_emails()
+returns table (
+  ids      bigint[],
+  kind     text,
+  to_name  text,
+  to_email text,
+  rides    jsonb
+)
+language plpgsql
+security definer set search_path = ''
+as $$
+begin
+  delete from public.email_outbox o where o.sent_at < now() - interval '30 days';
+
+  return query
+  with waiting as (
+    select o.recipient from public.email_outbox o
+    where o.sent_at is null
+    group by o.recipient
+    order by min(o.id)
+    limit 50
+  ),
+  picked as (
+    select o.id, o.kind, o.recipient, o.booking_id
+    from public.email_outbox o
+    where o.sent_at is null and o.recipient in (select w.recipient from waiting w)
+    for update skip locked
+  ),
+  marked as (
+    update public.email_outbox u set sent_at = now()
+    from picked k
+    where u.id = k.id
+    returning u.id
+  ),
+  items as (
+    select k.id, k.kind, k.recipient, b.ride_date, r.out_time,
+           jsonb_strip_nulls(jsonb_build_object(
+             'ride_date',      b.ride_date,
+             'out_time',       to_char(r.out_time, 'HH24:MI'),
+             'origin',         g.origin,
+             'destination',    g.destination,
+             'pickup',         pu.label,
+             'dropoff',        dr.label,
+             'price',          case when k.kind = 'booked' then b.price end,
+             'driver_name',    case when k.kind <> 'passenger_cancelled' then d.full_name end,
+             'driver_phone',   case when k.kind in ('booked', 'ride_cancelled') then d.phone end,
+             'passenger_name', case when k.kind = 'passenger_cancelled' then pa.full_name end
+           )) as ride
+    from picked k
+    join public.bookings b on b.id = k.booking_id
+    join public.routes r on r.id = b.route_id
+    join public.ride_groups g on g.id = r.group_id
+    join public.stops pu on pu.id = b.pickup_stop_id
+    join public.stops dr on dr.id = b.dropoff_stop_id
+    join public.profiles d on d.id = r.driver_id
+    left join public.profiles pa on pa.id = b.passenger_id
+    where public.departure_at(b.ride_date, r.out_time) > now()
+      and (k.kind <> 'booked'
+           or (b.status = 'active'
+               and not exists (select 1 from public.ride_exceptions x
+                               where x.route_id = b.route_id and x.ride_date = b.ride_date and x.cancelled)))
+  )
+  select array_agg(i.id order by i.id), i.kind::text, p.full_name, p.email,
+         jsonb_agg(i.ride order by i.ride_date, i.out_time, i.id)
+  from items i
+  join public.profiles p on p.id = i.recipient
+  where p.email <> '' and p.ride_emails_enabled
+  group by i.recipient, i.kind, p.full_name, p.email;
+end;
+$$;
+
+revoke execute on function public.claim_ride_emails from anon, authenticated, public;
+grant execute on function public.claim_ride_emails to service_role;
+
+
+-- ════════ supabase/migrations/0044_daily_passengers.sql ════════
+-- YourWay — the admin page's daily charts also show how many passengers rode each day.
+-- Run after 0043_ride_emails.sql. Safe to run again.
+--
+-- Counted as in admin_stats' "טרמפיסטיות שנסעו עד היום" (0033): each active
+-- booking on a ride that has departed, guests included, so someone who rides
+-- out and back counts twice. A date the driver cancelled is left out. Today
+-- counts only the rides that have left so far.
+
+-- The returned columns change, which "create or replace" can't do.
+drop function if exists public.admin_daily_stats(date);
+
+create function public.admin_daily_stats(p_from date)
+returns table (
+  day                  date,
+  new_users            bigint,
+  visitors             bigint,
+  non_driver_visitors  bigint,
+  passengers           bigint
+)
+language sql stable
+security definer set search_path = ''
+as $$
+  select
+    d.day,
+    (select count(*) from public.profiles p
+     where p.phone is not null and (p.created_at at time zone 'Asia/Jerusalem')::date = d.day),
+    (select count(*) from public.daily_visits v
+     join public.profiles p on p.id = v.user_id
+     where v.day = d.day and p.phone is not null),
+    (select count(*) from public.daily_visits v
+     join public.profiles p on p.id = v.user_id
+     where v.day = d.day and p.phone is not null
+       and not exists (select 1 from public.routes r
+                       where r.driver_id = v.user_id
+                         and (r.created_at at time zone 'Asia/Jerusalem')::date <= d.day)),
+    (select count(*) from public.bookings b
+     join public.routes r on r.id = b.route_id
+     where b.ride_date = d.day and b.status = 'active'
+       and public.departure_at(b.ride_date, r.out_time) <= now()
+       and not exists (select 1 from public.ride_exceptions x
+                       where x.route_id = b.route_id and x.ride_date = b.ride_date and x.cancelled))
+  from (select g::date as day from generate_series(p_from, public.israel_today(), interval '1 day') g) d
+  where public.is_admin()
+  order by d.day
+$$;
+
+revoke execute on function public.admin_daily_stats from anon, public;
+grant execute on function public.admin_daily_stats to authenticated;
+
+
+-- ════════ supabase/migrations/0045_admin_email_stats.sql ════════
+-- YourWay — the admin page counts who has each email turned on.
+-- Run after 0044_daily_passengers.sql. Safe to run again.
+--
+-- Members who finished sign-up, as in admin_stats, for each switch on the
+-- profile:
+--
+-- - ride_emails: "מיילים על הנסיעות שלי" (0043), for passengers and drivers.
+--   It's on until she turns it off, so it counts members who never opened it.
+-- - daily_email: the driver's "מייל יומי לנהגות" (0031).
+-- - daily_email_updates: its "מייל עדכון על נוסעת חדשה" (0036), which is sent
+--   only with the daily email, so it counts only while that's on too.
+
+create or replace function public.admin_email_stats()
+returns table (
+  ride_emails          bigint,
+  daily_email          bigint,
+  daily_email_updates  bigint
+)
+language sql stable
+security definer set search_path = ''
+as $$
+  select
+    count(*) filter (where p.ride_emails_enabled),
+    count(*) filter (where p.daily_email_enabled),
+    count(*) filter (where p.daily_email_enabled and p.daily_email_updates_enabled)
+  from public.profiles p
+  where p.phone is not null
+  having public.is_admin()
+$$;
+
+revoke execute on function public.admin_email_stats from anon, public;
+grant execute on function public.admin_email_stats to authenticated;

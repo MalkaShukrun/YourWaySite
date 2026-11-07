@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { publicOrigin } from "@/lib/auth/public-origin";
 
@@ -46,5 +47,24 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", publicOrigin(request)));
   }
 
+  if (isSignedIn) await recordVisit(supabase, request, response, data!.claims.sub);
+
   return response;
+}
+
+const VISIT_COOKIE = "yw_visit";
+
+// Marks the member as having come in today (Israel's date), for the admin
+// page's daily charts (0042). The cookie keeps it to one call a day.
+async function recordVisit(supabase: SupabaseClient, request: NextRequest, response: NextResponse, userId: string) {
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date());
+  const visit = `${userId}:${today}`;
+  if (request.cookies.get(VISIT_COOKIE)?.value === visit) return;
+
+  const { error } = await supabase.rpc("record_visit");
+  if (error) {
+    console.error("recordVisit:", error.message);
+    return;
+  }
+  response.cookies.set(VISIT_COOKIE, visit, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 2 * 86_400 });
 }

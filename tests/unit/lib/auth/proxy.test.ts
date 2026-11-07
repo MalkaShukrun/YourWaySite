@@ -5,8 +5,9 @@ import { NextRequest } from "next/server";
 // the redirect origin it uses (lib/auth/public-origin.ts).
 
 const claims = vi.hoisted(() => ({ value: null as unknown }));
+const rpc = vi.hoisted(() => vi.fn(async () => ({ error: null as { message: string } | null })));
 vi.mock("@supabase/ssr", () => ({
-  createServerClient: () => ({ auth: { getClaims: async () => ({ data: claims.value }) } }),
+  createServerClient: () => ({ auth: { getClaims: async () => ({ data: claims.value }) }, rpc }),
 }));
 const { updateSession } = await import("@/lib/supabase/proxy");
 const { publicOrigin } = await import("@/lib/auth/public-origin");
@@ -16,6 +17,7 @@ const locationOf = (response: Response) => response.headers.get("location");
 
 beforeEach(() => {
   claims.value = null;
+  rpc.mockClear();
   vi.stubEnv("SITE_URL", "");
   vi.stubEnv("NODE_ENV", "test");
 });
@@ -46,6 +48,47 @@ describe("signed-in users", () => {
   it.each(["/", "/dashboard", "/admin/groups"])("pass through to %s", async (path) => {
     claims.value = { claims: { sub: "user" } };
     expect(locationOf(await updateSession(request(path)))).toBeNull();
+  });
+});
+
+// The admin page's daily charts (0042): the first page each day records a visit.
+describe("visits", () => {
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date());
+  const withCookie = (value: string) => new NextRequest(new URL("/", "http://localhost:3000"), { headers: { cookie: `yw_visit=${value}` } });
+
+  it("records a signed-in user's first visit today, and remembers it in a cookie", async () => {
+    claims.value = { claims: { sub: "user" } };
+    const response = await updateSession(request("/"));
+    expect(rpc).toHaveBeenCalledExactlyOnceWith("record_visit");
+    expect(response.cookies.get("yw_visit")?.value).toBe(`user:${today}`);
+  });
+
+  it("doesn't record it again the same day", async () => {
+    claims.value = { claims: { sub: "user" } };
+    await updateSession(withCookie(`user:${today}`));
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("records it for another user, or on a new day", async () => {
+    claims.value = { claims: { sub: "user" } };
+    await updateSession(withCookie(`other:${today}`));
+    await updateSession(withCookie("user:2026-10-27"));
+    expect(rpc).toHaveBeenCalledTimes(2);
+  });
+
+  it("tries again on the next page when recording fails", async () => {
+    claims.value = { claims: { sub: "user" } };
+    rpc.mockResolvedValueOnce({ error: { message: "down" } });
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const response = await updateSession(request("/"));
+    expect(response.cookies.get("yw_visit")).toBeUndefined();
+    expect(locationOf(response)).toBeNull();
+    error.mockRestore();
+  });
+
+  it("records nothing for signed-out visitors", async () => {
+    await updateSession(request("/login"));
+    expect(rpc).not.toHaveBeenCalled();
   });
 });
 

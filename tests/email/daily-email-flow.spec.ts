@@ -39,7 +39,10 @@ test("the driver gets tomorrow's passenger by email", async ({ browser, page, se
 
   // A passenger finds it and books tomorrow.
   const passengerPage = await browser.newContext().then((context) => context.newPage());
-  await signIn(passengerPage, await seed.user("Passenger", { fullName: "נוסעת לבדיקה" }));
+  const passenger = await seed.user("Passenger", { fullName: "נוסעת לבדיקה" });
+  // Her address isn't real: no booking email (0043) for her.
+  await seed.service.from("profiles").update({ ride_emails_enabled: false }).eq("id", passenger.id);
+  await signIn(passengerPage, passenger);
   await passengerPage.goto(`/?group=${groupId}&date=${tomorrow}`);
   await passengerPage.locator(".trip-card").filter({ hasText: origin }).getByRole("link", { name: /לפרטים והרשמה/ }).click();
   await expect(passengerPage).toHaveURL(new RegExp(`date=${tomorrow}$`));

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildEmail, sendDailyEmails, type DailyEmail } from "@/supabase/functions/daily-passenger-email/email";
+import { buildEmail, type DailyEmail } from "@/supabase/functions/daily-passenger-email/email";
+import { sendEmails } from "@/supabase/functions/daily-passenger-email/send";
 
 // The driver's daily email (spec D7): its content and what happens when a send fails.
 
@@ -70,17 +71,18 @@ describe("buildEmail", () => {
   });
 });
 
-describe("sendDailyEmails", () => {
+describe("sendEmails", () => {
   const deps = (emails: DailyEmail[]) => ({
     claim: vi.fn(async () => emails),
     send: vi.fn(async () => {}),
     release: vi.fn(async () => {}),
     wait: vi.fn(async () => {}),
+    label: (e: DailyEmail) => e.driver_id,
   });
 
   it("sends every claimed email and waits between them", async () => {
     const d = deps([email(), email({ driver_id: "driver-2" })]);
-    expect(await sendDailyEmails(d)).toEqual({ sent: 2, failed: 0 });
+    expect(await sendEmails(d)).toEqual({ sent: 2, failed: 0 });
     expect(d.send).toHaveBeenCalledTimes(2);
     expect(d.wait).toHaveBeenCalledTimes(1);
     expect(d.release).not.toHaveBeenCalled();
@@ -92,7 +94,7 @@ describe("sendDailyEmails", () => {
     const d = deps([failing, email()]);
     d.send.mockRejectedValueOnce(new Error("Resend 429"));
 
-    expect(await sendDailyEmails(d)).toEqual({ sent: 1, failed: 1 });
+    expect(await sendEmails(d)).toEqual({ sent: 1, failed: 1 });
     expect(d.release).toHaveBeenCalledExactlyOnceWith(failing);
   });
 });
