@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { format, parseISO } from "date-fns";
 import { expect, test } from "./support/fixtures";
 import type { Seed } from "../integration/support/seed";
 import { choose, israelDate, shortDate, toast } from "./support/ui";
@@ -327,6 +328,11 @@ test("shows the daily charts from 27.10, and counts the admin's own visit today 
   await signIn(page, admin);
   await page.goto("/admin/groups");
   await expect(page.getByRole("heading", { name: "פעילות יומית" })).toBeVisible();
+  // The table is open; the charts fold under it.
+  await expect(page.locator(".daily-table tbody tr").first()).toContainText(shortDate(israelDate(0)));
+  await expect(page.locator(".daily-table tfoot th")).toHaveText(["סה״כ", "ממוצע יומי"]);
+  await expect(page.locator(".daily-chart").first()).toBeHidden();
+  await page.getByText("הצגה כגרפים").click();
   for (const title of ["משתמשות חדשות", "נוסעות שהן לא נהגות", "כל מי שנכנסה לאתר"]) {
     await expect(page.locator(".daily-chart").filter({ hasText: title })).toBeVisible();
   }
@@ -334,4 +340,24 @@ test("shows the daily charts from 27.10, and counts the admin's own visit today 
   await expect(bars.first()).toHaveAttribute("aria-label", /27\.10/);
   await expect(bars.last()).toHaveAttribute("aria-label", new RegExp(`^${shortDate(israelDate(0))}:`));
   expect(await visitsToday()).toBe(1);
+});
+
+test("shows the passengers of each of the next 7 days (0046)", async ({ page, seed, signIn }) => {
+  // A ride in 2 days with one passenger, in a database other tests share.
+  const date = israelDate(2);
+  const route = await seed.route(await seed.user("Driver"), { date, seats: 3, time: "08:00" });
+  await seed.book(await seed.user("Passenger"), route, date);
+  await signIn(page, await seed.user("Admin", { admin: true }));
+  await page.goto("/admin/groups");
+
+  await expect(page.getByRole("heading", { name: "טרמפיסטיות בשבוע הקרוב" })).toBeVisible();
+  const tiles = page.locator(".upcoming-day");
+  await expect(tiles).toHaveCount(7);
+  await expect(tiles.nth(0).locator(".upcoming-date")).toHaveText(`היום${format(parseISO(israelDate(0)), "d.M")}`);
+  await expect(tiles.nth(1).locator(".upcoming-date strong")).toHaveText("מחר");
+  const tile = tiles.nth(2);
+  await expect(tile.locator(".upcoming-date span")).toHaveText(format(parseISO(date), "d.M"));
+  await expect(tile.locator(".upcoming-count strong")).not.toHaveText("–");
+  await expect(tile.locator(".upcoming-bar")).toHaveAttribute("aria-label", /מתוך \d+ מקומות תפוסים/);
+  await expect(page.locator(".upcoming-total")).toContainText("טרמפיסטיות ב־");
 });

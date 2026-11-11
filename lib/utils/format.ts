@@ -50,6 +50,12 @@ export function seatsText(n: number) {
   return n === 1 ? "מקום פנוי אחד" : `${n} מקומות פנויים`;
 }
 
+// What's left on a ride, as the driver reads it: "נשארו 2 מקומות פנויים".
+export function seatsLeftText(n: number) {
+  if (n <= 0) return "אין מקומות פנויים";
+  return `${n === 1 ? "נשאר" : "נשארו"} ${seatsText(n)}`;
+}
+
 export const WEEKDAY_LETTERS = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"]; // Sunday … Saturday
 export const RIDE_WEEKDAYS = WEEKDAY_LETTERS.slice(0, 6); // Sunday … Friday
 

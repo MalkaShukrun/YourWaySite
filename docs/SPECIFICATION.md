@@ -2,8 +2,8 @@
 
 *How the ride-sharing app behaves today, written from the code: every rule the screens and the database enforce, and what the driver and the passenger each see in each situation.*
 
-- **Source:** the `YourWaySite` code and database migrations 0001–0045
-- **As of:** 7 November 2026
+- **Source:** the `YourWaySite` code and database migrations 0001–0046
+- **As of:** 10 November 2026
 - **Interface language:** Hebrew; labels below are quoted as they appear on screen
 
 **Contents**
@@ -518,8 +518,8 @@ Not applicable.
 
 `/dashboard`. Each ride card:
 
-- A gray header: the departure time in large type, the route, and two chips — the ride type and “N מתוך M מקומות” (lime when full). The fold arrow is at the far end; on phones the cancel button goes on the line under the route.
-- “טרמפיסטיות רשומות ופרטי קשר”: one row per passenger with her name and, under it, “איסוף: … · הורדה: …” (plus “נוספה על ידך” for a guest, D4). Her phone and email are shown as buttons, each with its icon and the number or address, that call or write to her (a guest has no email); on phones they go on the line under her name. “הוספת טרמפיסטית” is the last row of the list.
+- A gray header: the departure time in large type, the route, and two chips — the ride type and the seats left, “נשארו N מקומות פנויים” (“נשאר מקום פנוי אחד”; “אין מקומות פנויים” in lime when full). The fold arrow is at the far end; on phones the cancel button goes on the line under the route.
+- “טרמפיסטיות רשומות ופרטי קשר”: one row per passenger with her name and, under it, “איסוף: … · הורדה: …” (plus “נוספה על ידך” for a guest, D4). Her phone and email are shown as buttons, each with its icon and the number or address, that call or write to her (a guest has no email); on phones they go on the line under her name. “שריון מקום לטרמפיסטית” is the last row of the list, under the line “סיכמת טרמפ בטלפון? שרייני לה כאן מקום, כדי שמספר המקומות הפנויים יתעדכן.” An empty list says instead “עדיין אין טרמפיסטיות רשומות. סיכמת עם מישהי בטלפון? אפשר לשריין לה מקום למטה.” (just the first sentence when the button isn't offered).
 - “התחנות של היום”: one line of the booked stops in route order, pickups then drop-offs, each with who gets on or off there, and the איסוף / הורדה legend. The map beside it has no legend of its own; it shows its own only when no one has booked yet.
 
 **Rules:** removed routes don't appear. Cancelled dates still appear, marked “בוטלה לתאריך זה”.
@@ -565,10 +565,11 @@ Dashboard card.
 
 #### D4. A driver adds a passenger by hand
 
-**Trigger:** On a ride card she presses “הוספת טרמפיסטית” and enters a name, phone, pickup and drop-off.
+**Trigger:** On a ride card she presses “שריון מקום לטרמפיסטית” and enters a name, phone, pickup and drop-off.
 
 **Driver side**
 
+- A toast says “המקום של ‎<name>‎ שוריין · נשארו N מקומות פנויים” (or “אין מקומות פנויים” for the last seat).
 - The passenger appears on the card with “נוספה על ידך” and the phone she entered.
 - She takes a seat like any booking.
 - Only this driver ever sees her.
@@ -883,7 +884,9 @@ An unused group simply disappears from the filter.
 
 **Rules:** only admins can read the totals. Each active booking counts as one passenger on one ride, guests included, so a round trip counts twice. Dates the driver cancelled aren't counted. Today's rides include every scheduled ride, booked or not; a ride counts as departed only if it had at least one passenger, since a ride that left empty leaves no record. A route is active as in its driver's “מסלולים פעילים” tab: not removed, and not a one-time ride that took place or was cancelled for its date. The totals leave out routes in hidden groups, which can't be booked; a hidden group's row still shows its own count. Days follow Israel time.
 
-**Daily activity (“פעילות יומית”, migrations 0042 and 0044):** under the totals, four bar charts with one bar a day from 27.10.2026 to today: new users (“משתמשות חדשות”), users who came in without a route (“נוסעות שהן לא נהגות”), everyone who came in (“כל מי שנכנסה לאתר”), and passengers who traveled (“טרמפיסטיות שנסעו עם נהגת”). Each shows today's number and the total (new users) or daily average; the passengers chart shows yesterday's number and the average over whole days instead, since today's passengers and the total are already on the cards above; hovering or focusing a bar shows its date and number, and “הצגה כטבלה” lists every day. Only users who finished sign-up count. A user comes in on a day she opens the site while signed in, whether she typed her password that day or was still signed in; the app records it the first time each day. A user is without a route on a day if she hadn't added any route by the end of it, removed ones included. Passengers are counted on the ride's date as in “טרמפיסטיות שנסעו עד היום”: each active booking on a ride that has left, guests included, so a round trip counts twice, and a date the driver cancelled is left out; today counts only rides that have left so far. Unlike visits, every past day is complete. Days before 0042 was run are rebuilt from what Supabase Auth kept (sign-ins, token refreshes, sessions), which is partial, so they may count fewer people than came in.
+**The next 7 days (“טרמפיסטיות בשבוע הקרוב”, migration 0046):** above the daily activity, one tile a day from today (“היום”, marked in lime) through “מחר” to 6 days ahead, each with its date, how many passengers joined that day's rides, a bar of the share of its seats they took, and its rides and free seats (“3 נסיעות · 5 מקומות פנויים”, or “מלא”); a day with no rides says “אין נסיעות”. A line above sums the 7 days (“סה״כ N טרמפיסטיות ב־M נסיעות”). Rides are counted as in “נסיעות יוצאות היום”: every scheduled ride, booked or not, leaving out dates the driver cancelled and removed routes; today includes rides that already left. Passengers are those rides' active bookings, guests included, so a round trip counts twice. On phones each day is a row.
+
+**Daily activity (“פעילות יומית”, migrations 0042 and 0044):** under the totals, a table of every day from 27.10.2026 to today (“הצגה כטבלה”, open) and, folded under it, four bar charts with one bar a day (“הצגה כגרפים”): new users (“משתמשות חדשות”), users who came in without a route (“נוסעות שהן לא נהגות”), everyone who came in (“כל מי שנכנסה לאתר”), and passengers who traveled (“טרמפיסטיות שנסעו עם נהגת”). Each shows today's number and the total (new users) or daily average; the passengers chart shows yesterday's number and the average over whole days instead, since today's passengers and the total are already on the cards above; hovering or focusing a bar shows its date and number, and the table lists every day, newest first, closed by two rows: “סה״כ” and “ממוצע יומי”, with the same numbers as the charts (the passengers average again over whole days only). Only users who finished sign-up count. A user comes in on a day she opens the site while signed in, whether she typed her password that day or was still signed in; the app records it the first time each day. A user is without a route on a day if she hadn't added any route by the end of it, removed ones included. Passengers are counted on the ride's date as in “טרמפיסטיות שנסעו עד היום”: each active booking on a ride that has left, guests included, so a round trip counts twice, and a date the driver cancelled is left out; today counts only rides that have left so far. Unlike visits, every past day is complete. Days before 0042 was run are rebuilt from what Supabase Auth kept (sign-ins, token refreshes, sessions), which is partial, so they may count fewer people than came in.
 
 #### H6. An admin keeps the list of places
 

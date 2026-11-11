@@ -242,18 +242,59 @@ a.nav-item { text-decoration: none; }
 .daily-bars li:hover .daily-tip, .daily-bars li:focus-visible .daily-tip { opacity: 1; }
 .daily-axis { margin-top: 6px; }
 .daily-axis li { flex: 1 1 0; min-width: 0; text-align: center; color: #8A968F; font-size: 12px; white-space: nowrap; overflow: visible; }
-.daily-table { border-top: 1px solid var(--line); padding: 12px 24px; }
-.daily-table summary { color: var(--green); font-size: 15px; font-weight: 700; cursor: pointer; }
-.daily-table table { width: 100%; margin-top: 10px; border-collapse: collapse; font-size: 15px; }
+/* The table and the charts each fold under their own "הצגה כ…" line. */
+.daily-toggle > summary { padding-block: 12px; color: var(--green); font-size: 15px; font-weight: 700; cursor: pointer; }
+.daily-toggle + .daily-toggle { border-top: 1px solid var(--line); }
+.daily-table { padding: 0 24px 12px; }
+.daily-table table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.daily-charts-toggle > summary { padding-inline: 24px; }
+.daily-charts-toggle[open] > summary { border-bottom: 1px solid var(--line); }
 .daily-table th, .daily-table td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: right; }
 .daily-table th { color: #59665F; font-weight: 700; }
-.daily-table td + td, .daily-table th + th { text-align: center; }
+.daily-table td + td, .daily-table th + th, .daily-table tfoot th + td { text-align: center; }
+/* The totals close the table, set off by a heavier line. */
+.daily-table tfoot th, .daily-table tfoot td { color: var(--green-dark); font-weight: 800; background: #F6F8F7; }
+.daily-table tfoot tr:first-child > * { border-top: 3px solid var(--green-dark); }
 @media (max-width: 780px) {
   .daily-charts { grid-template-columns: 1fr; }
   .daily-chart:nth-child(even) { border-inline-start: 0; }
   .daily-chart + .daily-chart { border-top: 1px solid var(--line); }
 }
-@media (max-width: 780px) { .daily-chart, .daily-table { padding-inline: 16px; } }
+@media (max-width: 780px) { .daily-chart, .daily-table, .daily-charts-toggle > summary { padding-inline: 16px; } }
+
+/* Admin — the next 7 days, one tile a day, today first and marked in lime.
+   --fill is the share of the day's seats passengers took. On phones each day
+   is a row: the day, its bar and note, then the number. */
+.panel:has(.upcoming-days) { margin-bottom: 18px; }
+.upcoming-total { margin: 0; padding: 14px 24px 0; color: #59665F; font-size: 15px; }
+.upcoming-total strong { color: var(--green-dark); font-size: 18px; }
+.upcoming-days { list-style: none; margin: 0; padding: 12px 24px 22px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }
+.upcoming-day { min-width: 0; display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+.upcoming-day.is-today { border-top: 4px solid var(--lime); background: #FBFEF6; }
+.upcoming-day.is-empty { background: #FAFBFA; }
+.upcoming-date { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 6px; }
+.upcoming-date strong { color: var(--ink); font-size: 15px; }
+.upcoming-date span { color: #8A968F; font-size: 14px; }
+.upcoming-count { display: flex; flex-direction: column; }
+.upcoming-count strong { color: var(--green-dark); font-size: 30px; line-height: 1; }
+.upcoming-count span { margin-top: 4px; color: #59665F; font-size: 14px; }
+.upcoming-day.is-empty .upcoming-count strong { color: #A3AEA8; }
+.upcoming-bar { display: block; height: 8px; border-radius: 99px; background: var(--green-soft); overflow: hidden; }
+.upcoming-bar i { display: block; width: var(--fill); height: 100%; border-radius: inherit; background: var(--green); }
+.upcoming-day.is-full .upcoming-bar i { background: #5E8F3A; }
+.upcoming-day small { color: #59665F; font-size: 13px; line-height: 1.35; }
+@media (min-width: 781px) and (max-width: 1100px) { .upcoming-days { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 780px) {
+  .upcoming-total { padding-inline: 16px; }
+  .upcoming-days { grid-template-columns: minmax(0, 1fr); gap: 8px; padding-inline: 16px; }
+  .upcoming-day { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; grid-template-areas: "date bar count" "date note count"; align-items: center; gap: 4px 12px; padding: 10px 12px; }
+  .upcoming-day.is-empty { grid-template-areas: "date note count"; }
+  .upcoming-date { grid-area: date; flex-direction: column; align-items: flex-start; }
+  .upcoming-count { grid-area: count; align-items: center; }
+  .upcoming-count strong { font-size: 24px; }
+  .upcoming-bar { grid-area: bar; }
+  .upcoming-day small { grid-area: note; }
+}
 
 /* Profile — states the static design doesn't show */
 .input-shell.is-readonly { background: #F4F7F5; }

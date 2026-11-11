@@ -226,9 +226,11 @@ input[type="time"] { direction: ltr; }
 .passenger-name { display: flex; flex-direction: column; }
 .passenger-name strong { font-size: 16px; }
 .passenger-name small { font-size: 14px; color: #66736C; }
-/* "הוספת טרמפיסטית" closes the list, as a light row; its form opens there. */
+/* "שריון מקום לטרמפיסטית" closes the list, as a light row; its form opens there. */
 .passenger-add { padding: 6px 25px 4px; }
-.passenger-add > .btn-secondary { width: 100%; border-style: dashed; color: #59665F; font-weight: 600; }
+.passenger-add-hint { margin: 4px 0 8px; font-size: 15px; color: #59665F; }
+.passenger-add > .btn-secondary { width: 100%; border: 1px dashed #88B65D; background: var(--lime); color: var(--green-dark); font-weight: 700; }
+.passenger-add > .btn-secondary:hover { border-color: #5E8F3A; background: #C8E995; }
 .add-passenger { border-radius: 12px; background: #f6f8f7; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
 .add-passenger > div:first-child { display: flex; flex-direction: column; }
 .add-passenger > div:first-child strong { font-size: 16px; color: #48554f; }

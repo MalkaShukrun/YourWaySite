@@ -8,6 +8,7 @@ import {
   kindLabel,
   RIDE_WEEKDAYS,
   routeKindLabel,
+  seatsLeftText,
   seatsText,
   splitPlace,
   WEEKDAY_LETTERS,
@@ -30,6 +31,12 @@ describe("labels", () => {
     expect(seatsText(1)).toBe("מקום פנוי אחד");
     expect(seatsText(0)).toBe("0 מקומות פנויים");
     expect(seatsText(3)).toBe("3 מקומות פנויים");
+  });
+
+  it("says what's left on a ride", () => {
+    expect(seatsLeftText(3)).toBe("נשארו 3 מקומות פנויים");
+    expect(seatsLeftText(1)).toBe("נשאר מקום פנוי אחד");
+    expect(seatsLeftText(0)).toBe("אין מקומות פנויים");
   });
 });
 

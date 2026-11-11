@@ -5,6 +5,7 @@ import { Phone, Plus, User } from "lucide-react";
 import { addPassenger, removePassenger } from "@/app/(app)/(driver)/actions";
 import type { Stop } from "@/lib/rides/types";
 import { GUEST_NAME_MAX } from "@/lib/validation/passenger";
+import { seatsLeftText } from "@/lib/utils/format";
 import { ConfirmInline } from "@/components/ui/ConfirmInline";
 import { Select } from "@/components/ui/Select";
 import { Toast } from "@/components/ui/Toast";
@@ -14,7 +15,9 @@ type RideRef = { routeId: string; date: string };
 
 // The driver adds a passenger by hand — someone who called, or isn't signed
 // up. The booking stays on the driver's list only, apart from user accounts.
-export function AddPassengerForm({ routeId, date, stops }: RideRef & { stops: Stop[] }) {
+// Offered while `seatsLeft`; `hint` reminds her of it under a list that isn't
+// empty (an empty list says it itself).
+export function AddPassengerForm({ routeId, date, stops, seatsLeft, hint }: RideRef & { stops: Stop[]; seatsLeft: number; hint: boolean }) {
   const pickups = stops.filter((s) => s.kind === "pickup");
   const dropoffs = stops.filter((s) => s.kind === "dropoff");
   const empty = { name: "", phone: "", pickupStopId: pickups[0]?.id ?? "", dropoffStopId: dropoffs[0]?.id ?? "" };
@@ -40,65 +43,71 @@ export function AddPassengerForm({ routeId, date, stops }: RideRef & { stops: St
       setExistingGuest(null);
       if (result.error) return setError(result.error);
       const name = values.name.trim();
-      setToast((t) => ({ id: t.id + 1, message: replace ? `ההרשמה של ${name} עודכנה` : `${name} נוספה לנסיעה` }));
+      setToast((t) => ({ id: t.id + 1, message: replace ? `ההרשמה של ${name} עודכנה` : `המקום של ${name} שוריין · ${seatsLeftText(seatsLeft - 1)}` }));
       setValues(empty);
       setOpen(false);
     });
 
+  // The toast stays mounted when the last seat is taken.
+  if (seatsLeft <= 0) return <Toast message={toast.message} id={toast.id} />;
+
   if (!open) {
     return (
-      <>
+      <div className="passenger-add">
+        {hint && <p className="passenger-add-hint">סיכמת טרמפ בטלפון? שרייני לה כאן מקום, כדי שמספר המקומות הפנויים יתעדכן.</p>}
         <button className="btn btn-secondary" onClick={() => setOpen(true)}>
-          <Plus {...iconProps} size={18} /> הוספת טרמפיסטית
+          <Plus {...iconProps} size={18} /> שריון מקום לטרמפיסטית
         </button>
         <Toast message={toast.message} id={toast.id} />
-      </>
+      </div>
     );
   }
 
   return (
-    <form className="add-passenger" onSubmit={(e) => { e.preventDefault(); submit(); }}>
-      <div>
-        <strong>הוספת טרמפיסטית לנסיעה</strong>
-        <span>הטרמפיסטית תופיע ברשימה שלך בלבד ותתפוס מקום בנסיעה</span>
-      </div>
-      <div className="add-passenger-fields">
-        <label className="field">
-          <span>שם מלא</span>
-          <div className="input-shell"><User {...iconProps} size={20} /><input value={values.name} onChange={(e) => set("name")(e.target.value)} maxLength={GUEST_NAME_MAX} autoComplete="off" /></div>
-        </label>
-        <label className="field">
-          <span>טלפון</span>
-          <div className="input-shell"><Phone {...iconProps} size={20} /><input value={values.phone} onChange={(e) => set("phone")(e.target.value)} type="tel" inputMode="tel" placeholder="050-000-0000" autoComplete="off" /></div>
-        </label>
-        <div className="field">
-          <span>תחנת איסוף</span>
-          <Select label="תחנת איסוף" value={values.pickupStopId} onChange={set("pickupStopId")} options={pickups.map((s) => ({ value: s.id, label: s.label }))} />
+    <div className="passenger-add">
+      <form className="add-passenger" onSubmit={(e) => { e.preventDefault(); submit(); }}>
+        <div>
+          <strong>הוספת טרמפיסטית לנסיעה</strong>
+          <span>הטרמפיסטית תופיע ברשימה שלך בלבד ותתפוס מקום בנסיעה</span>
         </div>
-        <div className="field">
-          <span>תחנת הורדה</span>
-          <Select label="תחנת הורדה" value={values.dropoffStopId} onChange={set("dropoffStopId")} options={dropoffs.map((s) => ({ value: s.id, label: s.label }))} />
+        <div className="add-passenger-fields">
+          <label className="field">
+            <span>שם מלא</span>
+            <div className="input-shell"><User {...iconProps} size={20} /><input value={values.name} onChange={(e) => set("name")(e.target.value)} maxLength={GUEST_NAME_MAX} autoComplete="off" /></div>
+          </label>
+          <label className="field">
+            <span>טלפון</span>
+            <div className="input-shell"><Phone {...iconProps} size={20} /><input value={values.phone} onChange={(e) => set("phone")(e.target.value)} type="tel" inputMode="tel" placeholder="050-000-0000" autoComplete="off" /></div>
+          </label>
+          <div className="field">
+            <span>תחנת איסוף</span>
+            <Select label="תחנת איסוף" value={values.pickupStopId} onChange={set("pickupStopId")} options={pickups.map((s) => ({ value: s.id, label: s.label }))} />
+          </div>
+          <div className="field">
+            <span>תחנת הורדה</span>
+            <Select label="תחנת הורדה" value={values.dropoffStopId} onChange={set("dropoffStopId")} options={dropoffs.map((s) => ({ value: s.id, label: s.label }))} />
+          </div>
         </div>
-      </div>
-      {error && <small className="field-error" role="alert">{error}</small>}
-      {existingGuest !== null ? (
-        <div role="alert">
-          <ConfirmInline
-            question={`כבר יש הרשמה עם מספר הטלפון הזה${existingGuest ? ` (${existingGuest})` : ""}. להחליף אותה?`}
-            confirmLabel="כן, להחליף"
-            pendingLabel="מחליף..."
-            pending={pending}
-            onConfirm={() => submit(true)}
-            onCancel={() => setExistingGuest(null)}
-          />
-        </div>
-      ) : (
-        <div className="add-passenger-actions">
-          <button type="submit" className="btn btn-primary" disabled={pending}>{pending ? "מוסיף..." : "הוספה לנסיעה"}</button>
-          <button type="button" className="btn btn-ghost" onClick={() => { setOpen(false); setError(""); }}>ביטול</button>
-        </div>
-      )}
-    </form>
+        {error && <small className="field-error" role="alert">{error}</small>}
+        {existingGuest !== null ? (
+          <div role="alert">
+            <ConfirmInline
+              question={`כבר יש הרשמה עם מספר הטלפון הזה${existingGuest ? ` (${existingGuest})` : ""}. להחליף אותה?`}
+              confirmLabel="כן, להחליף"
+              pendingLabel="מחליף..."
+              pending={pending}
+              onConfirm={() => submit(true)}
+              onCancel={() => setExistingGuest(null)}
+            />
+          </div>
+        ) : (
+          <div className="add-passenger-actions">
+            <button type="submit" className="btn btn-primary" disabled={pending}>{pending ? "מוסיף..." : "הוספה לנסיעה"}</button>
+            <button type="button" className="btn btn-ghost" onClick={() => { setOpen(false); setError(""); }}>ביטול</button>
+          </div>
+        )}
+      </form>
+    </div>
   );
 }
 

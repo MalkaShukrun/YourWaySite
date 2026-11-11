@@ -131,6 +131,71 @@ describe("to date (spec H5)", () => {
   });
 });
 
+type Upcoming = { day: string; rides: number; seats: number; passengers: number };
+
+const upcoming = async () => check(await admin.db.rpc("admin_upcoming_passengers")) as Upcoming[];
+
+// The change on each of the next 7 days, keyed by date, leaving out days that didn't change.
+async function upcomingChangeFrom(before: Upcoming[]) {
+  const after = await upcoming();
+  const changes: Record<string, Omit<Upcoming, "day">> = {};
+  after.forEach((a, i) => {
+    const b = before[i];
+    const change = { rides: a.rides - b.rides, seats: a.seats - b.seats, passengers: a.passengers - b.passengers };
+    if (change.rides || change.seats || change.passengers) changes[a.day] = change;
+  });
+  return changes;
+}
+
+describe("the next 7 days (spec H5)", () => {
+  it("lists today and the 6 days after it, in order", async () => {
+    expect((await upcoming()).map((d) => d.day)).toEqual([0, 1, 2, 3, 4, 5, 6].map((n) => daysFromToday(n)));
+  });
+
+  it("counts each day's rides, their seats and passengers, guests included", async () => {
+    const before = await upcoming();
+    const route = await oneTime(daysFromToday(2), "08:00");
+    await w.bookDirectly(passenger, route, daysFromToday(2));
+    check(await w.addGuest(driver, route, daysFromToday(2)));
+    expect(await upcomingChangeFrom(before)).toEqual({ [daysFromToday(2)]: { rides: 1, seats: 4, passengers: 2 } });
+  });
+
+  it("counts a recurring route on each day it runs", async () => {
+    const days = [daysFromToday(1), daysFromToday(3)];
+    const before = await upcoming();
+    await w.route(driver, { kind: "recurring", weekdays: days.map(weekdayOf), seats: 3 });
+    expect(await upcomingChangeFrom(before)).toEqual(Object.fromEntries(days.map((d) => [d, { rides: 1, seats: 3, passengers: 0 }])));
+  });
+
+  it("includes today's rides that already left", async () => {
+    const before = await upcoming();
+    const route = await oneTime(today(), "00:00");
+    await w.bookDirectly(passenger, route, today());
+    expect(await upcomingChangeFrom(before)).toEqual({ [today()]: { rides: 1, seats: 4, passengers: 1 } });
+  });
+
+  it("leaves out a cancelled date, a cancelled booking, a removed route and days past the 7", async () => {
+    const before = await upcoming();
+    const cancelled = await oneTime(daysFromToday(1), "08:00");
+    await w.bookDirectly(passenger, cancelled, daysFromToday(1));
+    await cancelDate(cancelled, daysFromToday(1));
+    const removed = await oneTime(daysFromToday(2), "08:00");
+    check(await w.service.from("routes").update({ is_active: false }).eq("id", removed.id));
+    const later = await oneTime(daysFromToday(7), "08:00");
+    await w.bookDirectly(passenger, later, daysFromToday(7));
+    const route = await oneTime(daysFromToday(4), "08:00");
+    const id = await w.bookDirectly(other, route, daysFromToday(4));
+    check(await other.db.rpc("cancel_booking", { p_booking_id: id }));
+    expect(await upcomingChangeFrom(before)).toEqual({ [daysFromToday(4)]: { rides: 1, seats: 4, passengers: 0 } });
+  });
+
+  it("returns nothing to a regular user, and is closed to visitors", async () => {
+    expect(check(await passenger.db.rpc("admin_upcoming_passengers"))).toEqual([]);
+    const { error } = await w.anon.rpc("admin_upcoming_passengers");
+    expect(error?.code).toBe(DENIED);
+  });
+});
+
 describe("users and access (spec H5)", () => {
   it("counts only users who finished sign-up", async () => {
     const before = await stats();

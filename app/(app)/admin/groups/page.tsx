@@ -1,9 +1,10 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/auth/session";
-import { getAdminGroups, getAdminStats, getDailyStats, getEmailStats, getPlaces } from "@/lib/admin/data";
+import { getAdminGroups, getAdminStats, getDailyStats, getEmailStats, getPlaces, getUpcomingPassengers } from "@/lib/admin/data";
 import { AdminStatsSection, EmailStatsSection } from "@/components/admin/AdminStatsSection";
 import { DailyChartsSection } from "@/components/admin/DailyChartsSection";
+import { UpcomingPassengersSection } from "@/components/admin/UpcomingPassengersSection";
 import { GroupsSection, GroupStats } from "@/components/admin/GroupsSection";
 import { PlacesSection } from "@/components/admin/PlacesSection";
 import { OtpEmailsSection } from "@/components/admin/OtpEmailsSection";
@@ -25,9 +26,10 @@ export default function AdminGroupsPage() {
 
 async function AdminGroups() {
   await requireAdmin();
-  const [stats, emailStats, days, groups, places] = await Promise.all([
+  const [stats, emailStats, upcoming, days, groups, places] = await Promise.all([
     getAdminStats(),
     getEmailStats(),
+    getUpcomingPassengers(),
     getDailyStats(),
     getAdminGroups(),
     getPlaces(),
@@ -43,6 +45,7 @@ async function AdminGroups() {
       <AdminStatsSection stats={stats} />
       <GroupStats groups={groups} users={stats.users} />
       <EmailStatsSection stats={emailStats} />
+      <UpcomingPassengersSection days={upcoming} />
       <DailyChartsSection days={days} />
       <GroupsSection groups={groups} places={places} />
       <PlacesSection places={places} groups={groups} />

@@ -113,6 +113,17 @@ export async function getDailyStats(): Promise<DailyStats[]> {
   return data ?? [];
 }
 
+export type UpcomingDay = { day: string; rides: number; seats: number; passengers: number };
+
+// One row a day from today to 6 days ahead (0046_admin_upcoming_passengers.sql).
+// The function returns them to admins only.
+export async function getUpcomingPassengers(): Promise<UpcomingDay[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("admin_upcoming_passengers");
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
 // The addresses approved for sign-in with a personal code. RLS: admins only.
 export async function getOtpEmails(): Promise<{ email: string }[]> {
   const supabase = await createClient();

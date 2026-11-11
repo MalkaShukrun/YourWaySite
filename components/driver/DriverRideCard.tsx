@@ -2,7 +2,7 @@ import { Mail, Phone } from "lucide-react";
 import { formatTime } from "@/lib/utils/dates";
 import { isPlaced, type Stop } from "@/lib/rides/types";
 import type { DriverPassenger, DriverRide } from "@/lib/driver/types";
-import { avatarColorFor, initialsOf, routeKindLabel } from "@/lib/utils/format";
+import { avatarColorFor, initialsOf, routeKindLabel, seatsLeftText } from "@/lib/utils/format";
 import { CollapsibleRideCard } from "@/components/driver/CollapsibleRideCard";
 import { AddPassengerForm, RemovePassengerButton } from "@/components/driver/PassengerControls";
 import { CancelForDateButton } from "@/components/driver/RideDayControls";
@@ -21,6 +21,8 @@ export function DriverRideCard({ ride, date, departed = false, open = false }: {
   // The stops box shows only once someone has booked; the map only when stops are marked on it.
   const hasPassengers = ride.passengers.length > 0;
   const hasMap = ride.stops.some(isPlaced);
+  const seatsLeft = ride.seats - ride.booked;
+  const canAdd = !ride.cancelled && seatsLeft > 0;
 
   return (
     <CollapsibleRideCard
@@ -33,7 +35,7 @@ export function DriverRideCard({ ride, date, departed = false, open = false }: {
             <h2><GroupName origin={ride.origin} destination={ride.destination} /></h2>
             <div className="ride-chips">
               <span className="ride-chip">{routeKindLabel(ride.kind)}</span>
-              <span className={`ride-chip ${ride.booked >= ride.seats ? "full" : ""}`}>{ride.booked} מתוך {ride.seats} מקומות</span>
+              <span className={`ride-chip ${seatsLeft <= 0 ? "full" : ""}`}>{seatsLeftText(seatsLeft)}</span>
             </div>
           </div>
         </div>
@@ -51,7 +53,11 @@ export function DriverRideCard({ ride, date, departed = false, open = false }: {
       </div>
       <div className="passenger-list">
         {ride.passengers.length === 0 ? (
-          <p className="passenger-empty">עדיין אין טרמפיסטיות רשומות לנסיעה הזו.</p>
+          <p className="passenger-empty">
+            {canAdd
+              ? "עדיין אין טרמפיסטיות רשומות. סיכמת עם מישהי בטלפון? אפשר לשריין לה מקום למטה."
+              : "עדיין אין טרמפיסטיות רשומות לנסיעה הזו."}
+          </p>
         ) : (
           ride.passengers.map((p, index) => (
             <div className="passenger-row" key={p.booking_id}>
@@ -80,11 +86,7 @@ export function DriverRideCard({ ride, date, departed = false, open = false }: {
             </div>
           ))
         )}
-        {!ride.cancelled && ride.booked < ride.seats && (
-          <div className="passenger-add">
-            <AddPassengerForm routeId={ride.route_id} date={date} stops={ride.stops} />
-          </div>
-        )}
+        {!ride.cancelled && <AddPassengerForm routeId={ride.route_id} date={date} stops={ride.stops} seatsLeft={seatsLeft} hint={hasPassengers} />}
       </div>
 
       {(hasPassengers || hasMap) && (
