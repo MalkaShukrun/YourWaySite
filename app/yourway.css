@@ -1,7 +1,7 @@
 /* YourWay design system — ported from the Figma Make design (Group Rides Management System). */
 
 :root {
-  font-family: var(--font-assistant), "Assistant", Arial, sans-serif;
+  font-family: var(--font-assistant-hebrew), var(--font-assistant-latin-ext), var(--font-assistant-latin), "Assistant", Arial, sans-serif;
   color: #24342f;
   background: #F7FAF6;
   font-synthesis: none;

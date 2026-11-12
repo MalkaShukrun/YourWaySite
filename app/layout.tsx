@@ -1,13 +1,7 @@
 import type { Metadata } from "next";
-import { Assistant } from "next/font/google";
 import { SITE_ORIGIN } from "@/lib/site/url";
+import { assistantVariables } from "./fonts/assistant";
 import "./globals.css";
-
-const assistant = Assistant({
-  variable: "--font-assistant",
-  subsets: ["hebrew", "latin"],
-  weight: ["400", "500", "600", "700", "800"],
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_ORIGIN),
@@ -17,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="he" dir="rtl" className={assistant.variable}>
+    <html lang="he" dir="rtl" className={assistantVariables}>
       <body>{children}</body>
     </html>
   );
