@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { expect, test } from "./support/fixtures";
 import { expectNotFound, openForm, sideNav, toast } from "./support/ui";
 
@@ -272,6 +273,56 @@ test("signing out ends the session", async ({ page, seed, signIn }) => {
   await expect(page).toHaveURL(/\/login$/);
   await page.goto("/my-rides");
   await expect(page).toHaveURL(/\/login$/);
+});
+
+// Sign-out after 10 minutes without activity, with a warning at 9 (spec A8).
+// The page's clock is fast-forwarded; the server's is real.
+test.describe("inactivity (spec A8)", () => {
+  // Opens the page and waits for its idle timer, which records the opening:
+  // fast-forwarding before then would only move its starting point.
+  const openWithTimer = async (page: Page, path: string) => {
+    await page.goto(path);
+    await page.waitForFunction(() => localStorage.getItem("yw-last-activity") !== null, null, { polling: 100 });
+  };
+
+  test("after 9 idle minutes she is asked whether she is still there, and can stay", async ({ page, seed, signIn }) => {
+    await signIn(page, await seed.user("Idle"));
+    await page.clock.install();
+    await openWithTimer(page, "/my-rides");
+
+    await page.clock.fastForward("09:01");
+    const dialog = page.getByRole("alertdialog", { name: "עדיין כאן?" });
+    await expect(dialog).toContainText(/ננתק אותך בעוד \d+ שניות/);
+    await dialog.getByRole("button", { name: "כן, להישאר מחוברת" }).click();
+    await expect(dialog).toHaveCount(0);
+
+    // Counting starts again from "stay".
+    await page.clock.fastForward("08:00");
+    await expect(dialog).toHaveCount(0);
+    await page.goto("/payments");
+    await expect(page).toHaveURL(/\/payments$/);
+  });
+
+  test("at 10 idle minutes she is signed out, and sign-in says why", async ({ page, seed, signIn }) => {
+    await signIn(page, await seed.user("Idle"));
+    await page.clock.install();
+    await openWithTimer(page, "/");
+
+    await page.clock.fastForward("10:01");
+    await expect(page).toHaveURL(/\/login\?reason=idle$/);
+    await expect(page.getByText("התנתקת אוטומטית אחרי 10 דקות ללא פעילות. אפשר להתחבר שוב.")).toBeVisible();
+    await page.goto("/my-rides");
+    await expect(page).toHaveURL(/\/login$/);
+  });
+
+  test("the server signs her out too, after a closed tab", async ({ page, seed, signIn, baseURL }) => {
+    await signIn(page, await seed.user("Idle"));
+    await page.context().addCookies([{ name: "yw_active", value: String(Date.now() - 12 * 60_000), url: baseURL! }]);
+    await page.goto("/my-rides");
+    await expect(page).toHaveURL(/\/login\?reason=idle$/);
+    await page.goto("/my-rides");
+    await expect(page).toHaveURL(/\/login$/);
+  });
 });
 
 // The contact form (spec I1). Nothing reaches a real inbox: the test server's

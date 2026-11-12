@@ -4,6 +4,7 @@ import { initialsOf } from "@/lib/utils/format";
 import { AdminNavLink, Sidebar } from "./Sidebar";
 import { Header, UserMenu } from "./Header";
 import { BottomNav } from "./BottomNav";
+import { IdleLogout } from "@/components/auth/IdleLogout";
 
 // The signed-in layout from the design: sidebar, top bar, mobile tab bar.
 // Menus read the URL and the user, so they stream in behind <Suspense>;
@@ -35,6 +36,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <Suspense fallback={null}>
         <BottomNavForUser />
       </Suspense>
+      <IdleLogout />
     </div>
   );
 }

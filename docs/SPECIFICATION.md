@@ -3,7 +3,7 @@
 *How the ride-sharing app behaves today, written from the code: every rule the screens and the database enforce, and what the driver and the passenger each see in each situation.*
 
 - **Source:** the `YourWaySite` code and database migrations 0001–0046
-- **As of:** 10 November 2026
+- **As of:** 12 November 2026
 - **Interface language:** Hebrew; labels below are quoted as they appear on screen
 
 **Contents**
@@ -11,7 +11,7 @@
 1. [Overview](#1-overview)
 2. [Core concepts and rules](#2-core-concepts-and-rules)
 3. [Screens and where things appear](#3-screens-and-where-things-appear)
-4. [Scenarios](#4-scenarios) (43): [A. Accounts and access](#a-accounts-and-access) · [B. Publishing routes](#b-publishing-routes) · [C. Finding and booking a ride](#c-finding-and-booking-a-ride) · [D. The driver's day](#d-the-drivers-day) · [E. A passenger cancels](#e-a-passenger-cancels) · [F. Removing routes](#f-removing-routes) · [G. After the ride](#g-after-the-ride) · [H. Admin](#h-admin) · [I. Support and errors](#i-support-and-errors)
+4. [Scenarios](#4-scenarios) (44): [A. Accounts and access](#a-accounts-and-access) · [B. Publishing routes](#b-publishing-routes) · [C. Finding and booking a ride](#c-finding-and-booking-a-ride) · [D. The driver's day](#d-the-drivers-day) · [E. A passenger cancels](#e-a-passenger-cancels) · [F. Removing routes](#f-removing-routes) · [G. After the ride](#g-after-the-ride) · [H. Admin](#h-admin) · [I. Support and errors](#i-support-and-errors)
 5. [Who sees what](#5-who-sees-what)
 6. [Booking and ride states](#6-booking-and-ride-states)
 7. [Messages reference](#7-messages-reference)
@@ -97,7 +97,7 @@ Open for booking → Cancelled for this date → Shown as cancelled · never cha
 
 | Screen | Address | Who | What it shows |
 |---|---|---|---|
-| Sign-in | `/login` | Anyone | Google sign-in, or a personal code for approved addresses (A6), consent to the terms of use and the privacy policy, site totals (members, and shown groups with at least one ride that wasn't cancelled and hasn't taken place; refreshed hourly). Opens the onboarding window for new users. |
+| Sign-in | `/login` | Anyone | Google sign-in, or a personal code for approved addresses (A6), consent to the terms of use and the privacy policy, site totals (members, and shown groups with at least one ride that wasn't cancelled and hasn't taken place; refreshed hourly). Opens the onboarding window for new users. After an automatic sign-out it says she was signed out after 10 minutes without activity (A8). |
 | Terms of use | `/terms` | Anyone | The terms text, including the cancellation policy. |
 | Privacy policy | `/privacy` | Anyone | The policy text, including the mailing and messages section. |
 | Ride search | `/` | All | Greeting, filter bar (“מאיפה” and “לאן” with a swap button, date, departure from/until, ride type), result cards for the next 7 days. Each recurring route appears as one card with a chip per date showing free seats. |
@@ -242,6 +242,25 @@ Her session cookies are removed, even if Google already ended the session, and s
 Her mailbox, at her sign-in address. Each email links to “הנסיעות שלי” (or the dashboard) and to the profile, to change the settings.
 
 **Rules:** the emails are on until she turns them off. They go out on the same 5-minute run as D7, so they arrive within about 5 minutes, and what happened between two runs comes in one email per kind: several dates booked at once are one email. An email is left out when its news is already stale at the run: a booking cancelled since, or whose date the driver cancelled since, gets no booking email (the cancellation email still goes); a ride that already left gets none. Turning the emails off also stops those already waiting. Passengers the driver added have no account, so nothing is sent to them or about them. A failed send is tried again every 5 minutes until the ride leaves. There is no reminder before a ride.
+
+#### A8. A signed-in user is inactive for 10 minutes
+
+**Trigger:** No click, tap, key, scroll or mouse movement on any of her open tabs of the site for 10 minutes. Admins too.
+
+**Driver side**
+
+Her routes and bookings are untouched.
+
+**Passenger side**
+
+- After 9 minutes a window asks “עדיין כאן?” and counts down the last minute. “כן, להישאר מחוברת” keeps her signed in; “להתנתק עכשיו” signs her out at once. While the window is open, only its buttons count as activity.
+- At 10 minutes she is signed out as in A5 and lands on sign-in with “התנתקת אוטומטית אחרי 10 דקות ללא פעילות. אפשר להתחבר שוב.”
+
+**Where it shows**
+
+Every signed-in page; then `/login`.
+
+**Rules:** activity in one tab keeps all her tabs signed in. Time counts while the tab is in the background or the device sleeps: on waking she is signed out if the 10 minutes have passed. The server checks too, for a closed tab: a request more than 11 minutes after her last one signs her out the same way (the extra minute allows for the page reporting activity at most once a minute). Unsaved form input is lost.
 
 ### B. Publishing routes
 

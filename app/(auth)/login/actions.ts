@@ -9,6 +9,7 @@ import { vehicleColumns } from "@/lib/profile/data";
 import { profileSchema, type ProfileValues } from "@/lib/validation/profile";
 import { otpEmailSchema, personalCodeSchema } from "@/lib/validation/otp-email";
 import { checkCode } from "@/lib/auth/personal-code";
+import { IDLE_LOGIN_PATH, isSessionCookie } from "@/lib/auth/idle";
 
 export async function completeProfile(values: ProfileValues) {
   const user = await getCurrentUser();
@@ -78,13 +79,23 @@ export async function signInWithCode(emailValue: string, codeValue: string): Pro
 }
 
 export async function signOut() {
+  await endSession();
+  redirect("/login");
+}
+
+// IdleLogout's sign-out after 10 minutes without activity (spec A8).
+export async function signOutIdle() {
+  await endSession();
+  redirect(IDLE_LOGIN_PATH);
+}
+
+async function endSession() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   // signOut() keeps the cookies when Supabase rejects the call (e.g. an
   // already-used refresh token), and /login would send us straight back.
   const cookieStore = await cookies();
   for (const { name } of cookieStore.getAll()) {
-    if (/^sb-.+-auth-token/.test(name)) cookieStore.delete(name);
+    if (isSessionCookie(name)) cookieStore.delete(name);
   }
-  redirect("/login");
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Assistant } from "next/font/google";
+import { SITE_ORIGIN } from "@/lib/site/url";
 import "./globals.css";
 
 const assistant = Assistant({
@@ -9,6 +10,7 @@ const assistant = Assistant({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_ORIGIN),
   title: { default: "בדרך שלך", template: "%s · בדרך שלך" },
   description: "ניהול טרמפים ונסיעות קבוצתיות — נוסעות יחד, מגיעות רחוק",
 };

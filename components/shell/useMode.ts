@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useSyncExternalStore } from "react";
-import { usePathname } from "next/navigation";
 import { modeForPath, type Mode } from "./nav";
+import { useShellPathname } from "./useShellPathname";
 
 // Passenger / driver mode for the shell (SRS §7.1). Mode pages set it; shared
 // pages (profile, admin) show the last mode used, remembered in this browser.
@@ -37,7 +37,7 @@ function subscribe(notify: () => void) {
 }
 
 export function useMode(): Mode {
-  const fromRoute = modeForPath(usePathname());
+  const fromRoute = modeForPath(useShellPathname());
   const stored = useSyncExternalStore(subscribe, readStored, () => "passenger" as Mode);
 
   useEffect(() => {

@@ -6,8 +6,9 @@ import { NextRequest } from "next/server";
 
 const claims = vi.hoisted(() => ({ value: null as unknown }));
 const rpc = vi.hoisted(() => vi.fn(async () => ({ error: null as { message: string } | null })));
+const signOut = vi.hoisted(() => vi.fn(async () => ({ error: null })));
 vi.mock("@supabase/ssr", () => ({
-  createServerClient: () => ({ auth: { getClaims: async () => ({ data: claims.value }) }, rpc }),
+  createServerClient: () => ({ auth: { getClaims: async () => ({ data: claims.value }), signOut }, rpc }),
 }));
 const { updateSession } = await import("@/lib/supabase/proxy");
 const { publicOrigin } = await import("@/lib/auth/public-origin");
@@ -18,12 +19,14 @@ const locationOf = (response: Response) => response.headers.get("location");
 beforeEach(() => {
   claims.value = null;
   rpc.mockClear();
+  signOut.mockClear();
   vi.stubEnv("SITE_URL", "");
   vi.stubEnv("NODE_ENV", "test");
 });
 afterEach(() => vi.unstubAllEnvs());
 
-// Only sign-in, the legal pages and the auth callback are open to visitors (spec A2, §3).
+// Only sign-in, the legal pages, the auth callback and the files for search
+// engines are open to visitors (spec A2, §3).
 describe("signed-out visitors", () => {
   it.each(["/", "/my-rides", "/payments", "/dashboard", "/routes", "/routes/new", "/profile", "/admin/groups", "/ride/abc?date=2026-11-01"])(
     "are sent from %s to /login",
@@ -38,7 +41,7 @@ describe("signed-out visitors", () => {
     expect(locationOf(await updateSession(request("/routes?saved=1")))).toBe("http://localhost:3000/login");
   });
 
-  it.each(["/login", "/login?error=x", "/privacy", "/terms", "/auth/callback"])("can open %s", async (path) => {
+  it.each(["/login", "/login?error=x", "/privacy", "/terms", "/auth/callback", "/sitemap.xml", "/robots.txt"])("can open %s", async (path) => {
     const response = await updateSession(request(path));
     expect(locationOf(response)).toBeNull();
   });
@@ -89,6 +92,48 @@ describe("visits", () => {
   it("records nothing for signed-out visitors", async () => {
     await updateSession(request("/login"));
     expect(rpc).not.toHaveBeenCalled();
+  });
+});
+
+// The server's backstop for signing out after inactivity (spec A8): 11
+// minutes, a minute more than the page's own timer.
+describe("inactivity", () => {
+  const minutesAgo = (minutes: number) => String(Date.now() - minutes * 60_000);
+  const withActivity = (path: string, lastActive: string) =>
+    new NextRequest(new URL(path, "http://localhost:3000"), { headers: { cookie: `yw_active=${lastActive}; sb-ref-auth-token=session` } });
+
+  beforeEach(() => {
+    claims.value = { claims: { sub: "user" } };
+  });
+
+  it.each([
+    ["the first request after sign-in", null],
+    ["5 minutes", 5],
+    ["10.9 minutes", 10.9],
+  ])("keeps her signed in after %s, and records the new time", async (_, minutes) => {
+    const before = Date.now();
+    const response = await updateSession(minutes === null ? request("/my-rides") : withActivity("/my-rides", minutesAgo(minutes)));
+    expect(locationOf(response)).toBeNull();
+    expect(Number(response.cookies.get("yw_active")?.value)).toBeGreaterThanOrEqual(before);
+    expect(response.cookies.get("yw_active")?.httpOnly).toBe(true);
+  });
+
+  it.each(["/", "/admin/groups", "/auth/activity", "/login"])("signs her out from %s after 11 minutes, and says why", async (path) => {
+    const response = await updateSession(withActivity(path, minutesAgo(11.1)));
+    expect(response.status).toBe(307);
+    expect(locationOf(response)).toBe("http://localhost:3000/login?reason=idle");
+    expect(signOut).toHaveBeenCalledOnce();
+    expect(response.cookies.get("sb-ref-auth-token")?.value).toBe("");
+    expect(response.cookies.get("yw_active")?.value).toBe("");
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("forgets the time once she is signed out, so the next sign-in starts fresh", async () => {
+    claims.value = null;
+    const response = await updateSession(withActivity("/login", minutesAgo(60)));
+    expect(locationOf(response)).toBeNull();
+    expect(response.cookies.get("yw_active")?.value).toBe("");
+    expect(signOut).not.toHaveBeenCalled();
   });
 });
 

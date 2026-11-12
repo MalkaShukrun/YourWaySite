@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { iconProps } from "@/components/ui/icon";
 import { Announcement } from "./Announcement";
 import { adminNavItem, driverNavItems, isNavItemActive, passengerNavItems, profileNavItem, type NavItem } from "./nav";
 import { useMode } from "./useMode";
+import { useShellPathname } from "./useShellPathname";
 
 function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   const Icon = item.icon;
@@ -21,7 +21,7 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
 
 // `adminSlot` is filled by the server (with <AdminNavLink />) only for admins.
 export function Sidebar({ adminSlot }: { adminSlot: ReactNode }) {
-  const pathname = usePathname();
+  const pathname = useShellPathname();
   const mode = useMode();
   const items = mode === "driver" ? driverNavItems : passengerNavItems;
 
@@ -43,5 +43,5 @@ export function Sidebar({ adminSlot }: { adminSlot: ReactNode }) {
 }
 
 export function AdminNavLink() {
-  return <NavLink item={adminNavItem} pathname={usePathname()} />;
+  return <NavLink item={adminNavItem} pathname={useShellPathname()} />;
 }

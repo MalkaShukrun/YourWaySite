@@ -8,9 +8,10 @@ import { SignInOptions } from "@/components/auth/SignInOptions";
 import { OnboardingModal } from "@/components/auth/OnboardingModal";
 import { SiteStats } from "@/components/auth/SiteStats";
 import { getCurrentUser, homePathFor, needsOnboarding } from "@/lib/auth/session";
+import { IDLE_REASON } from "@/lib/auth/idle";
 import { carIconProps, iconProps } from "@/components/ui/icon";
 
-export const metadata: Metadata = { title: "התחברות" };
+export const metadata: Metadata = { title: "התחברות", alternates: { canonical: "/login" } };
 
 export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
@@ -81,7 +82,14 @@ async function SessionGate() {
 }
 
 async function LoginError({ searchParams }: Pick<PageProps<"/login">, "searchParams">) {
-  const { error } = await searchParams;
+  const { error, reason } = await searchParams;
+  if (reason === IDLE_REASON) {
+    return (
+      <p className="auth-error" role="status">
+        התנתקת אוטומטית אחרי 10 דקות ללא פעילות. אפשר להתחבר שוב.
+      </p>
+    );
+  }
   if (!error) return null;
   // The reason itself isn't shown: anyone can put text in the URL. The auth
   // callback logs the real reason on the server.

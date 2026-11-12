@@ -24,7 +24,7 @@ vi.mock("next/headers", () => ({
   cookies: async () => ({ getAll: () => sb.cookies, delete: (name: string) => sb.deleted.push(name) }),
 }));
 sb.mock = createSupabaseMock();
-const { completeProfile, signOut } = await import("@/app/(auth)/login/actions");
+const { completeProfile, signOut, signOutIdle } = await import("@/app/(auth)/login/actions");
 const { saveDailyEmail, saveProfile, saveRideEmails } = await import("@/app/(app)/profile/actions");
 
 const values = (overrides: Partial<ProfileValues> = {}): ProfileValues => ({
@@ -112,19 +112,23 @@ describe("completeProfile (onboarding, spec A1)", () => {
   });
 });
 
-// Sign-out removes the session cookies even if Supabase already ended the session (spec A5).
-describe("signOut", () => {
-  it("signs out, deletes every session cookie and returns to sign-in", async () => {
-    sb.cookies = [{ name: "sb-127-auth-token" }, { name: "sb-127-auth-token.0" }, { name: "theme" }];
-    expect(await runAction(signOut)).toEqual({ redirectedTo: "/login" });
+// Sign-out removes the session cookies even if Supabase already ended the
+// session (spec A5); after 10 idle minutes, sign-in also says why (A8).
+describe.each([
+  ["signOut", signOut, "/login"],
+  ["signOutIdle", signOutIdle, "/login?reason=idle"],
+])("%s", (_, action, destination) => {
+  it("signs out, deletes every session cookie and the last-activity time, and returns to sign-in", async () => {
+    sb.cookies = [{ name: "sb-127-auth-token" }, { name: "sb-127-auth-token.0" }, { name: "yw_active" }, { name: "theme" }];
+    expect(await runAction(action)).toEqual({ redirectedTo: destination });
     expect(sb.mock.client.auth.signOut).toHaveBeenCalledOnce();
-    expect(sb.deleted).toEqual(["sb-127-auth-token", "sb-127-auth-token.0"]);
+    expect(sb.deleted).toEqual(["sb-127-auth-token", "sb-127-auth-token.0", "yw_active"]);
   });
 
   it("still clears the cookies when Supabase refuses", async () => {
     sb.mock.client.auth.signOut.mockResolvedValueOnce({ error: { message: "refresh token already used" } } as never);
     sb.cookies = [{ name: "sb-127-auth-token" }];
-    expect(await runAction(signOut)).toEqual({ redirectedTo: "/login" });
+    expect(await runAction(action)).toEqual({ redirectedTo: destination });
     expect(sb.deleted).toEqual(["sb-127-auth-token"]);
   });
 });

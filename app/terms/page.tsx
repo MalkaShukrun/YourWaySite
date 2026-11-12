@@ -3,7 +3,7 @@ import Link from "next/link";
 import { LegalPage } from "@/components/legal/LegalPage";
 import { SUPPORT_EMAIL } from "@/lib/site/support";
 
-export const metadata: Metadata = { title: "תנאי שימוש" };
+export const metadata: Metadata = { title: "תנאי שימוש", alternates: { canonical: "/terms" } };
 
 // Public page (no sign-in needed) — linked from the login screen. Includes the
 // cancellation policy. Keep it true to docs/SPECIFICATION.md.

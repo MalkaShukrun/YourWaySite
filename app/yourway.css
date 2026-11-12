@@ -444,6 +444,7 @@ fieldset.editor-section { min-width: 0; margin: 0; border-top: 0; border-inline:
 .modal-backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(25,41,35,.48); display: grid; place-items: center; padding: 18px; backdrop-filter: blur(4px); }
 .modal-card { width: min(580px, 100%); max-height: calc(100vh - 36px); overflow: auto; background: white; border-radius: 20px; padding: 28px; box-shadow: 0 24px 70px rgba(20,42,34,.24); position: relative; }
 .small-modal { width: min(440px, 100%); }
+.idle-actions { display: grid; gap: 8px; margin-top: 22px; }
 .modal-close { position: absolute; top: 14px; left: 14px; width: 32px; height: 32px; border: 0; border-radius: 50%; background: #f2f5f3; color: #64726b; font-size: 19px; }
 .modal-icon { width: 44px; height: 44px; border-radius: 13px; display: grid; place-items: center; color: var(--green); background: var(--green-soft); }
 .modal-card h2 { margin: 15px 0 3px; font-size: 22px; }

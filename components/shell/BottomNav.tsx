@@ -1,15 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { iconProps } from "@/components/ui/icon";
 import { adminNavItem, driverNavItems, isNavItemActive, passengerNavItems, profileNavItem } from "./nav";
 import { useMode } from "./useMode";
+import { useShellPathname } from "./useShellPathname";
 
 // Mobile-only tab bar (hidden on desktop by the design CSS). The admin tab
 // shows in driver mode only, for admins.
 export function BottomNav({ isAdmin }: { isAdmin: boolean }) {
-  const pathname = usePathname();
+  const pathname = useShellPathname();
   const items = useMode() === "driver"
     ? [...driverNavItems, ...(isAdmin ? [adminNavItem] : []), profileNavItem]
     : [...passengerNavItems, profileNavItem];

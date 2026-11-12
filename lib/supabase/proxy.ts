@@ -2,11 +2,12 @@ import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { publicOrigin } from "@/lib/auth/public-origin";
+import { ACTIVE_COOKIE, IDLE_LOGIN_PATH, SERVER_IDLE_TIMEOUT_MS, isSessionCookie } from "@/lib/auth/idle";
 
-const PUBLIC_PATHS = ["/login", "/auth", "/privacy", "/terms"];
+const PUBLIC_PATHS = ["/login", "/auth", "/privacy", "/terms", "/sitemap.xml", "/robots.txt"];
 
-// Refreshes the Supabase session cookie on every request and sends
-// signed-out visitors to /login. Role checks (admin) happen on the server
+// Refreshes the Supabase session cookie on every request, sends signed-out
+// visitors to /login and signs out users idle too long. Role checks (admin) happen on the server
 // in lib/auth/session.ts — this is only an optimistic check.
 export async function updateSession(request: NextRequest) {
   // Supabase falls back to the Site URL (e.g. "/?code=…") when /auth/callback
@@ -43,13 +44,34 @@ export async function updateSession(request: NextRequest) {
 
   const isPublic = PUBLIC_PATHS.some((publicPath) => pathname.startsWith(publicPath));
 
-  if (!isSignedIn && !isPublic) {
-    return NextResponse.redirect(new URL("/login", publicOrigin(request)));
+  if (!isSignedIn) {
+    const signedOut = isPublic ? response : NextResponse.redirect(new URL("/login", publicOrigin(request)));
+    // A leftover time from an old session would sign her out right after she signs in again.
+    if (request.cookies.has(ACTIVE_COOKIE)) signedOut.cookies.delete(ACTIVE_COOKIE);
+    return signedOut;
   }
 
-  if (isSignedIn) await recordVisit(supabase, request, response, data!.claims.sub);
+  if (isIdle(request)) {
+    await supabase.auth.signOut({ scope: "local" });
+    const idle = NextResponse.redirect(new URL(IDLE_LOGIN_PATH, publicOrigin(request)));
+    for (const { name } of request.cookies.getAll()) {
+      if (isSessionCookie(name)) idle.cookies.delete(name);
+    }
+    return idle;
+  }
+
+  // Kept as long as Supabase's own cookies.
+  response.cookies.set(ACTIVE_COOKIE, String(Date.now()), serverCookie(400 * 86_400));
+  await recordVisit(supabase, request, response, data!.claims.sub);
 
   return response;
+}
+
+// Signed in, but no request for longer than the server's limit (spec A8). No
+// time yet (the first request after sign-in) counts as active.
+function isIdle(request: NextRequest) {
+  const lastActive = Number(request.cookies.get(ACTIVE_COOKIE)?.value);
+  return Number.isFinite(lastActive) && lastActive > 0 && Date.now() - lastActive > SERVER_IDLE_TIMEOUT_MS;
 }
 
 const VISIT_COOKIE = "yw_visit";
@@ -66,5 +88,10 @@ async function recordVisit(supabase: SupabaseClient, request: NextRequest, respo
     console.error("recordVisit:", error.message);
     return;
   }
-  response.cookies.set(VISIT_COOKIE, visit, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 2 * 86_400 });
+  response.cookies.set(VISIT_COOKIE, visit, serverCookie(2 * 86_400));
+}
+
+// A cookie only the server reads.
+function serverCookie(maxAge: number) {
+  return { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge } as const;
 }
