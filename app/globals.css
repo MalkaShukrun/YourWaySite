@@ -149,7 +149,7 @@ a.nav-item { text-decoration: none; }
 
 /* Shared dropdown (components/ui/Select.tsx) — long lists scroll; panels clip
    their content, so let an open list spill out. */
-.panel:has(.dropdown.open) { overflow: visible; }
+.panel:has(.dropdown.open), .today-card:has(.dropdown.open) { overflow: visible; }
 .dropdown-options { max-height: 288px; overflow-y: auto; }
 /* Searchable select (Select searchable) — a text box in the dropdown shell */
 .combobox .dropdown-trigger { cursor: text; }
