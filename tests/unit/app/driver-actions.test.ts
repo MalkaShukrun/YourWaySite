@@ -46,7 +46,9 @@ const DRIVER_MESSAGES: [string, string][] = [
   ["INVALID_PASSENGER", "יש להזין שם וטלפון."],
   ["INVALID_STOP", "התחנה שנבחרה אינה חלק מהמסלול."],
   ["BOOKING_NOT_FOUND", "ההרשמה לא נמצאה."],
-  ["ROUTE_LOCKED", "כבר נרשמו טרמפיסטיות למסלול, ולכן אי אפשר לשנות אותו — אפשר רק לערוך את ההערה ולהוסיף תחנות."],
+  ["ROUTE_LOCKED", "כבר נרשמו טרמפיסטיות למסלול, ולכן אי אפשר לשנות את פרטיו — אפשר רק לערוך את ההערה ואת התחנות שאף אחת לא נרשמה אליהן."],
+  ["STOP_IN_USE", "בינתיים נרשמה טרמפיסטית לתחנה ששינית או מחקת, ולכן היא נשארת כמו שהיא. טעני את הדף מחדש ונסי שוב."],
+  ["STOP_NOT_FOUND", "אחת התחנות כבר לא קיימת במסלול. טעני את הדף מחדש ונסי שוב."],
   ["RIDE_CANCELLED", "הנסיעה בוטלה לתאריך הזה, ואי אפשר להחזיר אותה."],
   ["RIDE_DEPARTED", "הנסיעה כבר יצאה ולא ניתן לבטל אותה."],
   ["RIDE_PAST", "הנסיעה כבר התקיימה ונשמרת בהיסטוריה — אי אפשר להסיר אותה."],
@@ -126,50 +128,50 @@ describe("saveRoute (edit a route nobody has booked)", () => {
   it("shows the lock once a passenger has booked it meanwhile", async () => {
     sb.mock.onRpc("save_route", { error: { message: "P0001: ROUTE_LOCKED" } });
     expect(await runAction(() => saveRoute(values(), ID.route))).toEqual({
-      error: "כבר נרשמו טרמפיסטיות למסלול, ולכן אי אפשר לשנות אותו — אפשר רק לערוך את ההערה ולהוסיף תחנות.",
+      error: "כבר נרשמו טרמפיסטיות למסלול, ולכן אי אפשר לשנות את פרטיו — אפשר רק לערוך את ההערה ואת התחנות שאף אחת לא נרשמה אליהן.",
     });
   });
 });
 
-// A booked route takes only its note and new stops (spec B4).
+// A booked route takes its note and its stops, the database keeping the ones a
+// booking uses as they are (spec B4, 0048_edit_unused_stops.sql).
 describe("updateRoute (edit a booked route)", () => {
-  const newStop = { kind: "dropoff" as const, label: " צומת גומא ", lat: null, lng: null };
+  const saved = { id: ID.pickup, kind: "pickup" as const, label: "קניון", lat: 31.7, lng: 35 };
+  const newStop = { id: "", kind: "dropoff" as const, label: " צומת גומא ", lat: null, lng: null };
+  const stops = [saved, newStop];
 
-  it("saves the trimmed note and the new stops", async () => {
-    expect(await runAction(() => updateRoute(ID.route, { notes: " מחכה 10 דקות ", stops: [newStop] }))).toEqual({
+  it("saves the trimmed note and every stop, saved ones with their ids", async () => {
+    expect(await runAction(() => updateRoute(ID.route, { notes: " מחכה 10 דקות ", stops }))).toEqual({
       redirectedTo: "/routes?saved=1",
     });
-    expect(sb.mock.client.rpc).toHaveBeenCalledWith("update_route", {
+    expect(sb.mock.client.rpc).toHaveBeenCalledWith("update_booked_route", {
       p_route_id: ID.route,
       p_notes: "מחכה 10 דקות",
-      p_stops: [{ kind: "dropoff", label: "צומת גומא", lat: null, lng: null }],
+      p_stops: [saved, { id: "", kind: "dropoff", label: "צומת גומא", lat: null, lng: null }],
     });
-  });
-
-  it("saves a note change alone, or clears the note", async () => {
-    await runAction(() => updateRoute(ID.route, { notes: "", stops: [] }));
-    expect(sb.mock.client.rpc).toHaveBeenCalledWith("update_route", { p_route_id: ID.route, p_notes: "", p_stops: [] });
-  });
-
-  it("never sends an existing stop's id, so saved stops can't change", async () => {
-    await runAction(() => updateRoute(ID.route, { notes: "", stops: [{ ...newStop, id: ID.pickup } as typeof newStop] }));
-    const [, args] = sb.mock.client.rpc.mock.calls[0] as [string, { p_stops: object[] }];
-    expect(args.p_stops[0]).not.toHaveProperty("id");
   });
 
   it.each([
-    ["a malformed route id", "nope", { notes: "", stops: [] }, "המסלול לא נמצא."],
-    ["a note over 200 characters", ID.route, { notes: "א".repeat(201), stops: [] }, "עד 200 תווים בהערות"],
-    ["a new stop without a name", ID.route, { notes: "", stops: [{ ...newStop, label: "" }] }, "יש לתת שם לתחנה"],
-    ["a one-letter stop name", ID.route, { notes: "", stops: [{ ...newStop, label: "א" }] }, "שם התחנה צריך להכיל לפחות 2 תווים"],
+    ["a malformed route id", "nope", { notes: "", stops }, "המסלול לא נמצא."],
+    ["a note over 200 characters", ID.route, { notes: "א".repeat(201), stops }, "עד 200 תווים בהערות"],
+    ["a stop without a name", ID.route, { notes: "", stops: [saved, { ...newStop, label: "" }] }, "יש לתת שם לתחנה"],
+    ["a one-letter stop name", ID.route, { notes: "", stops: [{ ...saved, label: "א" }, newStop] }, "שם התחנה צריך להכיל לפחות 2 תווים"],
+    ["no drop-off left", ID.route, { notes: "", stops: [saved] }, "יש להוסיף לפחות תחנת הורדה אחת"],
   ])("refuses %s without touching the database", async (_name, routeId, update, message) => {
     expect(await runAction(() => updateRoute(routeId, update))).toEqual({ error: message });
     expect(sb.mock.client.rpc).not.toHaveBeenCalled();
   });
 
   it("explains a removed or someone else's route", async () => {
-    sb.mock.onRpc("update_route", { error: { message: "P0001: ROUTE_NOT_FOUND" } });
-    expect(await runAction(() => updateRoute(ID.route, { notes: "", stops: [] }))).toEqual({ error: "המסלול לא נמצא." });
+    sb.mock.onRpc("update_booked_route", { error: { message: "P0001: ROUTE_NOT_FOUND" } });
+    expect(await runAction(() => updateRoute(ID.route, { notes: "", stops }))).toEqual({ error: "המסלול לא נמצא." });
+  });
+
+  it("explains a stop a passenger booked meanwhile", async () => {
+    sb.mock.onRpc("update_booked_route", { error: { message: "P0001: STOP_IN_USE" } });
+    expect(await runAction(() => updateRoute(ID.route, { notes: "", stops }))).toEqual({
+      error: "בינתיים נרשמה טרמפיסטית לתחנה ששינית או מחקת, ולכן היא נשארת כמו שהיא. טעני את הדף מחדש ונסי שוב.",
+    });
   });
 });
 

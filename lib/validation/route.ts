@@ -26,6 +26,15 @@ export const NOTES_MAX = 200;
 // Optional free text for passengers.
 const notesSchema = z.string().trim().max(NOTES_MAX, `עד ${NOTES_MAX} תווים בהערות`);
 
+// Every route needs somewhere to get on and somewhere to get off.
+function requireBothKinds(stops: { kind: "pickup" | "dropoff" }[], ctx: z.RefinementCtx) {
+  if (!stops.some((s) => s.kind === "pickup")) {
+    ctx.addIssue({ code: "custom", path: ["stops"], message: "יש להוסיף לפחות תחנת איסוף אחת" });
+  } else if (!stops.some((s) => s.kind === "dropoff")) {
+    ctx.addIssue({ code: "custom", path: ["stops"], message: "יש להוסיף לפחות תחנת הורדה אחת" });
+  }
+}
+
 // Route & recurring ride setup (SRS §5.1).
 export const routeSchema = z
   .object({
@@ -53,19 +62,19 @@ export const routeSchema = z
         message: v.kind === "recurring" ? "יש לבחור תאריך התחלה" : "יש לבחור תאריך",
       });
     }
-    if (!v.stops.some((s) => s.kind === "pickup")) {
-      ctx.addIssue({ code: "custom", path: ["stops"], message: "יש להוסיף לפחות תחנת איסוף אחת" });
-    } else if (!v.stops.some((s) => s.kind === "dropoff")) {
-      ctx.addIssue({ code: "custom", path: ["stops"], message: "יש להוסיף לפחות תחנת הורדה אחת" });
-    }
+    requireBothKinds(v.stops, ctx);
   });
 
 export type RouteValues = z.infer<typeof routeSchema>;
 
-// The only changes a booked route takes: its note, and stops added to it.
-export const routeUpdateSchema = z.object({
-  notes: notesSchema,
-  stops: z.array(routeStopSchema.omit({ id: true })),
-});
+// The only changes a booked route takes: its note, and its full list of stops —
+// new ones added, and saved ones nobody chose renamed, moved or removed
+// (0048_edit_unused_stops.sql). A stop a booking uses must come back as it was.
+export const routeUpdateSchema = z
+  .object({
+    notes: notesSchema,
+    stops: z.array(routeStopSchema),
+  })
+  .superRefine((v, ctx) => requireBothKinds(v.stops, ctx));
 
 export type RouteUpdateValues = z.infer<typeof routeUpdateSchema>;

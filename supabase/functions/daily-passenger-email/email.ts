@@ -1,8 +1,17 @@
 // The daily email to the driver: who rides with her tomorrow, and the update
-// when a passenger books after it. Plain TypeScript with no Deno APIs, so the
-// unit tests can run it; index.ts connects it to the database and Gmail.
+// when a passenger books or cancels after it. Plain TypeScript with no Deno
+// APIs, so the unit tests can run it; index.ts connects it to the database and Gmail.
 
-type DailyPassenger = { name: string; phone: string | null; email: string | null; pickup: string; is_new?: boolean };
+// is_new and is_cancelled come only on an update; a cancelled passenger has
+// no phone or email (0047).
+type DailyPassenger = {
+  name: string;
+  phone: string | null;
+  email: string | null;
+  pickup: string;
+  is_new?: boolean;
+  is_cancelled?: boolean;
+};
 type DailyRide = { origin: string; destination: string; out_time: string; passengers: DailyPassenger[] };
 export type DailyEmail = {
   driver_id: string;
@@ -29,12 +38,20 @@ const rideTitle = (ride: DailyRide) => `${ride.out_time} · ${ride.origin} ← $
 const cell = "padding:8px;border-bottom:1px solid #e3e8e5;text-align:right;";
 
 const NEW_MARK = "חדשה";
+const CANCELLED_MARK = "ביטלה";
+
+// A ride whose last passenger cancelled shows only her, with this under it.
+const EMPTY_RIDE = "אין כרגע נוסעות בנסיעה הזו.";
+
+const isEmpty = (ride: DailyRide) => ride.passengers.every((p) => p.is_cancelled);
 
 function passengerRow(p: DailyPassenger) {
   const values = [p.name, p.phone ?? "—", p.email ?? "—", p.pickup];
   const cells = values.map((v) => `<td style="${cell}">${escapeHtml(v)}</td>`);
   if (p.is_new) cells[0] = `<td style="${cell}"><strong>${escapeHtml(p.name)}</strong> (${NEW_MARK})</td>`;
-  return `<tr${p.is_new ? ' style="background:#eef7e4;"' : ""}>${cells.join("")}</tr>`;
+  if (p.is_cancelled) cells[0] = `<td style="${cell}"><s>${escapeHtml(p.name)}</s> (${CANCELLED_MARK})</td>`;
+  const background = p.is_new ? "#eef7e4" : p.is_cancelled ? "#fbeaea" : "";
+  return `<tr${background ? ` style="background:${background};"` : ""}>${cells.join("")}</tr>`;
 }
 
 function rideHtml(ride: DailyRide) {
@@ -43,14 +60,28 @@ function rideHtml(ride: DailyRide) {
 <table dir="rtl" style="border-collapse:collapse;width:100%;">
 <tr>${headers.map((h) => `<th style="${cell}">${h}</th>`).join("")}</tr>
 ${ride.passengers.map(passengerRow).join("\n")}
-</table>`;
+</table>${isEmpty(ride) ? `\n<p style="margin:6px 0;">${EMPTY_RIDE}</p>` : ""}`;
 }
+
+const mark = (p: DailyPassenger) => (p.is_new ? ` (${NEW_MARK})` : p.is_cancelled ? ` (${CANCELLED_MARK})` : "");
 
 function rideText(ride: DailyRide) {
   const rows = ride.passengers.map(
-    (p) => `- ${p.name}${p.is_new ? ` (${NEW_MARK})` : ""} | טלפון: ${p.phone ?? "—"} | דוא״ל: ${p.email ?? "—"} | תחנת עלייה: ${p.pickup}`,
+    (p) => `- ${p.name}${mark(p)} | טלפון: ${p.phone ?? "—"} | דוא״ל: ${p.email ?? "—"} | תחנת עלייה: ${p.pickup}`,
   );
-  return [rideTitle(ride), ...rows].join("\n");
+  return [rideTitle(ride), ...rows, ...(isEmpty(ride) ? [EMPTY_RIDE] : [])].join("\n");
+}
+
+// What an update says changed: passengers who joined, who cancelled, or both.
+function updateIntro(rides: DailyRide[], date: string) {
+  const passengers = rides.flatMap((r) => r.passengers);
+  const joined = passengers.some((p) => p.is_new);
+  const cancelled = passengers.some((p) => p.is_cancelled);
+  if (joined && cancelled) {
+    return `היו שינויים בנסיעות שלך ב${date}. זו הרשימה המעודכנת, ומסומנות בה הנוסעות החדשות והנוסעות שביטלו:`;
+  }
+  if (cancelled) return `נוסעות ביטלו את ההרשמה לנסיעות שלך ב${date}. זו הרשימה המעודכנת, והנוסעות שביטלו מסומנות:`;
+  return `נוספו נוסעות לנסיעות שלך ב${date}. זו הרשימה המעודכנת, והנוסעות החדשות מסומנות:`;
 }
 
 // siteUrl is the site's public address, for the link to the profile; optional.
@@ -60,9 +91,7 @@ export function buildEmail(email: DailyEmail, siteUrl = "", today = "") {
   const date = formatDate(email.ride_date);
   const when = email.ride_date === today ? "להיום" : "למחר";
   const update = Boolean(email.since);
-  const intro = update
-    ? `נוספו נוסעות לנסיעות שלך ב${date}. זו הרשימה המעודכנת, והנוסעות החדשות מסומנות:`
-    : `אלו הנוסעות הרשומות לנסיעות שלך ב${date}:`;
+  const intro = update ? updateIntro(email.rides, date) : `אלו הנוסעות הרשומות לנסיעות שלך ב${date}:`;
   const updatedNote = "הרשימה נכונה לרגע השליחה. ברשימת הנוסעות באתר תמיד מופיע המצב העדכני.";
   const profileUrl = siteUrl ? `${siteUrl.replace(/\/$/, "")}/profile` : "";
   const settings = "אפשר לשנות את השעה או להפסיק את המיילים בעמוד הפרופיל";

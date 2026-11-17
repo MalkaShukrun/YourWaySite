@@ -228,7 +228,7 @@ Her session cookies are removed, even if Google already ended the session, and s
 
 **Driver side**
 
-- When a passenger cancels a booking on her ride: “נוסעת ביטלה הרשמה: …”, with the passenger's name, her boarding stop and a link to that day on the dashboard (E1).
+- When a passenger cancels a booking on her ride: “נוסעת ביטלה הרשמה: …”, with the passenger's name, her boarding stop and a link to that day on the dashboard (E1). Not when her update email (D7) will show the cancellation instead: the update is on, her daily email for that date went out, and the passenger booked before it.
 - Nothing when she cancels a date or adds or removes a guest herself: she knows.
 
 **Passenger side**
@@ -650,7 +650,7 @@ Dashboard ride card.
 - Up to about 5 minutes after her time she gets one email, at her sign-in address, listing tomorrow's rides by departure time. For each ride: every active passenger's name, phone, email and boarding stop, ordered by stop, including passengers she added herself.
 - If her time already passed today when she saves it, the email goes out on the next run.
 - She can change the time or turn the email off at any time; a date's daily email is never sent twice (update emails, below, come on top of it).
-- With “מייל עדכון על נוסעת חדשה” on (a second switch, shown while the daily email is on, off until she turns it on): when a passenger books a ride of that date after the daily email went out, she gets another email within about 5 minutes. Its subject starts with “עדכון:”, and it has the full updated list with the new passengers marked “(חדשה)”. Several bookings between two runs come in one email.
+- With “מייל עדכון על שינוי ברשימת הנוסעות” on (a second switch, shown while the daily email is on, off until she turns it on): when a passenger books or cancels a ride of that date after her last email for it went out, she gets another email within about 5 minutes. Its subject starts with “עדכון:”, and it has the full updated list with the new passengers marked “(חדשה)” and those who cancelled marked “(ביטלה)”, crossed out, with their name and boarding stop only. A passenger who cancelled shows in that one update only; one who booked and cancelled between two emails shows in neither, and one who cancelled and booked the same ride again shows once, unmarked. A ride whose last passenger cancelled shows her and “אין כרגע נוסעות בנסיעה הזו.”. Several changes between two runs come in one email.
 
 **Passenger side**
 
@@ -660,7 +660,7 @@ Nothing changes. A passenger the driver added shows the name and phone the drive
 
 Profile; the driver's mailbox.
 
-**Rules:** every user sees the setting; only a driver with passengers gets an email. No email if she has no passengers tomorrow: a ride with none is left out, and so is a cancelled date. The list is a snapshot of the moment it was sent. Only a new booking by a passenger sends an update: a passenger the driver added, a cancellation or a cancelled date doesn't (a passenger's cancellation has its own email, A7). Updates for a date continue, for rides that haven't left yet, until her daily email for the next date is sent (at her time on the ride day itself); while her daily email waits for a retry, the retry carries the new passengers instead. A failed send is tried again every 5 minutes, for the same ride date, until the end of that date; a retry that goes out on the ride day itself says “להיום” and lists only the rides that haven't left yet.
+**Rules:** every user sees the setting; only a driver with passengers gets an email. No email if she has no passengers tomorrow: a ride with none is left out, and so is a cancelled date. The list is a snapshot of the moment it was sent. Only a passenger's own booking or cancellation sends an update: a passenger the driver added or removed, or a date she cancelled, doesn't. A cancellation the update shows doesn't also send the driver the short cancellation email (A7); any other passenger cancellation does, if she has those on. Updates for a date continue, for rides that haven't left yet, until her daily email for the next date is sent (at her time on the ride day itself); while her daily email waits for a retry, the retry carries the current list instead. A failed send is tried again every 5 minutes, for the same ride date, until the end of that date; a retry that goes out on the ride day itself says “להיום” and lists only the rides that haven't left yet.
 
 ### E. A passenger cancels
 
@@ -671,7 +671,7 @@ Profile; the driver's mailbox.
 **Driver side**
 
 - The passenger disappears from that ride card; the seat is free again.
-- Within about 5 minutes she gets an email, “נוסעת ביטלה הרשמה: …”, with the passenger's name and boarding stop and a link to that day on the dashboard (A7).
+- Within about 5 minutes she gets one email. If her daily email for that date already went out with the passenger in it and her update email is on: the updated list, with the passenger marked “(ביטלה)” (D7). Otherwise: “נוסעת ביטלה הרשמה: …”, with the passenger's name and boarding stop and a link to that day on the dashboard (A7).
 
 **Passenger side**
 
@@ -899,7 +899,7 @@ An unused group simply disappears from the filter.
 - To date: rides that departed with passengers (“נסיעות שיצאו עם טרמפיסטיות”) and passengers who traveled (“טרמפיסטיות שנסעו עד היום”).
 - Users in the system (“משתמשות במערכת”): those who finished sign-up.
 - Active routes (“מסלולים פעילים”), the drivers who have one (“נהגות עם מסלולים”), and visible groups (“קבוצות פעילות”). Each group row shows its own count of active routes.
-- Who has each email on (migration 0045): the emails about her own rides (“טרמפיסטיות שמקבלות מייל על הצטרפות וביטול נסיעה”, A7), the driver's daily email (“נהגות שמקבלות מייל יומי על הטרמפיסטיות שמצטרפות”, D7), and its update about a new passenger (“נהגות שמקבלות מייל עדכון על נוסעת חדשה”). Only users who finished sign-up count. The ride emails are on until a user turns them off, so they include users who never opened the setting; the update counts only while the daily email is on too, since it's sent only with it.
+- Who has each email on (migration 0045): the emails about her own rides (“טרמפיסטיות שמקבלות מייל על הצטרפות וביטול נסיעה”, A7), the driver's daily email (“נהגות שמקבלות מייל יומי על הטרמפיסטיות שמצטרפות”, D7), and its update about a passenger who joins or cancels (“נהגות שמקבלות מייל עדכון על שינוי ברשימת הנוסעות”). Only users who finished sign-up count. The ride emails are on until a user turns them off, so they include users who never opened the setting; the update counts only while the daily email is on too, since it's sent only with it.
 
 **Rules:** only admins can read the totals. Each active booking counts as one passenger on one ride, guests included, so a round trip counts twice. Dates the driver cancelled aren't counted. Today's rides include every scheduled ride, booked or not; a ride counts as departed only if it had at least one passenger, since a ride that left empty leaves no record. A route is active as in its driver's “מסלולים פעילים” tab: not removed, and not a one-time ride that took place or was cancelled for its date. The totals leave out routes in hidden groups, which can't be booked; a hidden group's row still shows its own count. Days follow Israel time.
 
@@ -965,7 +965,7 @@ In place of the page.
 |---|---|---|---|
 | Driver's name, vehicle, routes, note | Yes | Yes | Yes |
 | Driver's phone and email | Own | While her booking is active (including dates the driver cancelled); the phone also in her booking and cancelled-date emails (A7), which stay in her mailbox | No |
-| Passenger's name, phone, email | For passengers booked on her rides (also in her daily email, D7, which stays in her mailbox). When one cancels, her name and boarding stop by email (A7) | Own only | No |
+| Passenger's name, phone, email | For passengers booked on her rides (also in her daily email, D7, which stays in her mailbox). When one cancels, her name and boarding stop by email (A7, and the update email, D7) | Own only | No |
 | Who else is booked on a ride | Yes | No, only the number of free seats | No |
 | Guests the driver added | Name and phone she entered | No | No |
 | Paid / unpaid marks | No | Own only | No |

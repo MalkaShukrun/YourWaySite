@@ -39,7 +39,9 @@
     ".next-e2e/types/**/*.ts",
     ".next-e2e/dev/types/**/*.ts",
     ".next-e2e-claude/types/**/*.ts",
-    ".next-e2e-claude/dev/types/**/*.ts"
+    ".next-e2e-claude/dev/types/**/*.ts",
+    ".next-build-claude/types/**/*.ts",
+    ".next-build-claude/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

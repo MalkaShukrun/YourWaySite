@@ -1,5 +1,5 @@
 -- YourWay — full database setup. Paste this whole file into Supabase → SQL Editor → Run.
--- Generated from supabase/migrations/0001–0046. Safe to run more than once.
+-- Generated from supabase/migrations/0001–0048. Safe to run more than once.
 
 
 -- ════════ supabase/migrations/0001_profiles.sql ════════
@@ -4455,3 +4455,298 @@ $$;
 
 revoke execute on function public.admin_upcoming_passengers from anon, public;
 grant execute on function public.admin_upcoming_passengers to authenticated;
+
+
+-- ════════ supabase/migrations/0047_cancellation_update_emails.sql ════════
+-- YourWay — the driver's update email also comes when a passenger cancels.
+-- Run after 0046_admin_upcoming_passengers.sql. Safe to run again.
+--
+-- Until now only a new booking sent the update email (0036). Now a passenger
+-- who cancels after the driver's last email sends it too: the updated list,
+-- with her marked as cancelled in that one email, by name and boarding stop
+-- only. A passenger who booked and cancelled between two emails never showed
+-- in one, so she shows in neither. Bookings the driver added, and dates she
+-- cancelled, still send nothing: she knows. The switch is the same one.
+--
+-- A driver whose update email will show the cancellation no longer also gets
+-- the short cancellation email (A7, 0043): one email per cancellation.
+
+-- As 0036. With p_since (an update), it also lists the passengers who
+-- cancelled since then and were in the previous email (booked before it), with
+-- is_cancelled; so a ride whose last passenger cancelled still shows. A
+-- passenger who cancelled and booked the same ride again since shows once,
+-- unmarked: she was in the previous email.
+create or replace function public.daily_email_rides(p_driver uuid, p_date date, p_since timestamptz default null)
+returns jsonb
+language sql stable
+set search_path = ''
+as $$
+  select jsonb_agg(jsonb_build_object(
+           'origin', g.origin,
+           'destination', g.destination,
+           'out_time', to_char(r.out_time, 'HH24:MI'),
+           'passengers', onboard.passengers
+         ) order by r.out_time)
+  from public.routes r
+  join public.ride_groups g on g.id = r.group_id
+  join lateral (
+    select jsonb_agg(
+             case when b.status = 'cancelled' then
+               jsonb_build_object('name', p.full_name, 'phone', null, 'email', null, 'pickup', s.label,
+                                  'is_new', false, 'is_cancelled', true)
+             else
+               jsonb_build_object(
+                 'name',   case when b.added_by_driver then b.guest_name  else p.full_name end,
+                 'phone',  case when b.added_by_driver then b.guest_phone else p.phone end,
+                 'email',  case when b.added_by_driver then null          else p.email end,
+                 'pickup', s.label
+               ) || case when p_since is null then '{}'::jsonb
+                         else jsonb_build_object('is_new', not b.added_by_driver and b.created_at > p_since
+                                                   and not exists (select 1 from public.bookings e
+                                                                   where e.route_id = b.route_id and e.ride_date = b.ride_date
+                                                                     and e.passenger_id = b.passenger_id and e.status = 'cancelled'
+                                                                     and e.created_at <= p_since and e.cancelled_at > p_since),
+                                                 'is_cancelled', false) end
+             end
+           order by s.position, b.created_at) as passengers
+    from public.bookings b
+    left join public.profiles p on p.id = b.passenger_id
+    join public.stops s on s.id = b.pickup_stop_id
+    where b.route_id = r.id and b.ride_date = p_date
+      and (b.status = 'active'
+           or (p_since is not null and b.status = 'cancelled' and not b.added_by_driver
+               and b.created_at <= p_since and b.cancelled_at > p_since
+               and not exists (select 1 from public.bookings a
+                               where a.route_id = b.route_id and a.ride_date = b.ride_date
+                                 and a.passenger_id = b.passenger_id and a.status = 'active')))
+  ) onboard on onboard.passengers is not null
+  where r.driver_id = p_driver and r.is_active and public.route_runs_on(r, p_date)
+    and (p_date > (now() at time zone 'Asia/Jerusalem')::date
+         or r.out_time > (now() at time zone 'Asia/Jerusalem')::time)
+    and not exists (select 1 from public.ride_exceptions x
+                    where x.route_id = r.id and x.ride_date = p_date and x.cancelled)
+$$;
+
+revoke execute on function public.daily_email_rides from anon, authenticated, public;
+grant execute on function public.daily_email_rides to service_role;
+
+-- As 0036, also for a passenger who cancelled since the driver's last email
+-- and was in it. An update goes out only when its list marks someone: a change
+-- on a ride left out of it (a date the driver cancelled since) sends nothing.
+create or replace function public.claim_passenger_update_emails()
+returns table (
+  driver_id    uuid,
+  driver_name  text,
+  driver_email text,
+  ride_date    date,
+  rides        jsonb,
+  since        timestamptz
+)
+language plpgsql
+security definer set search_path = ''
+as $$
+declare
+  v_now   timestamp := now() at time zone 'Asia/Jerusalem';
+  v_today date      := v_now::date;
+begin
+  return query
+  with picked as (
+    select p.id, p.daily_email_sent_for as target, p.daily_email_sent_at as previous
+    from public.profiles p
+    where p.daily_email_enabled and p.daily_email_updates_enabled and p.email <> ''
+      and p.daily_email_sent_for >= v_today and p.daily_email_retry_for is null
+      and p.daily_email_sent_at is not null
+      and exists (select 1 from public.bookings b
+                  join public.routes r on r.id = b.route_id
+                  where r.driver_id = p.id and b.ride_date = p.daily_email_sent_for
+                    and not b.added_by_driver
+                    and ((b.status = 'active' and b.created_at > p.daily_email_sent_at)
+                         or (b.status = 'cancelled' and b.created_at <= p.daily_email_sent_at
+                             and b.cancelled_at > p.daily_email_sent_at))
+                    and (p.daily_email_sent_for > v_today or r.out_time > v_now::time))
+    limit 50
+    for update skip locked
+  ),
+  due as (
+    update public.profiles u set daily_email_sent_at = now()
+    from picked k
+    where u.id = k.id
+    returning u.id, u.full_name, u.email, k.target, k.previous
+  )
+  select d.id, d.full_name, d.email, d.target, list.rides, d.previous
+  from due d
+  cross join lateral (select public.daily_email_rides(d.id, d.target, d.previous) as rides) list
+  where list.rides is not null
+    and jsonb_path_exists(list.rides, '$[*].passengers[*] ? (@.is_new == true || @.is_cancelled == true)');
+end;
+$$;
+
+revoke execute on function public.claim_passenger_update_emails from anon, authenticated, public;
+grant execute on function public.claim_passenger_update_emails to service_role;
+
+-- As 0043, except the driver's cancellation email: it is left out when her
+-- update email will show the cancellation, under the same conditions as
+-- claim_passenger_update_emails and daily_email_rides above: the update is on,
+-- her email for this date went out (and isn't waiting for a retry), the
+-- passenger booked before it, and the ride is still on for that date.
+create or replace function public.queue_booking_emails()
+returns trigger
+language plpgsql
+security definer set search_path = ''
+as $$
+begin
+  if new.added_by_driver then return null; end if;
+  if tg_op = 'INSERT' then
+    if new.status = 'active' then
+      insert into public.email_outbox (kind, recipient, booking_id) values ('booked', new.passenger_id, new.id);
+    end if;
+  elsif old.status = 'active' and new.status = 'cancelled' then
+    insert into public.email_outbox (kind, recipient, booking_id)
+    values ('cancelled', new.passenger_id, new.id);
+
+    insert into public.email_outbox (kind, recipient, booking_id)
+    select 'passenger_cancelled', r.driver_id, new.id
+    from public.routes r
+    join public.profiles d on d.id = r.driver_id
+    where r.id = new.route_id
+      and not coalesce(
+            d.daily_email_enabled and d.daily_email_updates_enabled and d.email <> ''
+            and d.daily_email_sent_for = new.ride_date and d.daily_email_retry_for is null
+            and new.created_at <= d.daily_email_sent_at
+            and r.is_active and public.route_runs_on(r, new.ride_date)
+            and not exists (select 1 from public.ride_exceptions x
+                            where x.route_id = r.id and x.ride_date = new.ride_date and x.cancelled),
+            false);
+  end if;
+  return null;
+end;
+$$;
+
+revoke execute on function public.queue_booking_emails from anon, authenticated, public;
+
+
+-- ════════ supabase/migrations/0048_edit_unused_stops.sql ════════
+-- YourWay — a booked route's stops that nobody chose can be edited.
+-- Run after 0047_cancellation_update_emails.sql. Safe to run again.
+--
+-- Until now (0037) every stop of a booked route was fixed: only new stops could
+-- be added. But only a stop a booking points at is part of what a passenger
+-- signed up for and of her history. Now the lock is per stop:
+--   • a stop no booking has ever used — on any date, cancelled ones included —
+--     can be renamed, moved on the map or removed, even on a booked route;
+--   • a stop a booking uses stays exactly as it is (STOP_IN_USE).
+-- A route's other details stay as 0037 left them. update_booked_route() saves
+-- a booked route's note and its stops together; update_route() stays for app
+-- versions that only add stops.
+--
+-- lock_stop() locks the route row before it looks for bookings, as book_ride()
+-- and add_passenger() do before booking, so a booking and a stop change can't
+-- overlap: whichever comes second sees the other.
+
+-- lock_stop() and route_stops_in_use() look bookings up by stop.
+create index if not exists bookings_pickup_stop_idx  on public.bookings (pickup_stop_id);
+create index if not exists bookings_dropoff_stop_idx on public.bookings (dropoff_stop_id);
+
+-- ─── The lock ────────────────────────────────────────────────────────────────
+
+create or replace function public.lock_stop()
+returns trigger
+language plpgsql
+security definer set search_path = ''
+as $$
+begin
+  if auth.uid() is null then return coalesce(new, old); end if;
+  -- Deleting a route still takes its stops with it (on delete cascade): by then
+  -- the route row is gone.
+  if tg_op = 'DELETE' and not exists (select 1 from public.routes where id = old.route_id) then
+    return old;
+  end if;
+  -- Nothing changes on a removed route.
+  perform 1 from public.routes where id = old.route_id and is_active for update;
+  if not found then raise exception 'ROUTE_LOCKED'; end if;
+  if tg_op = 'UPDATE' and new.route_id is distinct from old.route_id then raise exception 'ROUTE_LOCKED'; end if;
+  if exists (select 1 from public.bookings b where b.pickup_stop_id = old.id or b.dropoff_stop_id = old.id) then
+    raise exception 'STOP_IN_USE' using detail = old.label;
+  end if;
+  return coalesce(new, old);
+end;
+$$;
+
+revoke execute on function public.lock_stop from anon, authenticated, public;
+
+-- ─── For the editor ──────────────────────────────────────────────────────────
+
+-- The route's stops that a booking uses: the editor shows them as fixed. Runs
+-- as the caller, so only the route's driver sees its bookings.
+create or replace function public.route_stops_in_use(p_route_id uuid)
+returns uuid[]
+language sql stable
+security invoker set search_path = ''
+as $$
+  select coalesce(array_agg(s.id), '{}')
+  from public.stops s
+  where s.route_id = p_route_id
+    and exists (select 1 from public.bookings b where b.pickup_stop_id = s.id or b.dropoff_stop_id = s.id)
+$$;
+
+revoke execute on function public.route_stops_in_use from anon, public;
+grant execute on function public.route_stops_in_use to authenticated;
+
+-- Save a booked route's note and its full list of stops: a saved stop (with
+-- its id) takes a new name or location, one left out of the list is removed,
+-- and a new one (no id) goes after the existing ones of its kind. lock_stop()
+-- refuses any change to a stop a booking uses. Saved stops keep their kind
+-- and order. Runs as the caller, so RLS limits it to the driver's own routes.
+create or replace function public.update_booked_route(p_route_id uuid, p_notes text, p_stops jsonb)
+returns void
+language plpgsql
+security invoker set search_path = ''
+as $$
+declare
+  v_stop  jsonb;
+  v_id    uuid;
+  v_keep  uuid[] := '{}';
+  v_new   jsonb := '[]';
+begin
+  if auth.uid() is null then raise exception 'NOT_SIGNED_IN'; end if;
+  -- Also locks the route row first, as book_ride() does.
+  update public.routes set notes = nullif(btrim(p_notes), '')
+  where id = p_route_id and driver_id = auth.uid() and is_active;
+  if not found then raise exception 'ROUTE_NOT_FOUND'; end if;
+
+  for v_stop in select * from jsonb_array_elements(coalesce(p_stops, '[]')) loop
+    v_id := nullif(v_stop ->> 'id', '')::uuid;
+    if v_id is null then
+      v_new := v_new || jsonb_build_array(v_stop);
+      continue;
+    end if;
+    if not exists (select 1 from public.stops where id = v_id and route_id = p_route_id and is_active) then
+      raise exception 'STOP_NOT_FOUND';
+    end if;
+    -- Only a stop that really changed is written: an unchanged stop a booking
+    -- uses passes untouched.
+    update public.stops set
+      label = v_stop ->> 'label',
+      lat   = (v_stop ->> 'lat')::double precision,
+      lng   = (v_stop ->> 'lng')::double precision
+    where id = v_id
+      and (label, lat, lng) is distinct from
+          (v_stop ->> 'label', (v_stop ->> 'lat')::double precision, (v_stop ->> 'lng')::double precision);
+    v_keep := v_keep || v_id;
+  end loop;
+
+  delete from public.stops where route_id = p_route_id and is_active and not (id = any (v_keep));
+
+  if jsonb_array_length(v_new) > 0 then
+    perform public.add_route_stops(p_route_id, v_new);
+  end if;
+
+  if not exists (select 1 from public.stops where route_id = p_route_id and is_active and kind = 'pickup')
+     or not exists (select 1 from public.stops where route_id = p_route_id and is_active and kind = 'dropoff') then
+    raise exception 'STOPS_REQUIRED';
+  end if;
+end;
+$$;
+
+revoke execute on function public.update_booked_route from anon, public;
+grant execute on function public.update_booked_route to authenticated;

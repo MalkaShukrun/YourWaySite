@@ -19,7 +19,9 @@ const ERRORS: Record<string, string> = {
   INVALID_PASSENGER: "יש להזין שם וטלפון.",
   INVALID_STOP: "התחנה שנבחרה אינה חלק מהמסלול.",
   BOOKING_NOT_FOUND: "ההרשמה לא נמצאה.",
-  ROUTE_LOCKED: "כבר נרשמו טרמפיסטיות למסלול, ולכן אי אפשר לשנות אותו — אפשר רק לערוך את ההערה ולהוסיף תחנות.",
+  ROUTE_LOCKED: "כבר נרשמו טרמפיסטיות למסלול, ולכן אי אפשר לשנות את פרטיו — אפשר רק לערוך את ההערה ואת התחנות שאף אחת לא נרשמה אליהן.",
+  STOP_IN_USE: "בינתיים נרשמה טרמפיסטית לתחנה ששינית או מחקת, ולכן היא נשארת כמו שהיא. טעני את הדף מחדש ונסי שוב.",
+  STOP_NOT_FOUND: "אחת התחנות כבר לא קיימת במסלול. טעני את הדף מחדש ונסי שוב.",
   RIDE_CANCELLED: "הנסיעה בוטלה לתאריך הזה, ואי אפשר להחזיר אותה.",
   RIDE_DEPARTED: "הנסיעה כבר יצאה ולא ניתן לבטל אותה.",
   RIDE_PAST: "הנסיעה כבר התקיימה ונשמרת בהיסטוריה — אי אפשר להסיר אותה.",
@@ -31,8 +33,8 @@ const rideRef = z.object({ routeId: z.uuid(), date: z.iso.date() });
 
 // Create a route with its stops (SRS §5.1), or with `routeId` save over one
 // nobody has booked yet (0037_edit_unbooked_routes.sql). Once a passenger books
-// it, it can't be changed, only given a new note and more stops (updateRoute)
-// or removed.
+// it, only its note and the stops nobody chose change (updateRoute), or it's
+// removed.
 export async function saveRoute(values: RouteValues, routeId: string | null = null) {
   await requireUser();
   if (routeId !== null && !z.uuid().safeParse(routeId).success) return { error: ERRORS.ROUTE_NOT_FOUND };
@@ -60,8 +62,10 @@ export async function saveRoute(values: RouteValues, routeId: string | null = nu
   redirect("/routes?saved=1");
 }
 
-// The only changes a booked route takes: its note, and more stops after its
-// existing ones (0022_lock_routes.sql, 0028_editable_route_notes.sql).
+// The only changes a booked route takes: its note, and its stops — new ones
+// added after the existing ones, and saved ones no booking uses renamed, moved
+// or removed. The database keeps a stop a booking uses as it is
+// (0028_editable_route_notes.sql, 0048_edit_unused_stops.sql).
 export async function updateRoute(routeId: string, values: RouteUpdateValues) {
   await requireUser();
   if (!z.uuid().safeParse(routeId).success) return { error: ERRORS.ROUTE_NOT_FOUND };
@@ -69,10 +73,10 @@ export async function updateRoute(routeId: string, values: RouteUpdateValues) {
   if (!parsed.success) return { error: firstIssue(parsed.error) };
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("update_route", {
+  const { error } = await supabase.rpc("update_booked_route", {
     p_route_id: routeId,
     p_notes: parsed.data.notes,
-    p_stops: parsed.data.stops.map((s) => ({ kind: s.kind, label: s.label, lat: s.lat, lng: s.lng })),
+    p_stops: parsed.data.stops.map((s) => ({ id: s.id, kind: s.kind, label: s.label, lat: s.lat, lng: s.lng })),
   });
   if (error) return { error: messageFor(error) };
 

@@ -82,7 +82,7 @@ test.describe("daily passenger email (spec D7)", () => {
         .select("daily_email_enabled, daily_email_updates_enabled, daily_email_time")
         .eq("id", user.id)
         .single()).data;
-    const updates = page.getByRole("button", { name: "מייל עדכון על נוסעת חדשה" });
+    const updates = page.getByRole("button", { name: "מייל עדכון על שינוי ברשימת הנוסעות" });
 
     await openForm(page, "/profile", "שמירת הגדרות המייל");
     await page.getByRole("button", { name: "כבוי", exact: true }).click();

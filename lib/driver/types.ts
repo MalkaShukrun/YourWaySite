@@ -48,4 +48,5 @@ export type DriverRoute = {
 };
 
 // `has_bookings`: a passenger has booked it, on some date — its details are then fixed.
-export type EditableRoute = DriverRoute & { stops: Stop[]; has_bookings: boolean };
+// `stops_in_use`: the ids of its stops a booking uses — those stay as they are.
+export type EditableRoute = DriverRoute & { stops: Stop[]; has_bookings: boolean; stops_in_use: string[] };

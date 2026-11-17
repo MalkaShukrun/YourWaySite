@@ -36,6 +36,13 @@ beforeEach(async () => {
   for (const user of [driver, passenger, other]) {
     check(await settings(user, { ride_emails_enabled: true }));
   }
+  check(await settings(driver, {
+    daily_email_enabled: false,
+    daily_email_updates_enabled: false,
+    daily_email_sent_for: null,
+    daily_email_sent_at: null,
+    daily_email_retry_for: null,
+  }));
   // What other tests, and removing the routes above, left waiting, so the
   // 50-member limit can't leave ours out.
   check(await w.service.from("email_outbox").update({ sent_at: new Date().toISOString() }).is("sent_at", null));
@@ -124,6 +131,24 @@ describe("a passenger cancels", () => {
     expect(toDriver.kind).toBe("passenger_cancelled");
     expect(toDriver.rides[0]).toMatchObject({ ride_date: tomorrow, passenger_name: "רחל נוסעת", pickup: "Pickup A" });
     expect(toDriver.rides[0]).not.toHaveProperty("driver_phone");
+  });
+
+  it("doesn't tell the driver when her update email (D7) will show the cancellation", async () => {
+    const route = await w.route(driver, { date: tomorrow });
+    const booking = check(await w.book(passenger, route, tomorrow));
+    // Her daily email for tomorrow goes out, with the passenger in it.
+    check(await settings(driver, { daily_email_enabled: true, daily_email_updates_enabled: true, daily_email_time: "00:00" }));
+    check(await w.service.rpc("claim_daily_passenger_emails"));
+    await claim();
+
+    check(await passenger.db.rpc("cancel_booking", { p_booking_id: booking }));
+    expect((await claim()).map((c) => [c.to_email, c.kind])).toEqual([[passenger.email, "cancelled"]]);
+
+    // A passenger who booked after it isn't in the update, so the driver is told.
+    const late = check(await w.book(other, route, tomorrow));
+    await claim();
+    check(await other.db.rpc("cancel_booking", { p_booking_id: late }));
+    expect((await claim()).map((c) => c.kind)).toEqual(expect.arrayContaining(["passenger_cancelled", "cancelled"]));
   });
 });
 

@@ -2,7 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { check, createWorld, daysFromToday, DENIED, type User, type World } from "./support/world";
 
 // The driver's daily email (spec D7): claim_daily_passenger_emails, and
-// claim_passenger_update_emails for passengers who book after it.
+// claim_passenger_update_emails for passengers who book or cancel after it.
 
 type Claimed = {
   driver_id: string;
@@ -11,7 +11,14 @@ type Claimed = {
   since?: string;
   rides: {
     out_time: string;
-    passengers: { name: string; phone: string | null; email: string | null; pickup: string; is_new?: boolean }[];
+    passengers: {
+      name: string;
+      phone: string | null;
+      email: string | null;
+      pickup: string;
+      is_new?: boolean;
+      is_cancelled?: boolean;
+    }[];
   }[];
 };
 
@@ -200,6 +207,81 @@ describe("claim_passenger_update_emails", () => {
 
     check(await settings({ daily_email_updates_enabled: false }));
     check(await w.book(late, route, tomorrow));
+    expect(await claimUpdates()).toEqual([]);
+  });
+
+  it("sends the list again with a passenger who cancelled marked, by name and stop, once", async () => {
+    const route = await w.route(driver, { date: tomorrow });
+    check(await w.book(late, route, tomorrow));
+    const booking = check(await w.book(passenger, route, tomorrow)) as unknown as string;
+    await claim();
+
+    check(await passenger.db.rpc("cancel_booking", { p_booking_id: booking }));
+    const [update, ...others] = await claimUpdates();
+    expect(others).toEqual([]);
+    expect(update.rides[0].passengers).toEqual([
+      expect.objectContaining({ name: "לאה מאחרת", is_new: false, is_cancelled: false }),
+      { name: "רחל נוסעת", phone: null, email: null, pickup: "Pickup A", is_new: false, is_cancelled: true },
+    ]);
+    expect(await claimUpdates()).toEqual([]);
+
+    // The next update, for someone else, leaves her out.
+    check(await w.addGuest(driver, route, tomorrow));
+    const other = await w.user("Other", { fullName: "מרים אחרת" });
+    check(await w.book(other, route, tomorrow));
+    const [next] = await claimUpdates();
+    expect(next.rides[0].passengers.map((p) => p.name)).not.toContain("רחל נוסעת");
+  });
+
+  it("still sends a ride whose last passenger cancelled", async () => {
+    const route = await w.route(driver, { date: tomorrow });
+    const booking = check(await w.book(passenger, route, tomorrow)) as unknown as string;
+    await claim();
+
+    check(await passenger.db.rpc("cancel_booking", { p_booking_id: booking }));
+    const [update] = await claimUpdates();
+    expect(update.rides[0].passengers.map((p) => [p.name, p.is_cancelled])).toEqual([["רחל נוסעת", true]]);
+  });
+
+  it("leaves out a passenger who booked and cancelled between two emails", async () => {
+    const route = await w.route(driver, { date: tomorrow });
+    check(await w.book(passenger, route, tomorrow));
+    await claim();
+
+    const booking = check(await w.book(late, route, tomorrow)) as unknown as string;
+    check(await late.db.rpc("cancel_booking", { p_booking_id: booking }));
+    expect(await claimUpdates()).toEqual([]);
+  });
+
+  it("lists a passenger who cancelled and booked again once, unmarked", async () => {
+    const route = await w.route(driver, { date: tomorrow });
+    const booking = check(await w.book(passenger, route, tomorrow)) as unknown as string;
+    await claim();
+
+    check(await passenger.db.rpc("cancel_booking", { p_booking_id: booking }));
+    check(await w.book(passenger, route, tomorrow));
+    expect(await claimUpdates()).toEqual([]);
+
+    check(await w.book(late, route, tomorrow));
+    const [update] = await claimUpdates();
+    expect(update.rides[0].passengers.map((p) => [p.name, p.is_new, p.is_cancelled])).toEqual([
+      ["רחל נוסעת", false, false],
+      ["לאה מאחרת", true, false],
+    ]);
+  });
+
+  it("sends nothing when the driver removes a passenger she added, or for a date she cancelled", async () => {
+    const route = await w.route(driver, { date: tomorrow });
+    const booking = check(await w.book(passenger, route, tomorrow)) as unknown as string;
+    const guest = check(await w.addGuest(driver, route, tomorrow)) as unknown as string;
+    await claim();
+
+    check(await driver.db.rpc("remove_passenger", { p_booking_id: guest }));
+    expect(await claimUpdates()).toEqual([]);
+
+    // The driver cancelled the date, and then the passenger cancelled too.
+    check(await w.service.from("ride_exceptions").insert({ route_id: route.id, ride_date: tomorrow, cancelled: true }));
+    check(await passenger.db.rpc("cancel_booking", { p_booking_id: booking }));
     expect(await claimUpdates()).toEqual([]);
   });
 

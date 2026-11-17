@@ -65,7 +65,7 @@ export function DailyEmailForm({ email, defaults }: Props) {
             </p>
           </div>
           <div className="field daily-email-box daily-email-updates">
-            <span id="daily-email-updates-label">מייל עדכון על נוסעת חדשה</span>
+            <span id="daily-email-updates-label">מייל עדכון על שינוי ברשימת הנוסעות</span>
             <button
               type="button"
               className={`btn outlined ${updates ? "btn-secondary" : "btn-ghost"}`}
@@ -76,7 +76,7 @@ export function DailyEmailForm({ email, defaults }: Props) {
               {updates ? "פעיל" : "כבוי"}
             </button>
             <p className="daily-email-note">
-              אם נוסעת נרשמת אחרי שהמייל היומי נשלח, תקבלי מייל נוסף עם הרשימה המעודכנת. נוסעות שהוספת בעצמך מופיעות ברשימה, אבל לא שולחות מייל עדכון לאחר שעת השליחה.
+              אם נוסעת נרשמת או מבטלת אחרי שהמייל היומי נשלח, תקבלי מייל נוסף עם הרשימה המעודכנת. נוסעות שהוספת בעצמך מופיעות ברשימה, אבל לא שולחות מייל עדכון לאחר שעת השליחה.
             </p>
           </div>
         </div>

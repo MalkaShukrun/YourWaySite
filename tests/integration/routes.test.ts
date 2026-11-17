@@ -20,6 +20,7 @@ beforeAll(async () => {
 afterAll(() => w?.cleanup());
 
 const LOCKED = "ROUTE_LOCKED";
+const IN_USE = "STOP_IN_USE";
 
 // Publishes through save_route, as the route editor does.
 async function publish(user: User, overrides: Record<string, unknown> = {}, stops?: object[]) {
@@ -257,12 +258,12 @@ describe("a booked route is locked (spec B4)", () => {
     expect(error?.message).toContain(LOCKED);
   });
 
-  it("its stops can't be renamed, moved or removed", async () => {
-    const { data } = await w.service.from("stops").select("id").eq("route_id", id).limit(1).single();
-    const stop = data!.id;
-    expect((await driver.db.from("stops").update({ label: "Renamed" }).eq("id", stop)).error?.message).toContain(LOCKED);
-    expect((await driver.db.from("stops").update({ lat: 31.7, lng: 35.2 }).eq("id", stop)).error?.message).toContain(LOCKED);
-    expect((await driver.db.from("stops").delete().eq("id", stop)).error?.message).toContain(LOCKED);
+  it("the stops its booking uses can't be renamed, moved, removed or archived", async () => {
+    const [kenyon] = await stopIdsOf(id); // the booked pickup
+    expect((await driver.db.from("stops").update({ label: "Renamed" }).eq("id", kenyon.id)).error?.message).toContain(IN_USE);
+    expect((await driver.db.from("stops").update({ lat: 31.7, lng: 35.2 }).eq("id", kenyon.id)).error?.message).toContain(IN_USE);
+    expect((await driver.db.from("stops").update({ is_active: false }).eq("id", kenyon.id)).error?.message).toContain(IN_USE);
+    expect((await driver.db.from("stops").delete().eq("id", kenyon.id)).error?.message).toContain(IN_USE);
   });
 
   it("even the driver can't delete it (it's removed by archiving)", async () => {
@@ -328,6 +329,111 @@ describe("editing the note and adding stops (spec B4)", () => {
   it("another user can't insert stops into the route", async () => {
     const { error } = await stranger.db.from("stops").insert({ route_id: id, kind: "pickup", label: "Fake" });
     expect(error?.code).toBe(DENIED);
+  });
+});
+
+// A booked route's stops that no booking uses can still change; the ones a
+// booking uses stay as they are (0048_edit_unused_stops.sql).
+describe("a booked route's stops nobody chose (spec B4)", () => {
+  // The editor's list for update_booked_route: every stop, with its id.
+  const savedStops = async (id: string) =>
+    (await w.service.from("stops").select("id, kind, label, lat, lng").eq("route_id", id).eq("is_active", true).order("kind").order("position")).data!;
+
+  async function bookedRoute() {
+    const id = check(await publish(driver)) as string;
+    await bookOn(id); // קניון → תחנה מרכזית; צומת stays unused
+    const [kenyon, junction, central] = await savedStops(id);
+    return { id, kenyon, junction, central };
+  }
+
+  it("the driver renames, moves and removes an unused stop directly", async () => {
+    const { junction } = await bookedRoute();
+    expect((await driver.db.from("stops").update({ label: "צומת חדש", lat: 31.7, lng: 35.2 }).eq("id", junction.id)).error).toBeNull();
+    expect((await driver.db.from("stops").delete().eq("id", junction.id)).error).toBeNull();
+  });
+
+  it("update_booked_route renames an unused stop, removes another and adds new ones, keeping the booked ones", async () => {
+    const { id, kenyon, junction, central } = await bookedRoute();
+    check(await driver.db.rpc("update_booked_route", { p_route_id: id, p_notes: "", p_stops: [kenyon, junction, central, { id: "", kind: "dropoff", label: "יעד", lat: null, lng: null }] }));
+    const [, , , extra] = await savedStops(id);
+
+    const { error } = await driver.db.rpc("update_booked_route", {
+      p_route_id: id,
+      p_notes: " הערה ",
+      p_stops: [
+        kenyon,
+        { ...junction, label: "צומת חדש", lat: 31.7, lng: 35.2 },
+        central,
+        { id: "", kind: "pickup", label: "תחנה נוספת", lat: null, lng: null },
+        // `extra` is left out: removed.
+      ],
+    });
+    expect(error).toBeNull();
+    expect(extra.label).toBe("יעד");
+    expect(await stopsOf(id)).toEqual([
+      { kind: "pickup", label: "קניון", lat: 31.75, lng: 35, position: 1 },
+      { kind: "pickup", label: "צומת חדש", lat: 31.7, lng: 35.2, position: 2 },
+      { kind: "pickup", label: "תחנה נוספת", lat: null, lng: null, position: 3 },
+      { kind: "dropoff", label: "תחנה מרכזית", lat: null, lng: null, position: 1 },
+    ]);
+    expect((await routeRow(id)).notes).toBe("הערה");
+  });
+
+  it.each([
+    ["renamed", (s: { label: string }) => ({ ...s, label: "שונה" })],
+    ["moved", (s: object) => ({ ...s, lat: 31.7, lng: 35.2 })],
+  ])("refuses a booked stop %s through update_booked_route, and saves nothing", async (_name, change) => {
+    const { id, kenyon, junction, central } = await bookedRoute();
+    const { error } = await driver.db.rpc("update_booked_route", {
+      p_route_id: id,
+      p_notes: "לא נשמר",
+      p_stops: [change(kenyon), { ...junction, label: "גם לא" }, central],
+    });
+    expect(error?.message).toContain(IN_USE);
+    expect((await routeRow(id)).notes).toBe("מחכה 5 דקות");
+    expect((await savedStops(id)).map((s) => s.label)).toEqual(["קניון", "צומת", "תחנה מרכזית"]);
+  });
+
+  it("refuses a booked stop left out of the list", async () => {
+    const { id, junction, central } = await bookedRoute();
+    const { error } = await driver.db.rpc("update_booked_route", { p_route_id: id, p_notes: "", p_stops: [junction, central] });
+    expect(error?.message).toContain(IN_USE);
+  });
+
+  it("a stop whose only booking was cancelled stays fixed: the passenger's history keeps it", async () => {
+    const id = check(await publish(driver)) as string;
+    await bookOn(id, "cancelled");
+    const [kenyon] = await savedStops(id);
+    expect((await driver.db.from("stops").update({ label: "שונה" }).eq("id", kenyon.id)).error?.message).toContain(IN_USE);
+  });
+
+  it("refuses a stop of another route, and moving a stop to another route", async () => {
+    const { id, kenyon, central } = await bookedRoute();
+    const other = check(await publish(driver)) as string;
+    const [foreign] = await savedStops(other);
+    const { error } = await driver.db.rpc("update_booked_route", { p_route_id: id, p_notes: "", p_stops: [kenyon, central, foreign] });
+    expect(error?.message).toContain("STOP_NOT_FOUND");
+    expect((await driver.db.from("stops").update({ route_id: id }).eq("id", foreign.id)).error?.message).toContain(LOCKED);
+  });
+
+  it("route_stops_in_use lists the booked stops to the driver only", async () => {
+    const { id, kenyon, central } = await bookedRoute();
+    expect(new Set(check(await driver.db.rpc("route_stops_in_use", { p_route_id: id })) as string[])).toEqual(new Set([kenyon.id, central.id]));
+    expect(check(await stranger.db.rpc("route_stops_in_use", { p_route_id: id }))).toEqual([]);
+  });
+
+  it("another user can't change its stops", async () => {
+    const { id, kenyon, junction, central } = await bookedRoute();
+    const { error } = await stranger.db.rpc("update_booked_route", { p_route_id: id, p_notes: "", p_stops: [kenyon, central] });
+    expect(error?.message).toContain("ROUTE_NOT_FOUND");
+    const { data } = await stranger.db.from("stops").update({ label: "Fake" }).eq("id", junction.id).select();
+    expect(data ?? []).toEqual([]);
+  });
+
+  it("a removed route's unused stops can't change", async () => {
+    const { id, junction } = await bookedRoute();
+    await driver.db.from("routes").update({ is_active: false }).eq("id", id);
+    expect((await driver.db.from("stops").update({ label: "Late" }).eq("id", junction.id)).error?.message).toContain(LOCKED);
   });
 });
 

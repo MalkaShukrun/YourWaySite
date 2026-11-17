@@ -21,7 +21,7 @@ export function EmailStatsSection({ stats }: { stats: EmailStats }) {
     <div className="admin-stats">
       <StatCard icon={<BellRing {...iconProps} size={20} />} value={stats.ride_emails} label="טרמפיסטיות שמקבלות מייל על הצטרפות וביטול נסיעה" tone="peach" />
       <StatCard icon={<Mail {...iconProps} size={20} />} value={stats.daily_email} label="נהגות שמקבלות מייל יומי על הטרמפיסטיות שמצטרפות" tone="blue" />
-      <StatCard icon={<MailPlus {...iconProps} size={20} />} value={stats.daily_email_updates} label="נהגות שמקבלות מייל עדכון על נוסעת חדשה" tone="purple" />
+      <StatCard icon={<MailPlus {...iconProps} size={20} />} value={stats.daily_email_updates} label="נהגות שמקבלות מייל עדכון על שינוי ברשימת הנוסעות" tone="purple" />
     </div>
   );
 }

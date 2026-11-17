@@ -145,25 +145,34 @@ describe("routeSchema", () => {
   });
 });
 
-// A published route takes only a new note and new stops (spec B4).
+// A booked route takes a new note and its full list of stops, saved ones with
+// their ids (spec B4, 0048_edit_unused_stops.sql).
 describe("routeUpdateSchema", () => {
-  const newStop = { kind: "dropoff" as const, label: "צומת גומא", lat: null, lng: null };
+  const saved = { ...pickup, id: ID.pickup };
+  const newStop = { id: "", kind: "dropoff" as const, label: "צומת גומא", lat: null, lng: null };
 
-  it("accepts a note change without new stops", () => {
-    expect(routeUpdateSchema.safeParse({ notes: "חדש", stops: [] }).success).toBe(true);
+  it("accepts a note change with the stops as they were", () => {
+    expect(routeUpdateSchema.safeParse({ notes: "חדש", stops: [saved, { ...dropoff, id: ID.dropoff }] }).success).toBe(true);
   });
 
-  it("accepts new stops and clearing the note", () => {
-    expect(routeUpdateSchema.parse({ notes: "   ", stops: [newStop] })).toEqual({ notes: "", stops: [newStop] });
+  it("accepts new stops and clearing the note, and keeps saved stops' ids", () => {
+    expect(routeUpdateSchema.parse({ notes: "   ", stops: [saved, newStop] })).toEqual({ notes: "", stops: [saved, newStop] });
   });
 
-  it("checks the note and each new stop's name", () => {
-    expect(routeUpdateSchema.safeParse({ notes: "א".repeat(NOTES_MAX + 1), stops: [] }).success).toBe(false);
-    expect(routeUpdateSchema.safeParse({ notes: "", stops: [{ ...newStop, label: "" }] }).success).toBe(false);
+  it("checks the note and each stop's name", () => {
+    expect(routeUpdateSchema.safeParse({ notes: "א".repeat(NOTES_MAX + 1), stops: [saved, newStop] }).success).toBe(false);
+    expect(routeUpdateSchema.safeParse({ notes: "", stops: [{ ...saved, label: "" }, newStop] }).success).toBe(false);
   });
 
-  it("drops a stop id: existing stops can't be changed through it", () => {
-    const parsed = routeUpdateSchema.parse({ notes: "", stops: [{ ...newStop, id: ID.pickup }] });
-    expect(parsed.stops[0]).not.toHaveProperty("id");
+  it.each([
+    ["no pickup", [newStop], "יש להוסיף לפחות תחנת איסוף אחת"],
+    ["no drop-off", [saved], "יש להוסיף לפחות תחנת הורדה אחת"],
+  ])("needs a pickup and a drop-off: refuses %s", (_name, stops, message) => {
+    const result = routeUpdateSchema.safeParse({ notes: "", stops });
+    expect(result.success ? [] : result.error.issues.map((i) => i.message)).toEqual([message]);
+  });
+
+  it("refuses a malformed stop id", () => {
+    expect(routeUpdateSchema.safeParse({ notes: "", stops: [{ ...saved, id: "nope" }, newStop] }).success).toBe(false);
   });
 });

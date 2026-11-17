@@ -115,6 +115,21 @@ describe("getRouteForEdit", () => {
     ]);
   });
 
+  // The stops a booking uses stay fixed in the editor (0048_edit_unused_stops.sql).
+  it("lists the stops a booking uses, or none", async () => {
+    sb.mock.onTable("routes", { data: routeRow() });
+    sb.mock.onRpc("route_stops_in_use", { data: [ID.pickup] }, { data: null });
+    expect(await getRouteForEdit(ID.driver, ID.route)).toMatchObject({ stops_in_use: [ID.pickup] });
+    expect(sb.mock.client.rpc).toHaveBeenCalledWith("route_stops_in_use", { p_route_id: ID.route });
+    expect(await getRouteForEdit(ID.driver, ID.route)).toMatchObject({ stops_in_use: [] });
+  });
+
+  it("throws when the stops in use can't be read, rather than unlock them", async () => {
+    sb.mock.onTable("routes", { data: routeRow() });
+    sb.mock.onRpc("route_stops_in_use", { error: { message: "down" } });
+    await expect(getRouteForEdit(ID.driver, ID.route)).rejects.toThrow("down");
+  });
+
   // Another driver's route, or a removed one, can't be opened (spec B4).
   it("is null for a route that isn't the driver's active route", async () => {
     sb.mock.onTable("routes", { data: null });

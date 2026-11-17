@@ -89,9 +89,10 @@ export async function getMyRoutes(driverId: string): Promise<DriverRoute[]> {
 
 // `has_bookings` counts any booking on any date, cancelled ones included: only
 // a route nobody has booked can be edited in full (0037_edit_unbooked_routes.sql).
+// `stops_in_use` counts the same way, per stop (0048_edit_unused_stops.sql).
 export async function getRouteForEdit(driverId: string, routeId: string): Promise<EditableRoute | null> {
   const supabase = await createClient();
-  const [{ data: route }, stops, bookings] = await Promise.all([
+  const [{ data: route }, stops, bookings, inUse] = await Promise.all([
     supabase
       .from("routes")
       .select(ROUTE_COLUMNS)
@@ -101,8 +102,15 @@ export async function getRouteForEdit(driverId: string, routeId: string): Promis
       .maybeSingle(),
     getRouteStops(routeId),
     supabase.from("bookings").select("id", { count: "exact", head: true }).eq("route_id", routeId),
+    supabase.rpc("route_stops_in_use", { p_route_id: routeId }),
   ]);
   if (bookings.error) throw new Error(bookings.error.message);
+  if (inUse.error) throw new Error(inUse.error.message);
   if (!route) return null;
-  return { ...flatten(route as unknown as RouteRow), stops, has_bookings: (bookings.count ?? 0) > 0 };
+  return {
+    ...flatten(route as unknown as RouteRow),
+    stops,
+    has_bookings: (bookings.count ?? 0) > 0,
+    stops_in_use: (inUse.data as string[] | null) ?? [],
+  };
 }

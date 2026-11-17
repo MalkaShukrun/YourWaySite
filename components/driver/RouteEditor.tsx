@@ -31,12 +31,15 @@ function stopLabelError(stops: unknown) {
 
 // Add a route: details, days & times, and stops — marking them on the map is
 // optional (SRS §5.1). A route a passenger has booked (`route.has_bookings`)
-// is shown read-only; the only changes it takes are its note and new stops. A
-// route nobody has booked stays editable in full. `copyFrom` fills a new
+// is shown read-only; the only changes it takes are its note and its stops —
+// except the stops a booking uses (`route.stops_in_use`), which stay as they
+// are. A route nobody has booked stays editable in full. `copyFrom` fills a new
 // route from another of her rides: everything stays editable and the date is
 // left to choose — the copy is a new ride, not the old one moved.
 export function RouteEditor({ groups, route, copyFrom, today }: Props) {
   const locked = route !== null && route.has_bookings;
+  // The saved stops a booking uses: they can't be renamed, moved or removed.
+  const fixedIds: ReadonlySet<string> = new Set(locked ? route.stops_in_use : []);
   const source = route ?? copyFrom;
   // The stop (by index) waiting for a click on the map.
   const [placing, setPlacing] = useState<number | null>(null);
@@ -78,8 +81,7 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
   const stops = useWatch({ control, name: "stops" });
   const notes = useWatch({ control, name: "notes" });
 
-  // On a booked route its saved stops are fixed.
-  const isFixed = (stop: { id: string }) => locked && Boolean(stop.id);
+  const isFixed = (stop: { id: string }) => fixedIds.has(stop.id);
 
   const toggleDay = (day: number) =>
     setValue(
@@ -92,7 +94,7 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
     startTransition(async () => {
       setServerError("");
       const result = locked
-        ? await updateRoute(route.id, { notes: values.notes, stops: values.stops.filter((s) => !s.id) })
+        ? await updateRoute(route.id, { notes: values.notes, stops: values.stops })
         : await saveRoute(values, route?.id ?? null);
       if (result?.error) setServerError(result.error);
     });
@@ -103,7 +105,11 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
       <div className={`editor-stops ${stopKind === "dropoff" ? "dropoff-editor-stops" : ""}`}>
         {fields.map((field, index) =>
           field.kind !== stopKind ? null : (
-            <div key={field.key} className={isFixed(field) ? "is-fixed" : ""}>
+            <div
+              key={field.key}
+              className={isFixed(field) ? "is-fixed" : ""}
+              title={isFixed(field) ? "כבר נרשמו טרמפיסטיות לתחנה הזו, ולכן אי אפשר לשנות או למחוק אותה" : undefined}
+            >
               <span>{fields.slice(0, index + 1).filter((f) => f.kind === stopKind).length}</span>
               {/* Read-only rather than disabled: a disabled input drops its value from the form. */}
               <input
@@ -115,7 +121,7 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
                 aria-disabled={isFixed(field) || undefined}
                 aria-invalid={Boolean(errors.stops?.[index]?.label)}
               />
-              {/* Only new stops can be placed or removed. */}
+              {/* A stop a booking uses can't be placed or removed. */}
               {!isFixed(field) && (
                 <>
                   <button
@@ -180,12 +186,12 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
         <section className="panel editor-form">
           {locked && (
             <p className="editor-locked-note">
-              כבר נרשמו טרמפיסטיות למסלול, ולכן אי אפשר לשנות אותו — אפשר רק לערוך את ההערה ולהוסיף תחנות. כדי לשנות פרטים אחרים, שכפלי את הנסיעה ושני בה את מה שצריך, ואחר כך הסירי את המסלול הזה.
+              כבר נרשמו טרמפיסטיות למסלול, ולכן אי אפשר לשנות את פרטיו — אפשר רק לערוך את ההערה, להוסיף תחנות ולשנות או למחוק תחנות שאף אחת לא נרשמה אליהן. תחנות שנרשמו אליהן מסומנות באפור. כדי לשנות פרטים אחרים, שכפלי את הנסיעה ושני בה את מה שצריך, ואחר כך הסירי את המסלול הזה.
             </p>
           )}
           {route && !locked && (
             <p className="editor-locked-note">
-              עדיין לא נרשמו טרמפיסטיות למסלול, ולכן אפשר לשנות את כל הפרטים. אחרי שתירשם הטרמפיסטית הראשונה, יהיה אפשר רק לערוך את ההערה ולהוסיף תחנות.
+              עדיין לא נרשמו טרמפיסטיות למסלול, ולכן אפשר לשנות את כל הפרטים. אחרי שתירשם הטרמפיסטית הראשונה, יהיה אפשר רק לערוך את ההערה ואת התחנות שאף אחת לא נרשמה אליהן.
             </p>
           )}
           {copyFrom && (
@@ -311,7 +317,7 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
           <LazyRouteEditorMap
             stops={stops}
             area={area}
-            lockSaved={locked}
+            fixedIds={fixedIds}
             placing={placing === null ? null : stops[placing]?.kind ?? null}
             onPlace={(lat, lng) => {
               if (placing === null) return;

@@ -17,7 +17,7 @@ type EditorStop = { id?: string; kind: "pickup" | "dropoff"; label: string; lat:
 type Props = {
   stops: EditorStop[];
   area: Area | null; // the group's two places; the map can't leave it
-  lockSaved: boolean; // a booked route: its saved stops stay put
+  fixedIds: ReadonlySet<string>; // stops a booking uses: they stay put
   placing: "pickup" | "dropoff" | null; // a stop waiting for a click on the map
   onPlace: (lat: number, lng: number) => void;
   onMove: (index: number, lat: number, lng: number) => void;
@@ -28,7 +28,7 @@ const DEFAULT_CENTER: [number, number] = [31.76, 35.09];
 
 // Optional map for the route's stops (SRS §5.1): click to place the chosen
 // stop, drag a pin to move it. Stops without a location just aren't drawn.
-export default function RouteEditorMap({ stops, area, lockSaved, placing, onPlace, onMove }: Props) {
+export default function RouteEditorMap({ stops, area, fixedIds, placing, onPlace, onMove }: Props) {
   // Fit to the stops already on the map once, when the editor opens.
   const [initialBounds] = useState(() => {
     const placed = stops.filter(isPlaced);
@@ -55,7 +55,7 @@ export default function RouteEditorMap({ stops, area, lockSaved, placing, onPlac
           <Marker
             key={index}
             position={[stop.lat, stop.lng]}
-            draggable={!(lockSaved && stop.id)}
+            draggable={!(stop.id && fixedIds.has(stop.id))}
             icon={stopPinIcon(stop.kind, numberOf(index))}
             eventHandlers={{
               dragend: (e) => {

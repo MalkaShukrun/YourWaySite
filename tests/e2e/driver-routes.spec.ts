@@ -253,6 +253,31 @@ test.describe("editing a published route (spec B4)", () => {
     await expect(page.locator(".trip-card").first()).toContainText("מחכה עד 10 דקות");
   });
 
+  test("once booked, a stop nobody chose can still be renamed or removed", async ({ page, seed, signIn }) => {
+    const driver = await seed.user("Driver");
+    const route = await seed.route(driver);
+    await seed.bookDirectly(await seed.user("Booked"), route, israelDate(1));
+    // Added after the booking: nobody chose them.
+    const { error } = await seed.service.from("stops").insert([
+      { route_id: route.id, kind: "dropoff", label: "תחנה עם שגיאה", position: 2 },
+      { route_id: route.id, kind: "dropoff", label: "תחנה מיותרת", position: 3 },
+    ]);
+    expect(error).toBeNull();
+    await signIn(page, driver);
+
+    await openForm(page, `/routes/${route.id}`, "שמירת השינויים");
+    await expect(page.locator(".editor-stops > .is-fixed")).toHaveCount(2); // the booked pickup and drop-off
+    await expect(page.getByRole("button", { name: "מחיקת התחנה" })).toHaveCount(2);
+    await expect(dropoffInputs(page).first()).toHaveAttribute("readonly", "");
+    await dropoffInputs(page).nth(1).fill("תחנה מתוקנת");
+    await page.getByRole("button", { name: "מחיקת התחנה" }).last().click();
+    await page.getByRole("button", { name: "שמירת השינויים" }).click();
+
+    await expect(page).toHaveURL(/\/routes\?saved=1$/);
+    const { data } = await seed.service.from("stops").select("label").eq("route_id", route.id).eq("kind", "dropoff").order("position");
+    expect(data!.map((s) => s.label)).toEqual(["Dropoff B", "תחנה מתוקנת"]);
+  });
+
   test("a note can be saved on its own, or cleared", async ({ page, seed, signIn }) => {
     const driver = await seed.user("Driver");
     const route = await seed.route(driver, { notes: "ישנה" });

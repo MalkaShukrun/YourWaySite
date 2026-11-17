@@ -53,6 +53,34 @@ describe("buildEmail", () => {
     expect(buildEmail(email()).text).not.toContain("חדשה");
   });
 
+  it("an update marks a passenger who cancelled, crossed out", () => {
+    const rides = email().rides;
+    rides[0].passengers[0] = { name: "רחל", phone: null, email: null, pickup: "תחנה מרכזית", is_cancelled: true };
+    const { subject, text, html } = buildEmail(email({ rides, since: "2026-11-01T18:00:00+00:00" }));
+    expect(subject).toMatch(/^עדכון: /);
+    expect(text).toContain("נוסעות ביטלו את ההרשמה");
+    expect(text).toContain("- רחל (ביטלה) | טלפון: — | דוא״ל: — | תחנת עלייה: תחנה מרכזית");
+    expect(text).not.toContain("אורחת (ביטלה)");
+    expect(html).toContain("<s>רחל</s> (ביטלה)");
+    expect(text).not.toContain("אין כרגע נוסעות");
+  });
+
+  it("an update with both changes says so", () => {
+    const rides = email().rides;
+    rides[0].passengers[0].is_new = true;
+    rides[0].passengers[1].is_cancelled = true;
+    const { text } = buildEmail(email({ rides, since: "2026-11-01T18:00:00+00:00" }));
+    expect(text).toContain("היו שינויים");
+    expect(text).toContain("רחל (חדשה)");
+    expect(text).toContain("אורחת (ביטלה)");
+  });
+
+  it("says a ride has no passengers left when the last one cancelled", () => {
+    const rides = [{ ...email().rides[0], passengers: [{ name: "רחל", phone: null, email: null, pickup: "תחנה מרכזית", is_cancelled: true }] }];
+    const { text, html } = buildEmail(email({ rides, since: "2026-11-01T18:00:00+00:00" }));
+    for (const body of [text, html]) expect(body).toContain("אין כרגע נוסעות בנסיעה הזו.");
+  });
+
   it("shows a dash where a passenger has no email", () => {
     expect(buildEmail(email()).text).toContain("אורחת | טלפון: 052-000-0000 | דוא״ל: — |");
   });
