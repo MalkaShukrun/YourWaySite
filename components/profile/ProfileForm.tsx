@@ -40,7 +40,7 @@ export function ProfileForm({ initials, email, defaults }: Props) {
       </div>
 
       <div className="form-grid">
-        <label className="field">
+        <label className="field required">
           <span>שם מלא</span>
           <div className="input-shell"><User {...iconProps} size={20} /><input {...register("fullName")} autoComplete="name" maxLength={FULL_NAME_MAX} /></div>
           <FieldError message={errors.fullName?.message} />

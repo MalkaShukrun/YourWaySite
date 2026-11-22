@@ -48,7 +48,7 @@ export function OnboardingModal({ defaultName }: Props) {
         <p>השלימי כמה פרטים כדי שנוכל לחבר אותך לנסיעות המתאימות.</p>
 
         <div className="form-grid">
-          <label className="field">
+          <label className="field required">
             <span>שם מלא</span>
             <div className="input-shell"><input {...register("fullName")} autoComplete="name" maxLength={FULL_NAME_MAX} /></div>
             <FieldError message={errors.fullName?.message} />
