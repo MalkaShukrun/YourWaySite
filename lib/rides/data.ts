@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { MyBooking, RideDetails, RideGroup, RideKind, RideSummary, Stop } from "@/lib/rides/types";
+import { clockOf } from "@/lib/utils/dates";
 
 // Data Access Layer for rides. All reads go through Postgres functions
 // (supabase/migrations/0002_rides.sql) that check auth.uid() themselves.
@@ -52,8 +53,7 @@ async function searchGroup(groupId: string | null, filters: Omit<SearchFilters, 
 // The minute after "HH:MM" (search_rides' upper bound is exclusive); null after 23:59.
 function minuteAfter(time: string) {
   const minutes = Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5)) + 1;
-  if (minutes >= 24 * 60) return null;
-  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+  return minutes >= 24 * 60 ? null : clockOf(minutes);
 }
 
 // The dates a route runs in the coming week, as search lists them (departed

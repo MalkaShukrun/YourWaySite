@@ -379,8 +379,9 @@ a.nav-item { text-decoration: none; }
 @media (min-width: 1101px) {
   .filters { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) minmax(0, 1fr) auto; }
   .filter-places { display: contents; }
-  /* "ניקוי" shares the row of the extra filters, below the search button. */
-  .filters-more, .search-clear { grid-row: 2; }
+  /* "ניקוי" shares the row of the extra filters, below the search button
+     (row 1 is smart search, row 2 the filters). */
+  .filters-more, .search-clear { grid-row: 3; }
 }
 @media (min-width: 781px) and (max-width: 1100px) { .filter-places { grid-column: 1 / -1; } }
 /* On a phone the two are too narrow side by side: one above the other, the

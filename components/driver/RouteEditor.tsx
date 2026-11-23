@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarDays, MapPin, Plus, Repeat, Route, Users } from "lucide-react";
+import { CalendarDays, Info, MapPin, Plus, Repeat, Route, Users } from "lucide-react";
 import { saveRoute, updateRoute } from "@/app/(app)/(driver)/actions";
 import { LazyRouteEditorMap } from "@/components/map/LazyMaps";
 import { DatePicker } from "@/components/ui/DatePicker";
@@ -17,6 +17,8 @@ import { groupLabel, RIDE_WEEKDAYS } from "@/lib/utils/format";
 import { groupArea } from "@/lib/utils/places";
 import { NOTES_MAX, routeSchema, STOP_LABEL_EMPTY, STOP_LABEL_MAX, type RouteValues } from "@/lib/validation/route";
 import { useHydrated } from "@/components/ui/useHydrated";
+
+const ROUTE_HINT = "לא מצאת את המסלול שלך? להוספת מסלול נסיעה מעיר לעיר יש ליצור קשר";
 
 type Props = { groups: RideGroup[]; route: EditableRoute | null; copyFrom?: EditableRoute | null; today: string };
 
@@ -202,7 +204,13 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
           <fieldset className="editor-section" disabled={locked}>
             <div className="section-heading"><span>1</span><div><h2>פרטי הנסיעה</h2><p>בחרי מסלול וסוג נסיעה</p></div></div>
             <div className="field">
-              <span>מסלול נסיעה</span>
+              <span className="field-label-hint">
+                מסלול נסיעה
+                <span className="hint" tabIndex={0} aria-label={ROUTE_HINT}>
+                  <Info {...iconProps} size={16} />
+                  <span className="hint-bubble" role="tooltip">{ROUTE_HINT}</span>
+                </span>
+              </span>
               <Controller
                 control={control}
                 name="groupId"

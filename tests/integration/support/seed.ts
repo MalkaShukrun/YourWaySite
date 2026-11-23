@@ -100,8 +100,10 @@ export function createWorld({ url, anonKey, serviceKey }: LocalSupabase) {
       return id as string;
     },
 
-    // A group between two places, each named "city, neighborhood".
-    async group({ origin = `IT ${tag} ${randomUUID().slice(0, 4)}, מרכז`, destination = "Test, מרכז", active = true } = {}) {
+    // A group between two places, each named "city, neighborhood". Eight
+    // random characters: with four, two groups of one run sometimes got the
+    // same name, and the second failed as a duplicate.
+    async group({ origin = `IT ${tag} ${randomUUID().slice(0, 8)}, מרכז`, destination = "Test, מרכז", active = true } = {}) {
       const [originId, destinationId] = await Promise.all([this.place(origin), this.place(destination)]);
       const { id } = check(
         await service

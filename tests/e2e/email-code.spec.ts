@@ -58,7 +58,7 @@ test("a forgotten code copies the support address", async ({ page, context }) =>
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.goto("/login");
   await page.getByRole("button", { name: openForm }).click();
-  await page.getByRole("button", { name: "שכחת את הקוד? שלחי לנו מייל" }).click();
+  await page.getByRole("button", { name: "משתמשת חדשה או שכחת את הקוד? שלחי לנו מייל לקבלת קוד" }).click();
   await expect(page.locator(".email-code-note")).toHaveText(`כתובת המייל הועתקה: ${SUPPORT_EMAIL}`);
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(SUPPORT_EMAIL);
 });

@@ -66,6 +66,11 @@ export function formatTime(time: string | null) {
   return time ? time.slice(0, 5) : "";
 }
 
+// Minutes from midnight as "HH:MM": 435 → "07:15".
+export function clockOf(minutes: number) {
+  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+}
+
 export function isIsoDate(value: unknown): value is string {
   return typeof value === "string" && ISO_DATE_PATTERN.test(value) && !Number.isNaN(parseISO(value).getTime());
 }

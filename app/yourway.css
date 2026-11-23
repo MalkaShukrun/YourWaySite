@@ -30,7 +30,7 @@ button { cursor: pointer; }
 .input-shell input, .input-shell select, .field { text-align: right; }
 .activity-date, .passenger-name, .driver, .today-route, .activity-route, .route-card-body { text-align: right; }
 .price-input input { text-align: center; }
-.logo-wrap, .header-user, .welcome, .search-heading, .trip-card, .today-card, .panel, .route-card, .profile-panel, .vehicle-section, .modal-card { text-align: right; }
+.logo-wrap, .header-user, .welcome, .trip-card, .today-card, .panel, .route-card, .profile-panel, .vehicle-section, .modal-card { text-align: right; }
 .avatar, .logo-mark, .stat-icon, .route-badge, .passenger-number, .seat-icon { text-align: center; }
 .side-nav, .nav-item, .field > span, .driver-contact-card, .group-row { text-align: right; }
 .role-switch, .activity-tabs, .day-picker, .kind-switch { text-align: center; }
@@ -111,12 +111,48 @@ button { cursor: pointer; }
 .welcome p { color: #59665F; font-size: 17px; margin: 0 0 3px; }
 .welcome h1 { color: var(--ink); font-size: 29px; line-height: 1.2; margin: 0; font-weight: 800; letter-spacing: -.5px; }
 .search-card { background: #FFFFFF; border: 1px solid var(--line); border-top: 4px solid var(--lime); border-radius: 20px; padding: 22px 28px 28px; overflow: visible; position: relative; box-shadow: 0 7px 24px rgba(36,52,47,.045); }
-.search-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
-.search-heading .eyebrow { color: #59665F; font-size: 16px; font-weight: 600; }
-.search-heading h2 { margin: 3px 0 0; font-size: 20px; color: #39443f; }
-.search-art { width: 100px; height: 42px; color: var(--green); display: grid; place-items: center; position: relative; }
-.search-art:after { content: ""; position: absolute; width: 105px; height: 40px; border-bottom: 2px dashed #b3b5a9; border-radius: 50%; right: -5px; bottom: 13px; transform: rotate(-7deg); }
-.search-art .icon { position: relative; z-index: 2; background: #fff; }
+/* Smart search (components/passenger/SmartSearch.tsx): a free-text box above
+   the filters, with a gradient border and a BETA tag. */
+/* The search card's background slowly drifts between soft lime, blue and
+   green tints, back and forth, behind both smart search and the filters,
+   whose boxes stay white. The tints are a wide strip in a layer of their own
+   (.search-card-tint, SearchPanel.tsx) that slides with transform: the
+   browser moves it without repainting the card, where animating the card's
+   own background repainted it every frame and slowed the whole page. Still
+   for those who turn motion off. The card's own background, the same tints
+   standing still, is what the loading placeholder shows. */
+.search-card { background: linear-gradient(110deg, #F2FAE6, #E9F2F6); isolation: isolate; }
+.search-card-tint { position: absolute; inset: 0; z-index: -1; border-radius: inherit; overflow: hidden; pointer-events: none; }
+.search-card-tint::before {
+  content: ""; position: absolute; top: 0; bottom: 0; right: 0; width: 300%;
+  background: linear-gradient(110deg, #F2FAE6, #E9F2F6, #EDF7E3, #F4F8F3);
+  animation: search-card-tint 9s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes search-card-tint { from { transform: translateX(0); } to { transform: translateX(66.667%); } }
+@media (prefers-reduced-motion: reduce) { .search-card-tint::before { animation: none; } }
+/* Smart search takes the filter bar's whole first row, its parts centered
+   in it: about three quarters of the width, the filters' places and date,
+   on a computer; the full width on a phone. */
+.smart-search { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; margin-bottom: 10px; }
+.smart-search > * { width: min(100%, 76%); }
+/* Two classes, to win over ".page-content p { text-align: right }". */
+.smart-search .smart-search-title { margin: 0 0 12px; font-size: 21px; font-weight: 500; color: var(--ink); text-align: center; }
+.smart-search-new { font-weight: 800; color: var(--green); }
+.smart-search-box { position: relative; display: flex; align-items: center; gap: 8px; padding: 5px 16px 5px 10px; border: 2px solid transparent; border-radius: 999px; background: linear-gradient(#fff, #fff) padding-box, linear-gradient(90deg, #88B65D, #2A4A60) border-box; box-shadow: 0 6px 18px rgba(42,74,96,.08); }
+.smart-search-box:focus-within { box-shadow: 0 0 0 4px rgba(215,245,165,.9), 0 6px 18px rgba(42,74,96,.1); }
+.smart-search-sparkle { color: #5E8F3A; }
+.smart-search-box input { flex: 1; min-width: 0; height: 46px; border: 0; outline: 0; background: transparent; font-size: 19px; color: var(--ink); text-align: right; }
+.smart-search-box input::placeholder { color: #8A958F; }
+.smart-search-clear { width: 34px; height: 34px; flex: none; border: 0; border-radius: 50%; background: transparent; color: var(--muted); display: grid; place-items: center; }
+.smart-search-clear:hover { background: #F0F2F1; color: var(--ink); }
+.smart-search-choices { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 8px; margin-top: 10px; padding-inline: 16px; font-size: 15px; color: #4C5A54; }
+.smart-search-choices .btn { min-height: 32px; padding: 0 12px; font-size: 15px; }
+/* A filter smart search filled: green text on a light green field, until
+   she changes it herself. SearchPanel flashes it when it's filled. */
+.field.smart-filled .input-shell { border-color: #9BC46F; background: #F6FBEE; color: #3F7A2A; }
+.field.smart-filled .input-shell input, .field.smart-filled .input-shell > span { color: #3F7A2A; font-weight: 700; }
+.field.smart-filled .input-shell input::placeholder { color: #3F7A2A; }
 .filters { display: grid; grid-template-columns: 1.15fr 1fr .65fr .65fr .8fr auto; gap: 12px; align-items: end; }
 .field { display: flex; flex-direction: column; gap: 7px; }
 .field > span { font-size: 16px; color: #6e766f; font-weight: 600; padding-right: 2px; }
@@ -539,7 +575,10 @@ fieldset.editor-section { min-width: 0; margin: 0; border-top: 0; border-inline:
   .welcome { align-items: flex-start; gap: 16px; }
   .welcome h1 { font-size: 25px; }
   .search-card { padding: 21px 17px; border-radius: 17px; }
-  .search-art { display: none; }
+  .smart-search > * { width: 100%; }
+  .smart-search .smart-search-title { font-size: 18px; }
+  .smart-search-box input { font-size: 16px; }
+  .smart-search-choices { padding-inline: 4px; }
   .filters { grid-template-columns: 1fr; }
   .trip-grid { grid-template-columns: minmax(0, 1fr); }
   .results-head { align-items: center; }

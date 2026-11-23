@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  clockOf,
   formatMonth,
   formatRideDate,
   formatShortRideDate,
@@ -70,6 +71,12 @@ describe("ride date labels", () => {
     expect(formatTime("07:15:00")).toBe("07:15");
     expect(formatTime("23:59")).toBe("23:59");
     expect(formatTime(null)).toBe("");
+  });
+
+  it("writes minutes from midnight as a time", () => {
+    expect(clockOf(0)).toBe("00:00");
+    expect(clockOf(435)).toBe("07:15");
+    expect(clockOf(23 * 60 + 59)).toBe("23:59");
   });
 });
 

@@ -100,7 +100,7 @@ Open for booking → Cancelled for this date → Shown as cancelled · never cha
 | Sign-in | `/login` | Anyone | Google sign-in, or a personal code for approved addresses (A6), consent to the terms of use and the privacy policy, site totals (members, and shown groups with at least one ride that wasn't cancelled and hasn't taken place; refreshed hourly). Opens the onboarding window for new users. After an automatic sign-out it says she was signed out after 10 minutes without activity (A8). |
 | Terms of use | `/terms` | Anyone | The terms text, including the cancellation policy. |
 | Privacy policy | `/privacy` | Anyone | The policy text, including the mailing and messages section. |
-| Ride search | `/` | All | Greeting, filter bar (“מאיפה” and “לאן” with a swap button, date, departure from/until, ride type), result cards for the next 7 days. Each recurring route appears as one card with a chip per date showing free seats. |
+| Ride search | `/` | All | Greeting, the smart search box “חדש! חיפוש חכם ומהיר” (C8), filter bar (“מאיפה” and “לאן” with a swap button, date, departure from/until, ride type), result cards for the next 7 days. Each recurring route appears as one card with a chip per date showing free seats. |
 | Ride details and booking | `/ride/[id]?date=` | All | Day picker (recurring), pickup and drop-off choice, price total, booking button, route map, driver card (contact details only after booking), vehicle, note. |
 | My rides | `/my-rides` | Passenger | Tabs “נסיעות קרובות” (upcoming) and “היסטוריה” (past, newest first). Each row: time, date, route, price, stops, driver contact, cancel button, and “הנהגת ביטלה את הנסיעה” when the driver cancelled. |
 | Payments | `/payments` | Passenger | Month picker (this month and the 3 before), totals for the month (total, paid, left to pay), one row per charged ride with a paid/unpaid toggle, and an all-time unpaid balance per driver. |
@@ -214,7 +214,7 @@ Her session cookies are removed, even if Google already ended the session, and s
 
 - She is signed in. The first time, the onboarding window asks for her name and phone, as in A1.
 - The same code works every time.
-- If she forgot it, “שכחת את הקוד? שלחי לנו מייל” copies the support address and shows it. The contact form needs a signed-in user, so it can't help here.
+- If she's new or forgot it, “משתמשת חדשה או שכחת את הקוד? שלחי לנו מייל לקבלת קוד” copies the support address and shows it. The contact form needs a signed-in user, so it can't help here.
 
 **Where it shows**
 
@@ -273,6 +273,7 @@ Every signed-in page; then `/login`.
 - She is taken to my routes with “המסלול נשמר ופורסם”.
 - The route appears under “מסלולים פעילים”, newest first.
 - Each of its dates appears on the weekly dashboard.
+- The ⓘ beside “מסלול נסיעה” reads “לא מצאת את המסלול שלך? להוספת מסלול נסיעה מעיר לעיר יש ליצור קשר”.
 
 **Passenger side**
 
@@ -381,7 +382,7 @@ Not applicable.
 
 #### C1. A passenger searches
 
-**Trigger:** She opens “מציאת נסיעה”, optionally filters, and presses “חיפוש נסיעה”.
+**Trigger:** She opens “מציאת נסיעה”, optionally filters, and presses “חיפוש נסיעה”, or writes a sentence in smart search and presses Enter (C8).
 
 **Driver side**
 
@@ -393,7 +394,6 @@ Nothing; searches aren't recorded.
 - Filters: “מאיפה” (from) and “לאן” (to), each one or more cities or places — a whole city (“בית שמש (כל העיר)”) covers every place in it; rides are found only in the direction picked, and “החלפת כיוון” swaps the two for the ride back. The list shows each city's whole-city option with its places indented under it by neighborhood only (“רמה ג”); while she types, matches show in full (“בית שמש, רמה ג”), since their city may be filtered out. Also ride type, and departure from and until (inclusive). An older link with `?group=` still narrows to those groups.
 - Results are sorted by date then time; each route is one card. The heading shows how many were found (“N תוצאות”), with or without filters.
 - No results, including picks with no group between them: “לא נמצאו נסיעות מתאימות”, with “נסי לשנות את המקומות, התאריך או השעה.”
-- The ⓘ beside “מאיפה” reads “נהגת? להוספת מסלולי נסיעה מעיר לעיר יש ליצור קשר”.
 
 **Where it shows**
 
@@ -514,6 +514,30 @@ The not-found page: “הדף לא נמצא”.
 **Where it shows**
 
 Not-found page.
+
+#### C8. A passenger searches by writing a sentence (smart search)
+
+**Trigger:** On “מציאת נסיעה” she types in the box “חדש! חיפוש חכם ומהיר”, for example “בית שמש לירושלים מחר בבוקר, קבועה” (the box's own example).
+
+**Driver side**
+
+Nothing.
+
+**Passenger side**
+
+- As she types, after a short pause, the filters fill in from the sentence: “מאיפה”, “לאן”, the date, departure from and until, and ride type (“עוד סינונים” opens for the last three). A filter it fills or changes flashes, and stays green until she changes it herself. A filter the sentence no longer names is emptied, so deleting a word takes it out.
+- Enter runs the search, as “חיפוש נסיעה” would with those filters (C1). The ✕ in the box clears the sentence and every filter.
+- **Places:** names from the place list. A city (“בית שמש”) is the whole city; “בית שמש רמה ג” or the neighborhood alone (“רמה ג”) is that place. Quotes, ׳ and dashes don't matter (“רמה ג׳”). Hebrew's joined letters are read too: “מבית שמש”, “לירושלים”, “ומרמה ג”. “מ” in front, or “מ” / “מכיוון” before it, means from; “ל”, “ל” / “לכיוון” means to. Places without either fill the ends in order: “בית שמש ירושלים” goes from the first to the second, and a single place is where from.
+- **A neighborhood in several cities:** all of them are searched, and under the box “התכוונת ל…?” offers them (up to 6; any more are in the filter itself). A pick keeps that place only and searches again; it stays picked, without asking again, while the sentence still names that neighborhood.
+- **Date:** “היום”, “מחר”, “מחרתיים”, “יום ראשון”–“יום שישי” or “יום א׳”–“יום ו׳”, and “שבת” — a weekday is the next one to come (today's weekday means next week). No day: the next 7 days.
+- **Time:** “בבוקר” 06:00–11:00, “בצהריים” 11:00–14:00, “אחר הצהריים” / “אחה״צ” 14:00–17:00, “בערב” 17:00–21:00, “בלילה” 20:00–23:59. An hour (“בשמונה”, “8:00”, “ב-8”, “בשעה 8”) is half an hour each way of it. “אחרי 4” / “מ-4”, “עד 9” / “לפני 9” and “בין 8 ל-10” set one end or both, and narrow a part of the day (“בבוקר עד 9” is 06:00–09:00). Hours 1–5 are afternoon unless she says “בבוקר”; with “בערב”, “בלילה” or “אחר הצהריים” an hour is after noon.
+- **Ride type:** “קבועה”, “קבוע”, “כל יום”, “כל שבוע” are fixed rides; “חד פעמית”, “חד־פעמית”, “פעם אחת” are one-time rides.
+
+**Where it shows**
+
+`/`, at the top of the search card, above the filters. The results and the address are those of the filters (C1); the sentence itself isn't kept in the address.
+
+**Rules:** fixed rules over the site's own place list, run in her browser: no AI, nothing sent anywhere, nothing saved. Words it doesn't know are skipped without an error; fewer than 2 characters, or nothing it knows, changes nothing. Other dates (“15 לחודש”, “בעוד שבועיים”), price and seats aren't understood — the filters cover those. The search card's background slowly shifts between soft tints, and stands still for users who turn animations off.
 
 ### D. The driver's day
 
@@ -1028,5 +1052,6 @@ In place of the page.
 | Contact form limits | No limit on messages per user. |
 | Confirmation before a passenger cancels | None; cancelling is one click. |
 | Live updates | Screens show the state when loaded; they don't refresh on their own when the other side acts or a ride departs. |
+| AI or a chat assistant | None. Smart search (C8) reads a sentence by fixed rules in the browser; nothing is sent to an AI service. |
 
 

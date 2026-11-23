@@ -75,7 +75,7 @@ export function BookingForm({ routeId, date, price, stops, canBook, blockedReaso
           <span className="step-number dropoff-step">2</span>
           <div><h2>בחרי תחנת הורדה</h2><p>התחנה שבה תרדי מהנסיעה</p></div>
         </div>
-        <StopOptions className="dropoff-options" stops={dropoffs} selected={dropoffId} onSelect={setDropoffId} hint="תחנה מורשית" />
+        <StopOptions className="dropoff-options" stops={dropoffs} selected={dropoffId} onSelect={setDropoffId} hint="תחנת הורדה" />
 
         <div className="booking-action-row">
           <div className="booking-info">
