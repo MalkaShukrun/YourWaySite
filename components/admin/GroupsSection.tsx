@@ -18,7 +18,7 @@ export function GroupStats({ groups, users }: { groups: AdminGroup[]; users: num
   return (
     <div className="admin-stats">
       <StatCard icon={<UserCheck {...iconProps} size={20} />} value={users} label="משתמשות במערכת" tone="purple" />
-      <StatCard icon={<Car {...carIconProps} size={20} />} value={active.routes} label="מסלולים פעילים" tone="blue" />
+      <StatCard icon={<Car {...carIconProps} size={20} />} value={active.routes} label="קווי נסיעה פעילים" tone="blue" />
       <StatCard icon={<Users {...iconProps} size={20} />} value={active.drivers} label="נהגות עם מסלולים" tone="purple" />
       <StatCard icon={<Route {...iconProps} size={20} />} value={groups.filter((g) => g.is_active).length} label="קבוצות פעילות" tone="green" />
     </div>

@@ -97,7 +97,7 @@ Open for booking → Cancelled for this date → Shown as cancelled · never cha
 
 | Screen | Address | Who | What it shows |
 |---|---|---|---|
-| Sign-in | `/login` | Anyone | Google sign-in, or a personal code for approved addresses (A6), consent to the terms of use and the privacy policy, site totals (members, and shown groups with at least one ride that wasn't cancelled and hasn't taken place; refreshed hourly). Opens the onboarding window for new users. After an automatic sign-out it says she was signed out after 10 minutes without activity (A8). |
+| Sign-in | `/login` | Anyone | Google sign-in, or a personal code for approved addresses (A6), consent to the terms of use and the privacy policy, site totals (members, and active routes (“קווי נסיעה פעילים”) counted as on the admin page, migration 0049; refreshed hourly). Opens the onboarding window for new users. After an automatic sign-out it says she was signed out after 10 minutes without activity (A8). |
 | Terms of use | `/terms` | Anyone | The terms text, including the cancellation policy. |
 | Privacy policy | `/privacy` | Anyone | The policy text, including the mailing and messages section. |
 | Ride search | `/` | All | Greeting, the smart search box “חדש! חיפוש חכם ומהיר” (C8), filter bar (“מאיפה” and “לאן” with a swap button, date, departure from/until, ride type), result cards for the next 7 days. Each recurring route appears as one card with a chip per date showing free seats. |
@@ -922,7 +922,7 @@ An unused group simply disappears from the filter.
 - Today: passengers traveling (“טרמפיסטיות נוסעות היום”) and rides departing (“נסיעות יוצאות היום”).
 - To date: rides that departed with passengers (“נסיעות שיצאו עם טרמפיסטיות”) and passengers who traveled (“טרמפיסטיות שנסעו עד היום”).
 - Users in the system (“משתמשות במערכת”): those who finished sign-up.
-- Active routes (“מסלולים פעילים”), the drivers who have one (“נהגות עם מסלולים”), and visible groups (“קבוצות פעילות”). Each group row shows its own count of active routes.
+- Active routes (“קווי נסיעה פעילים”), the drivers who have one (“נהגות עם מסלולים”), and visible groups (“קבוצות פעילות”). Each group row shows its own count of active routes.
 - Who has each email on (migration 0045): the emails about her own rides (“טרמפיסטיות שמקבלות מייל על הצטרפות וביטול נסיעה”, A7), the driver's daily email (“נהגות שמקבלות מייל יומי על הטרמפיסטיות שמצטרפות”, D7), and its update about a passenger who joins or cancels (“נהגות שמקבלות מייל עדכון על שינוי ברשימת הנוסעות”). Only users who finished sign-up count. The ride emails are on until a user turns them off, so they include users who never opened the setting; the update counts only while the daily email is on too, since it's sent only with it.
 
 **Rules:** only admins can read the totals. Each active booking counts as one passenger on one ride, guests included, so a round trip counts twice. Dates the driver cancelled aren't counted. Today's rides include every scheduled ride, booked or not; a ride counts as departed only if it had at least one passenger, since a ride that left empty leaves no record. A route is active as in its driver's “מסלולים פעילים” tab: not removed, and not a one-time ride that took place or was cancelled for its date. The totals leave out routes in hidden groups, which can't be booked; a hidden group's row still shows its own count. Days follow Israel time.

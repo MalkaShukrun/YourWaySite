@@ -312,7 +312,7 @@ test("shows the totals and the group list", async ({ page, seed, signIn }) => {
     "טרמפיסטיות שנסעו עד היום",
     "קבוצות פעילות",
     "נהגות עם מסלולים",
-    "מסלולים פעילים",
+    "קווי נסיעה פעילים",
   ]) {
     await expect(page.locator(".stat-card").filter({ hasText: label })).toBeVisible();
   }
