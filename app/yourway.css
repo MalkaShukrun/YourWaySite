@@ -121,7 +121,8 @@ button { cursor: pointer; }
    own background repainted it every frame and slowed the whole page. Still
    for those who turn motion off. The card's own background, the same tints
    standing still, is what the loading placeholder shows. */
-.search-card { background: linear-gradient(110deg, #F2FAE6, #E9F2F6); isolation: isolate; }
+/* z-index: its dropdowns open over the results below. */
+.search-card { background: linear-gradient(110deg, #F2FAE6, #E9F2F6); isolation: isolate; z-index: 2; }
 .search-card-tint { position: absolute; inset: 0; z-index: -1; border-radius: inherit; overflow: hidden; pointer-events: none; }
 .search-card-tint::before {
   content: ""; position: absolute; top: 0; bottom: 0; right: 0; width: 300%;
@@ -146,8 +147,46 @@ button { cursor: pointer; }
 .smart-search-box input::placeholder { color: #8A958F; }
 .smart-search-clear { width: 34px; height: 34px; flex: none; border: 0; border-radius: 50%; background: transparent; color: var(--muted); display: grid; place-items: center; }
 .smart-search-clear:hover { background: #F0F2F1; color: var(--ink); }
+/* The arrow that runs her sentence's search; pale until there's a sentence. */
+.smart-search-go { width: 38px; height: 38px; flex: none; border: 0; border-radius: 50%; background: var(--green); color: #fff; display: grid; place-items: center; transition: background .15s ease, transform .15s ease; }
+.smart-search-go:hover:not(:disabled) { background: var(--green-dark); transform: translateX(-2px); }
+.smart-search-go:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+.smart-search-go:disabled { background: #DCE3E0; color: #fff; cursor: default; }
+/* "חיפוש נסיעה": its icon turns while the results load. */
+.search-button { min-height: 45px; padding: 0 23px; }
+.search-button .spin { animation: spin .8s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .search-button .spin { animation-duration: 2.4s; } }
 .smart-search-choices { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 8px; margin-top: 10px; padding-inline: 16px; font-size: 15px; color: #4C5A54; }
 .smart-search-choices .btn { min-height: 32px; padding: 0 12px; font-size: 15px; }
+/* While a search's new results load, the current ones stay, dimmed — after a
+   beat, so a quick update doesn't flicker. */
+.search-results { transition: opacity .2s ease; }
+.search-results.updating { opacity: .5; transition-delay: .15s; }
+@keyframes spin { to { transform: rotate(360deg); } }
+/* Her 3 latest searches: a dropdown under smart search's box on every focus;
+   over the filters, not pushing them down. */
+.smart-search-field { position: relative; }
+.recent-menu { position: absolute; top: calc(100% + 8px); inset-inline: 14px; z-index: 30; padding: 6px; background: #fff; border: 1px solid #d9e1dc; border-radius: 14px; box-shadow: 0 14px 30px rgba(30,55,71,.14); text-align: right; animation: recent-menu-in .12s ease-out; }
+@keyframes recent-menu-in { from { opacity: 0; transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .recent-menu { animation: none; } }
+.smart-search .recent-menu-title { display: flex; align-items: center; gap: 5px; margin: 3px 9px 5px; color: #66736C; font-size: 12px; font-weight: 600; }
+.recent-menu ul { list-style: none; margin: 0; padding: 0; }
+/* Each search in full: the places (wrapping when there are many), then its
+   date, departure times and ride type, each with its icon. */
+.recent-option { display: flex; align-items: flex-start; gap: 9px; padding: 8px 10px; border-radius: 9px; color: var(--ink); font-size: 15px; cursor: pointer; }
+.recent-option > .icon { flex: none; margin-top: 3px; color: #8A958F; }
+.recent-option.active { background: #EEF3F6; }
+.recent-option-body { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.recent-option-route { line-height: 1.4; overflow-wrap: anywhere; }
+.recent-option-route strong { font-weight: 700; }
+.recent-areas { color: #4C5A54; }
+.recent-anywhere { color: #66736C; font-weight: 600; }
+.recent-option-arrow { color: #8A958F; }
+.recent-option-details { display: flex; flex-wrap: wrap; gap: 3px 12px; color: #59665F; font-size: 13px; }
+.recent-detail { display: inline-flex; align-items: center; gap: 4px; }
+.recent-detail .icon { color: #8A958F; }
+.recent-menu-clear { display: inline-flex; align-items: center; gap: 5px; margin: 4px 4px 1px; padding: 4px 6px; border: 0; border-radius: 6px; background: transparent; color: #66736C; font-size: 13px; }
+.recent-menu-clear:hover, .recent-menu-clear:focus-visible { background: #F0F2F1; color: var(--ink); }
 /* A filter smart search filled: green text on a light green field, until
    she changes it herself. SearchPanel flashes it when it's filled. */
 .field.smart-filled .input-shell { border-color: #9BC46F; background: #F6FBEE; color: #3F7A2A; }
@@ -181,7 +220,6 @@ button { cursor: pointer; }
 .btn-secondary { color: var(--green); border-color: #dce4df; background: #fff; box-shadow: none; }
 .btn-secondary:hover { border-color: #9BBC9E; background: #F4FAF1; }
 .btn-ghost { color: #b65c50; background: transparent; padding-inline: 5px; }
-.search-button { min-height: 45px; padding: 0 23px; }
 .results-head { display: flex; align-items: flex-end; justify-content: space-between; margin: 31px 0 17px; }
 .results-head h2, .panel-title > div > h2 { margin: 0; font-size: 19px; color: var(--ink); }
 .results-head > div > span, .panel-title > div > span { color: #59665F; font-size: 16px; }
@@ -548,7 +586,6 @@ fieldset.editor-section { min-width: 0; margin: 0; border-top: 0; border-inline:
 @media (max-width: 1100px) {
   .trip-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .filters { grid-template-columns: 1.4fr 1fr; }
-  .search-button { min-height: 45px; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .detail-layout { grid-template-columns: 1fr; }
   .booking-card { position: static; }
@@ -579,6 +616,9 @@ fieldset.editor-section { min-width: 0; margin: 0; border-top: 0; border-inline:
   .smart-search .smart-search-title { font-size: 18px; }
   .smart-search-box input { font-size: 16px; }
   .smart-search-choices { padding-inline: 4px; }
+  /* min-width: 0 — or a long line inside stretches the filters' grid past the screen. */
+  .smart-search { min-width: 0; }
+  .recent-menu { inset-inline: 0; }
   .filters { grid-template-columns: 1fr; }
   .trip-grid { grid-template-columns: minmax(0, 1fr); }
   .results-head { align-items: center; }

@@ -3,6 +3,7 @@ import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { MyBooking, RideDetails, RideGroup, RideKind, RideSummary, Stop } from "@/lib/rides/types";
 import { clockOf } from "@/lib/utils/dates";
+import { asRecentSearch, MAX_RECENT_SEARCHES, type RecentSearch } from "@/lib/rides/recentSearches";
 
 // Data Access Layer for rides. All reads go through Postgres functions
 // (supabase/migrations/0002_rides.sql) that check auth.uid() themselves.
@@ -54,6 +55,29 @@ async function searchGroup(groupId: string | null, filters: Omit<SearchFilters, 
 function minuteAfter(time: string) {
   const minutes = Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5)) + 1;
   return minutes >= 24 * 60 ? null : clockOf(minutes);
+}
+
+// Her recent searches (search_history, 0050; the table's rules show her her
+// own only): the latest first, none whose date has passed.
+export async function getRecentSearches(today: string): Promise<RecentSearch[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("search_history")
+    .select("origins, destinations, ride_date, depart_from, depart_to, kind")
+    .or(`ride_date.is.null,ride_date.gte.${today}`)
+    .order("searched_at", { ascending: false })
+    .limit(MAX_RECENT_SEARCHES);
+  type Row = { origins: string[]; destinations: string[]; ride_date: string | null; depart_from: string | null; depart_to: string | null; kind: RideKind | null };
+  return ((data ?? []) as Row[]).map((row) =>
+    asRecentSearch({
+      origins: row.origins,
+      destinations: row.destinations,
+      date: row.ride_date ?? undefined,
+      from: row.depart_from?.slice(0, 5),
+      to: row.depart_to?.slice(0, 5),
+      kind: row.kind ?? undefined,
+    }),
+  );
 }
 
 // The dates a route runs in the coming week, as search lists them (departed

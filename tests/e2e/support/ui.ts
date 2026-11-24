@@ -68,3 +68,11 @@ export function shortDate(date: string) {
   const d = new Date(`${date}T12:00:00Z`);
   return `${["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"][d.getUTCDay()]} ${d.getUTCDate()}.${d.getUTCMonth() + 1}`;
 }
+
+// ─── Names ───────────────────────────────────────────────────────────────────
+
+// A made-up Hebrew name no other test uses, without the letters Hebrew puts
+// in front of words (ו ב ל מ ה ש כ), so smart search's prefixes never eat into it.
+export function hebrewName() {
+  return Array.from({ length: 6 }, () => "אגדזחטנסעפצקרת"[Math.floor(Math.random() * 14)]).join("");
+}

@@ -268,6 +268,11 @@ test.describe("access (spec §1, §3)", () => {
 test("signing out ends the session", async ({ page, seed, signIn }) => {
   await signIn(page, await seed.user("Leaving"));
   await page.goto("/");
+  // Hovering her name opens the menu; moving away closes it.
+  await page.locator(".header-user").hover();
+  await expect(page.locator(".user-menu")).toBeVisible();
+  await page.mouse.move(5, 500);
+  await expect(page.locator(".user-menu")).toHaveCount(0);
   await page.locator(".header-user").click();
   await page.getByRole("button", { name: "התנתקות" }).click();
   await expect(page).toHaveURL(/\/login$/);

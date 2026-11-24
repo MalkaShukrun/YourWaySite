@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type PointerEvent, type ReactNode } from "react";
 import { LogOut } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { Announcement } from "./Announcement";
@@ -28,10 +28,37 @@ export function Header({ userSlot }: { userSlot: ReactNode }) {
 
 export function UserMenu({ name, initials }: { name: string; initials: string }) {
   const { open, setOpen, ref } = usePopover();
+  // A mouse opens the menu by hovering; it closes a moment after the mouse
+  // leaves, so crossing the gap down to the menu doesn't shut it.
+  const closeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const pressedWith = useRef("");
+  useEffect(() => () => clearTimeout(closeTimer.current), []);
+
+  const onEnter = (event: PointerEvent) => {
+    if (event.pointerType !== "mouse") return;
+    clearTimeout(closeTimer.current);
+    setOpen(true);
+  };
+  const onLeave = (event: PointerEvent) => {
+    if (event.pointerType !== "mouse") return;
+    closeTimer.current = setTimeout(() => setOpen(false), 250);
+  };
+  // Touch and keyboard toggle it; a mouse click keeps the hovered menu open.
+  const onClick = () => {
+    const mouse = pressedWith.current === "mouse";
+    pressedWith.current = "";
+    setOpen((v) => mouse || !v);
+  };
 
   return (
-    <div className="user-menu-wrap" ref={ref}>
-      <button className="header-user" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+    <div className="user-menu-wrap" ref={ref} onPointerEnter={onEnter} onPointerLeave={onLeave}>
+      <button
+        className="header-user"
+        onPointerDown={(event) => (pressedWith.current = event.pointerType)}
+        onClick={onClick}
+        aria-expanded={open}
+        aria-haspopup="true"
+      >
         <div className="avatar avatar-sand">{initials}</div>
         <div>
           <strong>{name}</strong>

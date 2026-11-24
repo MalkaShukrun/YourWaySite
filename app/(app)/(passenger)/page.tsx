@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth/session";
 import { greetingFor, isIsoDate, israelHour, israelToday } from "@/lib/utils/dates";
-import { getRideGroups, searchRides } from "@/lib/rides/data";
+import { getRecentSearches, getRideGroups, searchRides } from "@/lib/rides/data";
 import type { RideKind } from "@/lib/rides/types";
 import { firstNameOf } from "@/lib/utils/format";
 import { groupByRoute, groupIdsFrom, placePicksFrom, searchedGroups } from "@/lib/rides/search";
 import { TIME_PATTERN } from "@/lib/validation/patterns";
 import { SearchPanel } from "@/components/passenger/SearchPanel";
 import { RideCard } from "@/components/passenger/RideCard";
+import { SearchResultsFrame, SearchTransitionProvider } from "@/components/passenger/SearchTransition";
 
 type SearchParams = PageProps<"/">["searchParams"];
 
@@ -21,12 +22,16 @@ export default function FindRidePage({ searchParams }: PageProps<"/">) {
       <Suspense fallback={<div className="welcome"><div><p>&nbsp;</p><h1>בואי נמצא לך טרמפ</h1></div></div>}>
         <Welcome />
       </Suspense>
-      <Suspense fallback={<section className="search-card search-placeholder" aria-busy="true" />}>
-        <Search searchParams={searchParams} />
-      </Suspense>
-      <Suspense fallback={<ResultsHead subtitle="טוען נסיעות…" />}>
-        <Results searchParams={searchParams} />
-      </Suspense>
+      <SearchTransitionProvider>
+        <Suspense fallback={<section className="search-card search-placeholder" aria-busy="true" />}>
+          <Search searchParams={searchParams} />
+        </Suspense>
+        <SearchResultsFrame>
+          <Suspense fallback={<ResultsHead subtitle="טוען נסיעות…" />}>
+            <Results searchParams={searchParams} />
+          </Suspense>
+        </SearchResultsFrame>
+      </SearchTransitionProvider>
     </main>
   );
 }
@@ -69,8 +74,9 @@ async function Welcome() {
 }
 
 async function Search({ searchParams }: { searchParams: SearchParams }) {
-  const [groups, filters, today] = await Promise.all([getRideGroups(), readFilters(searchParams), israelToday()]);
-  return <SearchPanel groups={groups} initial={filters} today={today} />;
+  const today = await israelToday();
+  const [groups, filters, recent] = await Promise.all([getRideGroups(), readFilters(searchParams), getRecentSearches(today)]);
+  return <SearchPanel groups={groups} initial={filters} today={today} recent={recent} />;
 }
 
 async function Results({ searchParams }: { searchParams: SearchParams }) {
@@ -102,7 +108,8 @@ async function Results({ searchParams }: { searchParams: SearchParams }) {
 function ResultsHead({ subtitle }: { subtitle: string }) {
   return (
     <div className="results-head">
-      <div><h2>נסיעות זמינות</h2><span>{subtitle}</span></div>
+      {/* Announced as the filters change the results. */}
+      <div><h2>נסיעות זמינות</h2><span aria-live="polite">{subtitle}</span></div>
     </div>
   );
 }

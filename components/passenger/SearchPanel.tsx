@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeftRight, MapPin, Repeat, RotateCcw, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowLeftRight, LoaderCircle, MapPin, Repeat, RotateCcw, Search, SlidersHorizontal } from "lucide-react";
+import { useSearchTransition } from "@/components/passenger/SearchTransition";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { MultiSelect, Select } from "@/components/ui/Select";
 import { TimePicker } from "@/components/ui/TimePicker";
@@ -10,7 +11,20 @@ import type { RideGroup, RideKind } from "@/lib/rides/types";
 import { placeOptions } from "@/lib/rides/search";
 import { iconProps } from "@/components/ui/icon";
 import { rememberSearch } from "@/components/passenger/BackToSearchLink";
+import { clearRecentSearches, saveRecentSearch } from "@/app/(app)/(passenger)/actions";
+import {
+  addRecentSearch,
+  asRecentSearch,
+  describePlaces,
+  hasAnyFilter,
+  KIND_LABELS,
+  placeNames,
+  recentKey,
+  searchDetails,
+  type RecentSearch,
+} from "@/lib/rides/recentSearches";
 import { SmartSearch } from "@/components/passenger/SmartSearch";
+import type { RecentSearchView } from "@/components/passenger/RecentSearchesMenu";
 import type { ExtractedSearch, PlaceChoice } from "@/lib/smart-search/extract";
 
 type Filters = { groupIds?: string[]; origins?: string[]; destinations?: string[]; date?: string; kind?: RideKind; from?: string; to?: string };
@@ -31,9 +45,13 @@ function searchHref({ groupIds, origins, destinations, date, from, to, kind }: O
 
 const KIND_OPTIONS = [
   { value: "", label: "כל הנסיעות" },
-  { value: "recurring", label: "נסיעות קבועות" },
-  { value: "one_time", label: "נסיעות חד־פעמיות" },
+  { value: "recurring", label: KIND_LABELS.recurring },
+  { value: "one_time", label: KIND_LABELS.one_time },
 ];
+
+// Smart search's list offers her latest 3 — the one on screen too, so a search
+// she just ran shows at once (one more is kept in case one can't be shown).
+const RECENT_SHOWN = 3;
 
 // The filters smart search can fill.
 type Field = "origins" | "destinations" | "date" | "from" | "to" | "kind";
@@ -48,8 +66,23 @@ const FLASH: Keyframe[] = [
 ];
 
 // Smart filter bar (SRS §4.1): from and to (a city, or places in it), date;
-// under "עוד סינונים", departure time range and ride type.
-export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; initial: Filters; today: string }) {
+// under the filters button, departure time range and ride type.
+//
+// The results load only when she runs the search: "חיפוש נסיעה" (or Enter in
+// a filter), or smart search's arrow (or Enter in it). Changing a filter, or
+// picking a recent search, only fills the filters. Running a search is also
+// what keeps it among her recent searches (search_history, 0050).
+export function SearchPanel({
+  groups,
+  initial,
+  today,
+  recent: savedRecent,
+}: {
+  groups: RideGroup[];
+  initial: Filters;
+  today: string;
+  recent: RecentSearch[];
+}) {
   const router = useRouter();
   const [origins, setOrigins] = useState(initial.origins ?? []);
   const [destinations, setDestinations] = useState(initial.destinations ?? []);
@@ -57,7 +90,7 @@ export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; i
   const [from, setFrom] = useState(initial.from ?? "");
   const [to, setTo] = useState(initial.to ?? "");
   const [kind, setKind] = useState<string>(initial.kind ?? "");
-  // Departure times and ride type wait behind "עוד סינונים" — open when a link already sets one.
+  // Departure times and ride type wait behind the filters button — open when a link already sets one.
   const [moreOpen, setMoreOpen] = useState(Boolean(initial.from || initial.to || initial.kind));
   // Bumped by "ניקוי", which empties smart search's text too.
   const [smartKey, setSmartKey] = useState(0);
@@ -69,12 +102,45 @@ export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; i
   const fieldRefs = useRef<Partial<Record<Field, HTMLDivElement | null>>>({});
   const moreCount = [from, to, kind].filter(Boolean).length;
   const options = placeOptions(groups);
+  const { updating, startUpdate } = useSearchTransition();
 
   // The search shown now — the ride page's back link returns to it.
   const shownHref = searchHref(initial);
   useEffect(() => rememberSearch(shownHref), [shownHref]);
 
-  // After render, so the time filters "עוד סינונים" just opened are there.
+  // ─── Recent searches ──────────────────────────────────────────────────────
+  // From the database when the page opens; after that this list is the one
+  // shown, updated at once as she runs searches (the database keeps the same).
+  const [recent, setRecent] = useState(savedRecent);
+  const places = placeNames(groups);
+  const recentViews: RecentSearchView[] = recent
+    .map((search) => ({ key: recentKey(search), search, ...describePlaces(search, places), details: searchDetails(search) }))
+    // One whose places are no longer offered (their group was hidden) would read "anywhere": left out.
+    .filter((v) => (!v.search.origins.length || v.origin.length) && (!v.search.destinations.length || v.destination.length))
+    .slice(0, RECENT_SHOWN);
+
+  // Runs a search: the results load, and it's kept among her recent searches.
+  function run(filters: Omit<Filters, "groupIds">) {
+    const href = searchHref(filters);
+    startUpdate(() => router.push(href, { scroll: false }));
+    const search = asRecentSearch(filters);
+    if (!hasAnyFilter(search)) return;
+    setRecent((list) => addRecentSearch(list, search, today));
+    saveRecentSearch(search).catch(() => {});
+  }
+
+  function forgetRecent() {
+    setRecent([]);
+    clearRecentSearches().catch(() => {});
+  }
+
+  // A recent search picked under smart search: its filters fill in, flashing
+  // like smart search's. It runs when she presses search.
+  function pickRecent(search: RecentSearch) {
+    fillFrom({ ...search, ambiguous: [] });
+  }
+
+  // After render, so the time filters the filters button just opened are there.
   useEffect(() => {
     if (!flash.fields.length || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     for (const name of flash.fields) {
@@ -82,17 +148,22 @@ export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; i
     }
   }, [flash]);
 
+  // "חיפוש נסיעה", or Enter in a filter: runs the search, and on a phone,
+  // where the results are below the filters, takes her down to them.
   function submit(event: FormEvent) {
     event.preventDefault();
-    router.push(searchHref({ origins, destinations, date, from, to, kind }));
+    run({ origins, destinations, date, from, to, kind: (kind || undefined) as RideKind | undefined });
+    const results = document.getElementById("search-results");
+    if (results && results.getBoundingClientRect().top > window.innerHeight - 120) {
+      const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      results.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
+    }
   }
 
-  const hasFilters = Boolean(
-    origins.length || destinations.length || date || from || to || kind ||
-      initial.groupIds?.length || initial.origins?.length || initial.destinations?.length || initial.date || initial.from || initial.to || initial.kind,
-  );
-
-  function clear() {
+  // "ניקוי" empties the filters, and smart search's box too (a new one). Its
+  // own X has emptied the box already, and keeps it focused. The results stay
+  // until she searches again.
+  function clear({ resetSmartSearch = true } = {}) {
     setOrigins([]);
     setDestinations([]);
     setDate("");
@@ -100,8 +171,7 @@ export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; i
     setTo("");
     setKind("");
     setSmartFilled(new Set());
-    setSmartKey((k) => k + 1);
-    router.push("/");
+    if (resetSmartSearch) setSmartKey((k) => k + 1);
   }
 
   // She changed a filter herself: it's hers now, no longer green.
@@ -135,20 +205,20 @@ export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; i
     if (changed.length) setFlash({ fields: changed });
   }
 
+  // Smart search's arrow (or Enter): the filters it read from her sentence —
+  // never the sentence itself — fill in, run, and are kept.
   function searchFrom(found: ExtractedSearch) {
     fillFrom(found);
-    router.push(searchHref(found));
+    run(found);
   }
 
-  // A pick from "התכוונת ל…?": that place only, and search again.
+  // A pick from "התכוונת ל…?": that place only, in its filter.
   function pickPlace(role: "origin" | "destination", choice: PlaceChoice) {
     const name: Field = role === "origin" ? "origins" : "destinations";
-    const picked = { origins: role === "origin" ? [choice.pick] : origins, destinations: role === "destination" ? [choice.pick] : destinations };
-    setOrigins(picked.origins);
-    setDestinations(picked.destinations);
+    if (role === "origin") setOrigins([choice.pick]);
+    else setDestinations([choice.pick]);
     setSmartFilled((filled) => new Set([...filled, name]));
     setFlash({ fields: [name] });
-    router.push(searchHref({ ...picked, date, from, to, kind }));
   }
 
   // A filter with its label: green, and flashed, when smart search filled it.
@@ -173,7 +243,16 @@ export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; i
       <div className="search-card-tint" aria-hidden="true" />
       <form className="filters" onSubmit={submit}>
         {/* The filters' first row, as wide as they are. */}
-        <SmartSearch key={smartKey} groups={groups} today={today} onFill={fillFrom} onSearch={searchFrom} onPick={pickPlace} onClear={clear} />
+        <SmartSearch
+          key={smartKey}
+          groups={groups}
+          today={today}
+          onFill={fillFrom}
+          onSearch={searchFrom}
+          onPick={pickPlace}
+          onClear={() => clear({ resetSmartSearch: false })}
+          recent={{ searches: recentViews, onPick: pickRecent, onClear: forgetRecent }}
+        />
         <div className="filter-places">
           {field(
             "origins",
@@ -237,19 +316,26 @@ export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; i
           />,
         )}
         <div className="search-actions">
+          {/* The departure times and ride type: an icon only, named for screen readers. */}
           <button
             type="button"
             className={`btn btn-secondary search-more${moreOpen ? " open" : ""}`}
             aria-expanded={moreOpen}
             aria-controls="search-more-filters"
+            aria-label="עוד סינונים"
+            title="עוד סינונים"
             onClick={() => setMoreOpen(!moreOpen)}
           >
             <SlidersHorizontal {...iconProps} size={18} />
-            עוד סינונים
-            {moreCount > 0 && <span className="search-more-count">{moreCount}</span>}
+            {moreCount > 0 && <span className="search-more-count" aria-hidden="true">{moreCount}</span>}
+          </button>
+          {/* Always there, beside the filters button. */}
+          <button type="button" className="btn btn-secondary search-clear" onClick={() => clear()}>
+            <RotateCcw {...iconProps} size={18} />
+            ניקוי
           </button>
           <button type="submit" className="btn btn-primary search-button">
-            <Search {...iconProps} size={20} />
+            {updating ? <LoaderCircle {...iconProps} size={20} className="icon spin" aria-hidden="true" /> : <Search {...iconProps} size={20} />}
             חיפוש נסיעה
           </button>
         </div>
@@ -297,12 +383,6 @@ export function SearchPanel({ groups, initial, today }: { groups: RideGroup[]; i
               />,
             )}
           </div>
-        )}
-        {hasFilters && (
-          <button type="button" className="btn btn-secondary search-clear" onClick={clear}>
-            <RotateCcw {...iconProps} size={18} />
-            ניקוי
-          </button>
         )}
       </form>
     </section>

@@ -7,6 +7,9 @@ import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth/session";
 import { messageForCode } from "@/lib/utils/action-errors";
 import { formatShortRideDate } from "@/lib/utils/dates";
+import { TIME_PATTERN } from "@/lib/validation/patterns";
+import { placePicksFrom } from "@/lib/rides/search";
+import { asRecentSearch } from "@/lib/rides/recentSearches";
 
 const ERRORS: Record<string, string> = {
   RIDE_FULL: "הנסיעה התמלאה — אין יותר מקומות פנויים.",
@@ -85,4 +88,44 @@ export async function setBookingPaid(bookingId: string, isPaid: boolean) {
 
   refresh();
   return {};
+}
+
+// ─── Recent searches (search_history, 0050) ─────────────────────────────────
+
+const timeSchema = z.string().regex(TIME_PATTERN);
+const picksSchema = z.array(z.string().max(60)).max(30).refine((picks) => picks.length === 0 || placePicksFrom(picks)?.length === new Set(picks).size);
+const recentSearchSchema = z.object({
+  origins: picksSchema,
+  destinations: picksSchema,
+  date: z.iso.date().optional(),
+  from: timeSchema.optional(),
+  to: timeSchema.optional(),
+  kind: z.enum(["recurring", "one_time"]).optional(),
+});
+
+// Keeps the search she just ran ("חיפוש נסיעה", or smart search's arrow): its
+// filters, never smart search's text. record_search moves the same filters
+// up, skips a past date, and keeps her 4 latest. A failed save never stops
+// the search itself, so it says nothing.
+export async function saveRecentSearch(input: z.infer<typeof recentSearchSchema>) {
+  await requireUser();
+  const parsed = recentSearchSchema.safeParse(input);
+  if (!parsed.success) return;
+  const s = asRecentSearch(parsed.data);
+  const supabase = await createClient();
+  await supabase.rpc("record_search", {
+    p_origins: s.origins,
+    p_destinations: s.destinations,
+    p_date: s.date ?? null,
+    p_from: s.from ?? null,
+    p_to: s.to ?? null,
+    p_kind: s.kind ?? null,
+  });
+}
+
+// "ניקוי החיפושים האחרונים": all of hers.
+export async function clearRecentSearches() {
+  const user = await requireUser();
+  const supabase = await createClient();
+  await supabase.from("search_history").delete().eq("user_id", user.id);
 }

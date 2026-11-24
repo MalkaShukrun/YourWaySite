@@ -1,23 +1,22 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./support/fixtures";
 import { daysFromToday } from "../integration/support/seed";
+import { hebrewName as name } from "./support/ui";
 
 // Smart search (spec C8, components/passenger/SmartSearch.tsx): a free-text
 // box above the filters that fills them from a Hebrew sentence. The rules
 // themselves are covered by tests/unit/lib/smart-search; this checks the page.
 
-const box = (page: Page) => page.getByRole("textbox", { name: "חיפוש חכם: מאיפה, לאן ומתי" });
+const box = (page: Page) => page.getByRole("combobox", { name: "חיפוש חכם: מאיפה, לאן ומתי" });
 const clearBox = (page: Page) => page.getByRole("button", { name: "ניקוי החיפוש" });
+// The arrow in the box: runs the search her sentence describes.
+const arrow = (page: Page) => page.getByRole("button", { name: "חיפוש לפי מה שכתבת" });
 // "מאיפה" / "לאן" are text boxes that show the picked place; the others are buttons.
 const place = (page: Page, label: string) => page.getByRole("combobox", { name: label, exact: true });
 const filter = (page: Page, label: string) => page.getByRole("button", { name: new RegExp(`^${label}:`) });
 // A filter's box with its label: green (.smart-filled) when smart search filled it.
 // Its label then also says so to screen readers, so match the label's start.
 const filterField = (page: Page, label: string) => page.locator(".filters .field").filter({ hasText: new RegExp(`^${label}`) });
-
-// A made-up Hebrew name no other test uses, without the letters Hebrew puts
-// in front of words (ו ב ל מ ה ש כ), so a prefix never eats into it.
-const name = () => Array.from({ length: 6 }, () => "אגדזחטנסעפצקרת"[Math.floor(Math.random() * 14)]).join("");
 
 // Types once React runs the box: its X shows only then.
 async function type(page: Page, text: string) {
@@ -27,7 +26,7 @@ async function type(page: Page, text: string) {
   }).toPass();
 }
 
-test("fills the filters while typing, and Enter searches", async ({ page, seed, signIn }) => {
+test("fills the filters while typing; the arrow, or Enter, runs the search", async ({ page, seed, signIn }) => {
   const [from, to] = [name(), name()];
   const driver = await seed.user("Driver", { fullName: "דנה נהגת" });
   const groupId = await seed.group({ origin: `${from}, מרכז`, destination: `${to}, מרכז` });
@@ -36,21 +35,26 @@ test("fills the filters while typing, and Enter searches", async ({ page, seed, 
 
   await page.goto("/");
   await type(page, `מ${from} ל${to} מחר בבוקר עד 9, חד פעמית`);
-  // The filters fill in before any search.
   await expect(place(page, "מאיפה")).toHaveValue(`${from} (כל העיר)`);
   await expect(place(page, "לאן")).toHaveValue(`${to} (כל העיר)`);
   await expect(filter(page, "יציאה משעה")).toContainText("06:00");
   await expect(filter(page, "עד שעה")).toContainText("09:00");
   await expect(page.getByRole("combobox", { name: "סוג נסיעה" })).toHaveValue("נסיעות חד־פעמיות");
-  await expect(page).toHaveURL(/\/$/);
   // Each filled filter is marked as filled by smart search.
   for (const label of ["מאיפה", "לאן", "תאריך", "יציאה משעה", "עד שעה", "סוג נסיעה"]) {
     await expect(filterField(page, label)).toHaveClass(/smart-filled/);
   }
 
-  await box(page).press("Enter");
+  // Filling isn't searching: the results wait for the arrow.
+  await expect(page).toHaveURL(/\/$/);
+  await arrow(page).click();
   await expect(page).toHaveURL(new RegExp(`origin=city%3A.+&destination=city%3A.+&date=${daysFromToday(1)}&from=06%3A00&to=09%3A00&kind=one_time$`));
   await expect(page.locator(".trip-card").filter({ hasText: from })).toContainText("08:00");
+  // Enter does the same, and changes nothing more.
+  const url = page.url();
+  await box(page).press("Enter");
+  await page.waitForLoadState("networkidle");
+  expect(page.url()).toBe(url);
 
   // Changing a filter by hand makes it hers: no longer marked. The others stay.
   await page.getByRole("button", { name: "החלפת כיוון" }).click();
@@ -58,10 +62,11 @@ test("fills the filters while typing, and Enter searches", async ({ page, seed, 
   await expect(filterField(page, "לאן")).not.toHaveClass(/smart-filled/);
   await expect(filterField(page, "תאריך")).toHaveClass(/smart-filled/);
 
-  // The X empties the box and the filters.
+  // The X empties the box and the filters; the results stay until she searches.
   await clearBox(page).click();
   await expect(box(page)).toHaveValue("");
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(url);
+  await expect(arrow(page)).toBeDisabled();
   await expect(place(page, "מאיפה")).toHaveValue("מכל מקום");
   await expect(page.locator(".filters .smart-filled")).toHaveCount(0);
 });
@@ -81,7 +86,10 @@ test("asks which place she meant when a neighborhood is in two cities", async ({
   await expect(choices.getByRole("button")).toHaveCount(2);
   await expect(choices.getByRole("button", { name: `${cityB}, ${area}` })).toBeVisible();
 
+  // The pick fills "מאיפה"; the arrow runs it.
   await choices.getByRole("button", { name: `${cityA}, ${area}` }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await arrow(page).click();
   await expect(page).toHaveURL(/\?origin=[0-9a-f-]{36}&destination=city%3A/);
   const picked = page.url();
   await expect(choices).toHaveCount(0);

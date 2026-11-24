@@ -33,22 +33,23 @@ a.nav-item { text-decoration: none; }
 .empty-state strong { color: var(--ink); font-size: 18px; }
 .empty-state .btn { margin-top: 6px; }
 .search-placeholder { min-height: 200px; }
-/* Search panel: places, date and the buttons share the first row; "עוד סינונים"
-   opens the departure times and ride type on a row below them, and "ניקוי"
-   sits at the end of that row */
+/* Search panel: places, date and the buttons ("עוד סינונים", "ניקוי") share
+   the first row; "עוד סינונים" opens the departure times and ride type on a
+   row below them */
 .page-content.page-wide { max-width: 1520px; }
 .search-actions { display: flex; justify-content: flex-end; gap: 12px; }
 .search-clear, .search-more { min-height: 45px; }
+/* The filters button is an icon (with its count), square beside the others. */
+.search-more { min-width: 45px; padding: 0 12px; justify-content: center; gap: 6px; }
 .search-more.open { border-color: #9BBC9E; background: #F4FAF1; }
 .search-more-count { min-width: 21px; height: 21px; padding: 0 6px; border-radius: 11px; background: var(--green); color: #fff; font-size: 13px; display: inline-grid; place-items: center; }
 .filters-more { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 260px)); gap: 12px; padding-top: 12px; border-top: 1px dashed #dedfd9; }
-.search-clear { grid-column: -2 / -1; justify-self: end; }
 /* The date stays on one line however narrow its field. */
 .filters .date-picker .dropdown-trigger > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 780px) {
   .search-actions { flex-wrap: wrap; }
   .search-actions .btn { flex: 1; }
-  .search-actions .search-button { flex-basis: 100%; }
+  .search-actions .search-more { flex: none; }
   .filters-more { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .filters-more > .field:last-child { grid-column: 1 / -1; }
 }
@@ -379,9 +380,8 @@ a.nav-item { text-decoration: none; }
 @media (min-width: 1101px) {
   .filters { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) minmax(0, 1fr) auto; }
   .filter-places { display: contents; }
-  /* "ניקוי" shares the row of the extra filters, below the search button
-     (row 1 is smart search, row 2 the filters). */
-  .filters-more, .search-clear { grid-row: 3; }
+  /* The extra filters get a row of their own (row 1 is smart search, row 2 the filters). */
+  .filters-more { grid-row: 3; }
 }
 @media (min-width: 781px) and (max-width: 1100px) { .filter-places { grid-column: 1 / -1; } }
 /* On a phone the two are too narrow side by side: one above the other, the

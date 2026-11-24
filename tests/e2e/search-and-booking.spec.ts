@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./support/fixtures";
 import { rideDay, rideDayAfter, type Seed } from "../integration/support/seed";
-import { choose, israelDate, shortDate, toast } from "./support/ui";
+import { choose, hebrewName, israelDate, shortDate, toast } from "./support/ui";
 
 // Finding and booking a ride (spec C1–C7, B6, H2).
 
@@ -56,6 +56,7 @@ test.describe("search (spec C1)", () => {
     await page.goto("/");
     await choose(page, "מאיפה", `${group.city} (כל העיר)`);
     await page.getByRole("button", { name: "חיפוש נסיעה" }).click();
+    await expect(page).toHaveURL(/\?origin=city%3A/);
     await expect(card(page, group.label)).toHaveCount(1);
 
     // Now to that city: the ride goes the other way, so it isn't found.
@@ -72,7 +73,7 @@ test.describe("search (spec C1)", () => {
     await signIn(page, await seed.user("Passenger"));
 
     await page.goto("/");
-    const field = page.getByRole("combobox", { name: "מאיפה" });
+    const field = page.getByRole("combobox", { name: "מאיפה", exact: true });
     await field.click();
     // Named in full for screen readers either way.
     const place = page.getByRole("listbox", { name: "מאיפה" }).getByRole("option", { name: group.origin, exact: true });
@@ -176,6 +177,155 @@ test.describe("search (spec C1)", () => {
     await expect(result.getByText("אין מקום")).toBeVisible();
     await expect(result.getByRole("link", { name: /לפרטים והרשמה/ })).toHaveCount(0);
   });
+});
+
+// The results load only when she runs the search: changing a filter fills it, no more.
+test("the filters change nothing until she presses search", async ({ page, seed, signIn }) => {
+  const driver = await seed.user("Driver");
+  const [a, b] = [await namedGroup(seed), await namedGroup(seed)];
+  await seed.route(driver, { groupId: a.id, kind: "recurring", weekdays: [0, 1, 2, 3, 4, 5], date: null, time: "23:59" });
+  await seed.route(driver, { groupId: b.id, kind: "recurring", weekdays: [0, 1, 2, 3, 4, 5], date: null, time: "23:59" });
+  await signIn(page, await seed.user("Passenger"));
+  await page.goto("/");
+  await expect(card(page, a.label)).toHaveCount(1);
+  await expect(card(page, b.label)).toHaveCount(1);
+
+  const clear = page.getByRole("button", { name: "ניקוי", exact: true });
+  const more = page.getByRole("button", { name: "עוד סינונים" });
+  // "ניקוי" is always there, beside the filters button, in the filters' row.
+  await expect(clear).toBeVisible();
+  const [clearBox, moreBox] = [await clear.boundingBox(), await more.boundingBox()];
+  expect(Math.abs(clearBox!.y - moreBox!.y)).toBeLessThan(2);
+  // The filters button is an icon, named for screen readers.
+  await expect(more).not.toContainText("עוד סינונים");
+
+  await choose(page, "מאיפה", a.origin);
+  await page.waitForLoadState("networkidle");
+  await expect(page).toHaveURL(/\/$/);
+  await expect(card(page, b.label)).toHaveCount(1);
+
+  await page.getByRole("button", { name: "חיפוש נסיעה" }).click();
+  await expect(page).toHaveURL(/\?origin=[0-9a-f-]{36}$/);
+  await expect(card(page, b.label)).toHaveCount(0);
+  await expect(card(page, a.label)).toHaveCount(1);
+
+  // "ניקוי" empties the filters; the results stay until she searches again.
+  await clear.click();
+  await expect(page.getByRole("combobox", { name: "מאיפה", exact: true })).toHaveValue("מכל מקום");
+  await expect(card(page, b.label)).toHaveCount(0);
+});
+
+const smartBox = (page: Page) => page.getByRole("combobox", { name: /חיפוש חכם/ });
+const smartArrow = (page: Page) => page.getByRole("button", { name: "חיפוש לפי מה שכתבת" });
+const recentMenu = (page: Page) => page.getByRole("listbox", { name: "חיפושים אחרונים" });
+// The next server action's reply (saving or clearing recent searches), to wait for before leaving the page.
+const serverAction = (page: Page) => page.waitForResponse((r) => r.request().method() === "POST" && Boolean(r.request().headers()["next-action"]));
+
+// Kept in the database: the 3 latest are offered (of the 4 kept), none with a
+// past date, none whose places are no longer offered.
+test("recent searches: the three latest are offered, none whose date has passed", async ({ page, signIn, seed }) => {
+  const me = await seed.user("Passenger");
+  const minutesAgo = (m: number) => new Date(Date.now() - m * 60_000).toISOString();
+  const { error } = await seed.service.from("search_history").insert([
+    { user_id: me.id, depart_from: "00:00", ride_date: israelDate(-1), searched_at: minutesAgo(0) }, // past date
+    { user_id: me.id, origins: ["city:אין כזאת"], searched_at: minutesAgo(1) }, // a place no longer offered
+    { user_id: me.id, depart_from: "01:00", kind: "recurring", searched_at: minutesAgo(2) },
+    { user_id: me.id, depart_from: "02:00", searched_at: minutesAgo(3) },
+    { user_id: me.id, depart_from: "03:00", searched_at: minutesAgo(4) },
+    { user_id: me.id, depart_from: "04:00", searched_at: minutesAgo(5) }, // the 5th latest of those left
+  ], { defaultToNull: false }); // a column a row leaves out takes its default, not null
+  expect(error).toBeNull();
+  await signIn(page, me);
+  await page.goto("/");
+  await smartBox(page).click();
+  await expect(page.getByText("חיפושים אחרונים")).toBeVisible();
+  await expect(recentMenu(page).locator(".recent-option-details")).toHaveText([/יציאה מ־01:00\s*נסיעות קבועות/, "יציאה מ־02:00", "יציאה מ־03:00"]);
+});
+
+test("recent searches: kept when she presses search or smart search's arrow, offered when she focuses the box", async ({ page, seed, signIn }) => {
+  const city = hebrewName();
+  const group = await namedGroup(seed);
+  await seed.group({ origin: `${city}, מרכז`, destination: "יעד, מרכז" });
+  const date = israelDate(2);
+  await signIn(page, await seed.user("Passenger"));
+  const box = smartBox(page);
+  const options = recentMenu(page).getByRole("option");
+
+  // Opening a search's address keeps nothing: there's nothing to offer.
+  await page.goto(`/?date=${date}`);
+  await box.click();
+  await expect(recentMenu(page)).toHaveCount(0);
+
+  // "חיפוש נסיעה" keeps the search.
+  await choose(page, "מאיפה", group.origin);
+  let saved = serverAction(page); // the save is sent alongside the search
+  await page.getByRole("button", { name: "חיפוש נסיעה" }).click();
+  await expect(page).toHaveURL(/\?origin=[0-9a-f-]{36}&date=/);
+  const searched = page.url();
+  await saved;
+  // It shows at once, though it's the search on screen.
+  await box.click();
+  await expect(options).toHaveCount(1);
+  await expect(options.first().locator(".recent-option-route")).toHaveText(`${group.city} (מרכז) ← לכל מקום`);
+
+  // In the database: there after a reload, hidden until she focuses the box.
+  await page.goto("/");
+  await expect(recentMenu(page)).toHaveCount(0);
+  await box.click();
+  await expect(box).toHaveAttribute("aria-expanded", "true");
+  await expect(options).toHaveCount(1);
+  await expect(options.first().locator(".recent-option-route")).toHaveText(`${group.city} (מרכז) ← לכל מקום`);
+  await expect(options.first().locator(".recent-detail.date")).toContainText(`, ${Number(date.slice(8))} ב`);
+
+  // Leaving the box hides it.
+  await page.getByRole("heading", { name: "בואי נמצא לך טרמפ" }).click();
+  await expect(recentMenu(page)).toHaveCount(0);
+
+  // A pick fills the filters, like smart search, and closes the list — no search yet.
+  await box.click();
+  await options.first().click();
+  await expect(page.locator(".field.smart-filled").filter({ hasText: "מאיפה" })).toHaveCount(1);
+  await expect(recentMenu(page)).toHaveCount(0);
+  await page.waitForLoadState("networkidle");
+  await expect(page).toHaveURL(/\/$/);
+  await page.getByRole("button", { name: "חיפוש נסיעה" }).click();
+  await expect(page).toHaveURL(searched);
+
+  // Smart search's arrow keeps what it read from the sentence, not the sentence.
+  await expect(smartArrow(page)).toBeDisabled();
+  await box.fill(`מ${city}`);
+  await expect(page.getByRole("combobox", { name: "מאיפה", exact: true })).toHaveValue(`${city} (כל העיר)`);
+  saved = serverAction(page);
+  await smartArrow(page).click();
+  await expect(page).toHaveURL(/\?origin=city%3A/);
+  await saved;
+
+  // Both kept, the latest first. By keyboard: ↓ opens it on the first, Esc closes it.
+  await page.goto("/");
+  await box.focus();
+  await expect(options).toHaveCount(2);
+  await expect(options.locator(".recent-option-route")).toHaveText([`${city} ← לכל מקום`, `${group.city} (מרכז) ← לכל מקום`]);
+  await box.press("Escape");
+  await expect(recentMenu(page)).toHaveCount(0);
+  await box.press("ArrowDown");
+  await expect(options.first()).toHaveAttribute("aria-selected", "true");
+
+  // Writing puts it away; it's back on the next focus, with the sentence still in the box.
+  await box.fill("שלום");
+  await expect(recentMenu(page)).toHaveCount(0);
+  await page.getByRole("heading", { name: "בואי נמצא לך טרמפ" }).click();
+  await box.click();
+  await expect(box).toHaveValue("שלום");
+  await expect(recentMenu(page)).toBeVisible();
+
+  // "ניקוי החיפושים האחרונים" clears them, in the database too.
+  const cleared = serverAction(page);
+  await page.getByRole("button", { name: "ניקוי החיפושים האחרונים" }).click();
+  await expect(recentMenu(page)).toHaveCount(0);
+  await cleared;
+  await page.reload();
+  await box.click();
+  await expect(recentMenu(page)).toHaveCount(0);
 });
 
 test.describe("the ride page (spec C2)", () => {
