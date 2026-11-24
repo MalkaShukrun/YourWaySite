@@ -89,6 +89,16 @@ test.describe("the week (spec D1)", () => {
     await expect(rideCard(page, label).getByRole("button", { name: "ביטול הנסיעה לתאריך זה בלבד" })).toHaveCount(0);
   });
 
+  test("a past day says its rides have left, without the today mark", async ({ page, seed, signIn }) => {
+    const date = israelDate(-1);
+    const { driver, label } = await driverWithRide(seed, { date, time: "23:55" });
+    await signIn(page, driver);
+    await page.goto(`/dashboard?date=${date}`);
+    const summary = page.locator("details.week-day").filter({ hasText: label }).locator("summary");
+    await expect(summary).toContainText("שעת היציאה עברה");
+    await expect(summary).not.toContainText("היום");
+  });
+
   test("days fold, and 'open all' / 'close all' toggle them", async ({ page, seed, signIn }) => {
     const driver = await seed.user("Driver");
     await seed.route(driver, { kind: "recurring", weekdays: [0, 1, 2, 3, 4, 5], date: null, time: "23:55" });

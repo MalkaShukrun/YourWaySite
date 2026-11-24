@@ -42,7 +42,7 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
   // Only today's rides start expanded; in a week without rides today, the chosen date (or the first ride day) opens instead.
   const openDay = [today, date].find((d) => rideDays.some((r) => r.day === d)) ?? rideDays[0]?.day;
   // A ride has left once its departure time on that date has passed.
-  // Today is marked once every ride still on for it has left.
+  // A day is marked once every ride still on for it has left: every past day with rides, and today once its last ride has gone.
   const rideDeparted = (day: string, ride: { out_time: string }) =>
     day < today || (day === today && formatTime(ride.out_time) <= nowTime);
   const departed = (day: string, rides: (typeof days)[number]["rides"]) => {
@@ -82,9 +82,9 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
         <FoldAll className="week-days-actions" actions={actions}>{rideDays.map(({ day, rides }) => (
           <details className="week-day" key={day} open={day === openDay}>
             <summary className={`week-day-head ${day === today ? "today" : ""}`}>
-              {formatRideDate(day)}{day === today && <span>היום</span>}
-              {day === today && departed(day, rides) && <span className="departed">שעת היציאה עברה</span>}
               <ChevronDown {...iconProps} size={20} className="week-day-chevron" />
+              {formatRideDate(day)}{day === today && <span>היום</span>}
+              {departed(day, rides) && <span className="departed">שעת היציאה עברה</span>}
             </summary>
             <div className="today-list">
               {rides.map((ride, i) => (

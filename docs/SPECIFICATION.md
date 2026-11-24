@@ -550,7 +550,7 @@ Nothing.
 - The week runs Sunday to Saturday. Only days with rides are listed.
 - Totals: “טרמפיסטיות רשומות לשבוע הקרוב” (booked passengers) and rides this week (cancelled dates excluded).
 - Today's rides start open; otherwise the chosen date or the first ride day.
-- Today is marked “היום”. Once all of today's rides that weren't cancelled have left, today also shows “שעת היציאה עברה”.
+- Today is marked “היום”. A day whose rides that weren't cancelled have all left shows “שעת היציאה עברה”: every earlier day of the week, and today once its last ride has left.
 - No rides: “אין לך נסיעות בשבוע הזה”.
 
 **Passenger side**
@@ -811,7 +811,7 @@ As in D2.
 **Driver side**
 
 - The cancel button disappears from that card.
-- If it's today and every active ride today has left, the day shows “שעת היציאה עברה”.
+- Once every active ride of that day has left, the day shows “שעת היציאה עברה”.
 - A one-time ride moves from active to history in my routes.
 
 **Passenger side**
