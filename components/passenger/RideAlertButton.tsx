@@ -107,7 +107,7 @@ export function RideAlertButton({ onCard = false, groups, initial, today }: { on
           title="התראה על נסיעה"
           description="נשלח לך מייל כשנהגת תפרסם נסיעה חדשה שמתאימה, או כשיתפנה מקום בנסיעה מלאה שמתאימה. ההתראה בתוקף עד סוף תאריך הסיום, או 7 ימים בלי תאריכים."
           error={error}
-          submitLabel={pending ? "שומרת…" : "שמירת ההתראה"}
+          submitLabel={pending ? "שומר…" : "שמירה"}
           submitDisabled={pending}
           onSubmit={submit}
           onClose={() => setOpen(false)}

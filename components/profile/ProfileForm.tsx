@@ -55,7 +55,7 @@ export function ProfileForm({ initials, email, defaults }: Props) {
       <div className="vehicle-section profile-vehicle">
         <div>
           <h3><Car {...carIconProps} size={20} /> פרטי הרכב שלי</h3>
-          <span>הפרטים יוצגו לטרמפיסטיות</span>
+          <span>הפרטים יוצגו לנוסעות</span>
         </div>
         {hasVehicle ? (
           <button type="button" className="btn btn-ghost outlined" onClick={() => setValue("hasVehicle", false)}>הסרת הרכב</button>
@@ -71,9 +71,9 @@ export function ProfileForm({ initials, email, defaults }: Props) {
 
       {serverError && <p className="auth-error" role="alert">{serverError}</p>}
       <div className="profile-save">
-        <button type="submit" className="btn btn-primary" disabled={!hydrated || pending}>{pending ? "שומר..." : "שמירת שינויים"}</button>
+        <button type="submit" className="btn btn-primary" disabled={!hydrated || pending}>{pending ? "שומר..." : "שמירה"}</button>
       </div>
-      <Toast message={saved ? "הפרטים נשמרו בהצלחה" : ""} id={saved} />
+      <Toast message={saved ? "הפרטים נשמרו" : ""} id={saved} />
     </form>
   );
 }

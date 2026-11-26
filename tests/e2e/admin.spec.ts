@@ -34,7 +34,7 @@ test.describe("creating (spec H1)", () => {
       await choose(page, "יעד", JERUSALEM, dialog);
       await dialog.getByRole("button", { name: "יצירת הקבוצה" }).click();
 
-      await expect(toast(page, "הקבוצה נוצרה בהצלחה")).toBeVisible();
+      await expect(toast(page, "הקבוצה נוצרה")).toBeVisible();
       await expect(dialog).toHaveCount(0);
       const row = groupRow(page, `${origin} ← ${JERUSALEM}`);
       await expect(row.locator(".status-pill")).toHaveText("פעילה");
@@ -93,7 +93,7 @@ test.describe("changing a group (spec H1)", () => {
     const dialog = page.getByRole("dialog", { name: "עריכת קבוצת נסיעה" });
     await expect(dialog.getByRole("combobox", { name: "נקודת מוצא", exact: true })).toHaveValue(origin);
     await choose(page, "יעד", "ירושלים, הר חוצבים", dialog);
-    await dialog.getByRole("button", { name: "שמירת השינויים" }).click();
+    await dialog.getByRole("button", { name: "שמירה" }).click();
     await expect(toast(page, "הקבוצה עודכנה")).toBeVisible();
 
     await signIn(page, passenger);
@@ -144,7 +144,7 @@ test.describe("places (0040)", () => {
     await placeRow(page, origin).getByRole("button", { name: "עריכה" }).click();
     const dialog = page.getByRole("dialog", { name: "עריכת מקום" });
     await dialog.getByLabel("שכונה או אזור").fill("צפון");
-    await dialog.getByRole("button", { name: "שמירת השינויים" }).click();
+    await dialog.getByRole("button", { name: "שמירה" }).click();
     await expect(toast(page, "המקום עודכן")).toBeVisible();
 
     const renamed = origin.replace(", מרכז", ", צפון");
@@ -305,11 +305,11 @@ test("shows the totals and the group list", async ({ page, seed, signIn }) => {
   await signIn(page, await seed.user("Admin", { admin: true }));
   await page.goto("/admin/groups");
   for (const label of [
-    "טרמפיסטיות נוסעות היום",
+    "נוסעות נוסעות היום",
     "נסיעות יוצאות היום",
     "משתמשות במערכת",
-    "נסיעות שיצאו עם טרמפיסטיות",
-    "טרמפיסטיות שנסעו עד היום",
+    "נסיעות שיצאו עם נוסעות",
+    "נוסעות שנסעו עד היום",
     "קבוצות פעילות",
     "נהגות עם מסלולים",
     "קווי נסיעה פעילים",
@@ -350,7 +350,7 @@ test("shows the passengers of each of the next 7 days (0046)", async ({ page, se
   await signIn(page, await seed.user("Admin", { admin: true }));
   await page.goto("/admin/groups");
 
-  await expect(page.getByRole("heading", { name: "טרמפיסטיות בשבוע הקרוב" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "נוסעות בשבוע הקרוב" })).toBeVisible();
   const tiles = page.locator(".upcoming-day");
   await expect(tiles).toHaveCount(7);
   await expect(tiles.nth(0).locator(".upcoming-date")).toHaveText(`היום${format(parseISO(israelDate(0)), "d.M")}`);
@@ -359,5 +359,5 @@ test("shows the passengers of each of the next 7 days (0046)", async ({ page, se
   await expect(tile.locator(".upcoming-date span")).toHaveText(format(parseISO(date), "d.M"));
   await expect(tile.locator(".upcoming-count strong")).not.toHaveText("–");
   await expect(tile.locator(".upcoming-bar")).toHaveAttribute("aria-label", /מתוך \d+ מקומות תפוסים/);
-  await expect(page.locator(".upcoming-total")).toContainText("טרמפיסטיות ב־");
+  await expect(page.locator(".upcoming-total")).toContainText("נוסעות ב־");
 });

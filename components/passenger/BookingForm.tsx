@@ -48,7 +48,7 @@ export function BookingForm({ routeId, date, price, stops, canBook, blockedReaso
   // With a day picker, booked days are shown there and the others stay open.
   const showBookedLink = pickDays ? days.every((d) => bookedDates.includes(d.ride_date) || d.seats_left <= 0) && bookedDates.length > 0 : alreadyBooked;
   const buttonLabel = pending
-    ? "רושמת…"
+    ? "רושם…"
     : pickDays
       ? dates.length === 0 ? "בחרי לפחות יום אחד" : dates.length > 1 ? `אישור הרשמה ל־${dates.length} ימים` : "אישור הרשמה לנסיעה"
       : canBook ? "אישור הרשמה לנסיעה" : blockedReason;
@@ -85,11 +85,11 @@ export function BookingForm({ routeId, date, price, stops, canBook, blockedReaso
               </span>
               <strong>{formatPrice(price * Math.max(dates.length, 1))}</strong>
             </div>
-            <p className="booking-note">אם הנסיעה לא בוטלה יופיע במעקב תשלומים חיוב על הנסיעה.</p>
+            <p className="booking-note">החיוב מופיע אחרי היציאה, אלא אם הנסיעה בוטלה.</p>
           </div>
           {ownRide ? (
             <div className="booked-link">
-              <span>זו הנסיעה שלך · כך רואות אותה הטרמפיסטיות</span>
+              <span>זו הנסיעה שלך · כך רואות אותה הנוסעות</span>
               <Link className="btn btn-secondary" href="/routes">למסלולים שלי</Link>
             </div>
           ) : showBookedLink ? (

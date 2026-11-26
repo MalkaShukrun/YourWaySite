@@ -2,7 +2,7 @@ import { CRON_SECRET } from "../../playwright.email.config";
 import { localSupabase } from "../local-supabase";
 import { weekdayOf } from "../integration/support/seed";
 import { expect, test } from "../e2e/support/fixtures";
-import { choose, chooseTime, israelDate, openForm, toast } from "../e2e/support/ui";
+import { choose, chooseTime, dailyEmailSave, israelDate, openEmailForm, openForm, toast } from "../e2e/support/ui";
 
 // The whole daily email: a driver publishes a ride, a passenger books tomorrow,
 // the driver turns the email on, and the real Edge Function sends it through
@@ -21,7 +21,7 @@ test("the driver gets tomorrow's passenger by email", async ({ browser, page, se
   await signIn(page, driver);
 
   // The driver publishes a recurring route, Sunday to Friday.
-  await openForm(page, "/routes/new", "שמירת המסלול");
+  await openForm(page, "/routes/new", "שמירה");
   await choose(page, "קבוצת נסיעה", `${origin} ← ירושלים, גבעת שאול`);
   const days = page.getByRole("group", { name: "ימים בשבוע" }).getByRole("button");
   for (let i = 0; i < 6; i++) {
@@ -29,12 +29,12 @@ test("the driver gets tomorrow's passenger by email", async ({ browser, page, se
   }
   await chooseTime(page, "שעת יציאה", "23:55");
   await page.getByLabel("מקומות פנויים").fill("3");
-  await page.getByLabel("מחיר לכל טרמפיסטית").fill("10");
+  await page.getByLabel("מחיר לכל נוסעת").fill("10");
   await page.getByRole("button", { name: "הוספת תחנת איסוף" }).click();
   await page.locator(".editor-stop-group:not(.dropoff-editor-group) input").last().fill("תחנה מרכזית");
   await page.getByRole("button", { name: "הוספת תחנת הורדה" }).click();
   await page.locator(".dropoff-editor-group input").last().fill("גבעת שאול");
-  await page.getByRole("button", { name: "שמירת המסלול" }).click();
+  await page.getByRole("button", { name: "שמירה" }).click();
   await expect(page).toHaveURL(/\/routes\?saved=1$/);
 
   // A passenger finds it and books tomorrow.
@@ -51,10 +51,10 @@ test("the driver gets tomorrow's passenger by email", async ({ browser, page, se
   await passengerPage.context().close();
 
   // The driver turns the email on, with a time that has already passed.
-  await openForm(page, "/alerts", "שמירת הגדרות המייל");
+  await openEmailForm(page, dailyEmailSave);
   await page.getByRole("button", { name: "כבוי", exact: true }).click();
   await chooseTime(page, "שעת השליחה", "00:00");
-  await page.getByRole("button", { name: "שמירת הגדרות המייל" }).click();
+  await dailyEmailSave(page).click();
   await expect(toast(page, "הגדרות המייל נשמרו")).toBeVisible();
 
   // Her address comes from auth.users; the update refreshes the profile's copy.

@@ -66,7 +66,7 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
       </div>
 
       <div className="stats-grid">
-        <StatCard icon={<Users {...iconProps} size={20} />} value={booked} label="טרמפיסטיות רשומות לשבוע הקרוב" tone="peach" />
+        <StatCard icon={<Users {...iconProps} size={20} />} value={booked} label="נוסעות רשומות לשבוע הקרוב" tone="peach" />
         <StatCard icon={<CalendarDays {...iconProps} size={20} />} value={active.length} label="נסיעות השבוע" tone="blue" />
       </div>
 
@@ -75,7 +75,7 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
           <div className="week-days-actions">{actions}</div>
           <section className="panel empty-state">
             <strong>אין לך נסיעות בשבוע הזה</strong>
-            <span>הגדירי מסלול קבוע או נסיעה חד־פעמית כדי שטרמפיסטיות יוכלו להירשם.</span>
+            <span>הגדירי מסלול כדי שנוסעות יוכלו להירשם.</span>
           </section>
         </>
       ) : (

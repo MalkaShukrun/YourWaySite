@@ -11,9 +11,9 @@ export function UpcomingPassengersSection({ days }: { days: UpcomingDay[] }) {
   const passengers = days.reduce((sum, d) => sum + d.passengers, 0);
   const rides = days.reduce((sum, d) => sum + d.rides, 0);
   return (
-    <CollapsiblePanel title="טרמפיסטיות בשבוע הקרוב" subtitle="כמה טרמפיסטיות הצטרפו לנסיעות בכל אחד מ־7 הימים הקרובים">
+    <CollapsiblePanel title="נוסעות בשבוע הקרוב" subtitle="כמה נוסעות נרשמו לנסיעות בכל אחד מ־7 הימים הקרובים">
       <p className="upcoming-total">
-        סה״כ <strong>{passengers}</strong> טרמפיסטיות ב־<strong>{rides}</strong> נסיעות
+        סה״כ <strong>{passengers}</strong> נוסעות ב־<strong>{rides}</strong> נסיעות
       </p>
       <ol className="upcoming-days">
         {days.map((d, i) => <UpcomingDayTile key={d.day} day={d} label={dayLabel(d.day, i)} today={i === 0} />)}
@@ -38,7 +38,7 @@ function UpcomingDayTile({ day, label, today }: { day: UpcomingDay; label: strin
   return (
     <li className={`upcoming-day ${today ? "is-today" : ""} ${fill >= 1 ? "is-full" : ""}`}>
       <div className="upcoming-date"><strong>{label}</strong><span>{date}</span></div>
-      <div className="upcoming-count"><strong>{day.passengers}</strong><span>טרמפיסטיות</span></div>
+      <div className="upcoming-count"><strong>{day.passengers}</strong><span>נוסעות</span></div>
       <span className="upcoming-bar" role="img" aria-label={`${day.passengers} מתוך ${day.seats} מקומות תפוסים`} style={{ "--fill": `${fill * 100}%` } as CSSProperties}><i /></span>
       <small>
         {day.rides === 1 ? "נסיעה אחת" : `${day.rides} נסיעות`} · {fill >= 1 ? "מלא" : seatsText(day.seats - day.passengers)}

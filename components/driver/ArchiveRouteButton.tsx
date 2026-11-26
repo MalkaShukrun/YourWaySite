@@ -18,7 +18,7 @@ export function ArchiveRouteButton({ routeId }: { routeId: string }) {
   return (
     <>
       <p className="form-alert archive-warning" role="alert">
-        לפני ההסרה, ודאי שאין טרמפיסטיות רשומות לאחד התאריכים הקרובים. אם יש — עדכני אותן על השינוי.
+        לפני ההסרה, ודאי שאין נוסעות רשומות לאחד התאריכים הקרובים. אם יש — עדכני אותן על השינוי.
       </p>
       <ConfirmInline
         question="להסיר את המסלול?"

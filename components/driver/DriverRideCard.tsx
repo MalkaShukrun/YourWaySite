@@ -49,14 +49,14 @@ export function DriverRideCard({ ride, date, departed = false, open = false }: {
       }
     >
       <div className="passengers-head">
-        <h3>טרמפיסטיות רשומות ופרטי קשר</h3>
+        <h3>נוסעות רשומות ופרטי קשר</h3>
       </div>
       <div className="passenger-list">
         {ride.passengers.length === 0 ? (
           <p className="passenger-empty">
             {canAdd
-              ? "עדיין אין טרמפיסטיות רשומות. סיכמת עם מישהי בטלפון? אפשר לשריין לה מקום למטה."
-              : "עדיין אין טרמפיסטיות רשומות לנסיעה הזו."}
+              ? "עדיין אין נוסעות רשומות. אפשר לשריין מקום למטה."
+              : "עדיין אין נוסעות רשומות לנסיעה הזו."}
           </p>
         ) : (
           ride.passengers.map((p, index) => (

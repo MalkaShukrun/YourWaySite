@@ -6,7 +6,7 @@ import { formatShortRideDate } from "@/lib/utils/dates";
 
 // Each chart sums up its last day and its total or daily average. The
 // passengers chart shows yesterday and an average: today and the total are
-// already on the cards above ("טרמפיסטיות נוסעות היום", "טרמפיסטיות שנסעו עד היום").
+// already on the cards above ("נוסעות נוסעות היום", "נוסעות שנסעו עד היום").
 type Metric = {
   key: Exclude<keyof DailyStats, "day">;
   title: string;
@@ -19,7 +19,7 @@ const METRICS: Metric[] = [
   { key: "new_users", title: "משתמשות חדשות", subtitle: "הצטרפו למערכת באותו יום", last: "today", summary: "total" },
   { key: "non_driver_visitors", title: "נוסעות שהן לא נהגות", subtitle: "נכנסו למערכת ואין להן מסלול (לא נהגות)", last: "today", summary: "average" },
   { key: "visitors", title: "כל מי שנכנסה לאתר", subtitle: "כל המשתמשות שנכנסו למערכת באותו יום", last: "today", summary: "average" },
-  { key: "passengers", title: "טרמפיסטיות שנסעו עם נהגת", subtitle: "נסעו עם נהגות באותו יום (הלוך וחזור נספרים פעמיים)", last: "yesterday", summary: "average" },
+  { key: "passengers", title: "נוסעות שנסעו עם נהגת", subtitle: "נסעו עם נהגות באותו יום (הלוך וחזור נספרים פעמיים)", last: "yesterday", summary: "average" },
 ];
 
 // Day by day since DAILY_STATS_FROM: a table, newest day first, and bar

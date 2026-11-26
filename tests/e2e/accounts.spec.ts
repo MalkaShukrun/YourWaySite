@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./support/fixtures";
-import { expectNotFound, openForm, sideNav, toast } from "./support/ui";
+import { dailyEmailSave, expectNotFound, openEmailForm, openForm, rideEmailsSave, sideNav, toast } from "./support/ui";
 
 // Accounts (spec A1, A3–A5, §1 Modes, I1): onboarding, the profile, the two
 // modes, signing out, the contact form and who may open what.
@@ -84,14 +84,14 @@ test.describe("daily passenger email (spec D7)", () => {
         .single()).data;
     const updates = page.getByRole("button", { name: "מייל עדכון על שינוי ברשימת הנוסעות" });
 
-    await openForm(page, "/alerts", "שמירת הגדרות המייל");
+    await openEmailForm(page, dailyEmailSave);
     await page.getByRole("button", { name: "כבוי", exact: true }).click();
     await page.getByRole("button", { name: "שעת השליחה: 20:00" }).click();
     await page.getByRole("option", { name: "07" }).click();
     await page.getByRole("option", { name: "30" }).click();
     await expect(updates).toHaveAttribute("aria-pressed", "false");
     await updates.click();
-    await page.getByRole("button", { name: "שמירת הגדרות המייל" }).click();
+    await dailyEmailSave(page).click();
     await expect(toast(page, "הגדרות המייל נשמרו")).toBeVisible();
     expect(await saved()).toEqual({ daily_email_enabled: true, daily_email_updates_enabled: true, daily_email_time: "07:30:00" });
 
@@ -100,7 +100,7 @@ test.describe("daily passenger email (spec D7)", () => {
     await expect(updates).toHaveAttribute("aria-pressed", "true");
     await page.getByRole("button", { name: "פעיל", exact: true }).click();
     await expect(page.getByRole("button", { name: "שעת השליחה: 07:30" })).toBeHidden();
-    await page.getByRole("button", { name: "שמירת הגדרות המייל" }).click();
+    await dailyEmailSave(page).click();
     await expect.poll(saved).toEqual({ daily_email_enabled: false, daily_email_updates_enabled: true, daily_email_time: "07:30:00" });
   });
 });
@@ -113,13 +113,13 @@ test.describe("emails about her rides (spec A7)", () => {
       (await seed.service.from("profiles").select("ride_emails_enabled").eq("id", user.id).single()).data;
     const toggle = page.getByRole("button", { name: "מיילים על הנסיעות שלי" });
 
-    await openForm(page, "/alerts", "שמירת הגדרות ההתראות");
+    await openEmailForm(page, rideEmailsSave);
     await expect(toggle).toHaveAttribute("aria-pressed", "true");
     await expect(toggle).toHaveText("פעיל");
 
     await toggle.click();
     await expect(toggle).toHaveText("כבוי");
-    await page.getByRole("button", { name: "שמירת הגדרות ההתראות" }).click();
+    await rideEmailsSave(page).click();
     await expect(toast(page, "הגדרות ההתראות נשמרו")).toBeVisible();
     expect(await saved()).toEqual({ ride_emails_enabled: false });
 
@@ -132,7 +132,7 @@ test.describe("profile (spec A3)", () => {
   test("shows her details with a read-only email, saves changes and keeps them", async ({ page, seed, signIn }) => {
     const user = await seed.user("Profile", { fullName: "רחל לוי" });
     await signIn(page, user);
-    await openForm(page, "/profile", "שמירת שינויים");
+    await openForm(page, "/profile", "שמירה");
 
     await expect(page.getByLabel("שם מלא")).toHaveValue("רחל לוי");
     await expect(page.getByLabel("מספר טלפון")).toHaveValue(user.phone!);
@@ -145,8 +145,8 @@ test.describe("profile (spec A3)", () => {
     await page.getByLabel("סוג רכב").fill("יונדאי איוניק");
     await page.getByLabel("צבע").fill("לבן");
     await page.getByLabel("מספר מקומות").fill("4");
-    await page.getByRole("button", { name: "שמירת שינויים" }).click();
-    await expect(toast(page, "הפרטים נשמרו בהצלחה")).toBeVisible();
+    await page.getByRole("button", { name: "שמירה" }).click();
+    await expect(toast(page, "הפרטים נשמרו")).toBeVisible();
 
     await page.reload();
     await expect(page.getByLabel("שם מלא")).toHaveValue("רחל כהן");
@@ -156,12 +156,12 @@ test.describe("profile (spec A3)", () => {
 
   test("checks the name, phone and car before saving", async ({ page, seed, signIn }) => {
     await signIn(page, await seed.user("Profile"));
-    await openForm(page, "/profile", "שמירת שינויים");
+    await openForm(page, "/profile", "שמירה");
     await page.getByLabel("שם מלא").fill("א");
     await page.getByLabel("מספר טלפון").fill("12345");
     await page.getByRole("button", { name: "הוספת רכב" }).click();
     await page.getByLabel("מספר מקומות").fill("9");
-    await page.getByRole("button", { name: "שמירת שינויים" }).click();
+    await page.getByRole("button", { name: "שמירה" }).click();
 
     await expect(page.getByText("יש להזין שם מלא")).toBeVisible();
     await expect(page.getByText("מספר טלפון לא תקין (לדוגמה 050-000-0000)")).toBeVisible();
@@ -173,11 +173,11 @@ test.describe("profile (spec A3)", () => {
     const user = await seed.user("WithCar");
     await seed.service.from("profiles").update({ vehicle_model: "יונדאי", vehicle_color: "לבן", vehicle_seats: 4 }).eq("id", user.id);
     await signIn(page, user);
-    await openForm(page, "/profile", "שמירת שינויים");
+    await openForm(page, "/profile", "שמירה");
     await page.getByRole("button", { name: "הסרת הרכב" }).click();
     await expect(page.getByLabel("סוג רכב")).toHaveCount(0);
-    await page.getByRole("button", { name: "שמירת שינויים" }).click();
-    await expect(toast(page, "הפרטים נשמרו בהצלחה")).toBeVisible();
+    await page.getByRole("button", { name: "שמירה" }).click();
+    await expect(toast(page, "הפרטים נשמרו")).toBeVisible();
     const { data } = await seed.service.from("profiles").select("vehicle_model, vehicle_seats").eq("id", user.id).single();
     expect(data).toEqual({ vehicle_model: null, vehicle_seats: null });
   });
@@ -187,7 +187,7 @@ test.describe("modes (spec §1, A4)", () => {
   test("the mode switch flips between the passenger and driver menus", async ({ page, seed, signIn }) => {
     await signIn(page, await seed.user("Both"));
     await page.goto("/");
-    await expect(sideNav(page).locator(".nav-label")).toHaveText("אזור טרמפיסטית");
+    await expect(sideNav(page).locator(".nav-label")).toHaveText("אזור נוסעת");
     for (const name of ["מציאת נסיעה", "הנסיעות שלי", "מעקב תשלומים"]) await expect(sideNav(page).getByRole("link", { name })).toBeVisible();
     // Each mode announces its own email news.
     const announcements = page.locator(".side-announce");
@@ -199,9 +199,9 @@ test.describe("modes (spec §1, A4)", () => {
     await expect(sideNav(page).locator(".nav-label")).toHaveText("אזור נהגת");
     for (const name of ["לוח נהגת שבועי", "המסלולים שלי"]) await expect(sideNav(page).getByRole("link", { name })).toBeVisible();
     await expect(announcements).toHaveCount(1);
-    await expect(announcements).toContainText("קבלי מייל יומי על הנוסעות שמצטרפות לנסיעה שלך");
+    await expect(announcements).toContainText("קבלי מייל יומי על הנוסעות שנרשמות לנסיעה שלך");
 
-    await page.getByRole("group", { name: "בחירת מצב" }).getByRole("link", { name: "אני הטרמפיסטית" }).click();
+    await page.getByRole("group", { name: "בחירת מצב" }).getByRole("link", { name: "אני הנוסעת" }).click();
     await expect(page).toHaveURL(/\/$/);
   });
 
@@ -215,7 +215,7 @@ test.describe("modes (spec §1, A4)", () => {
 
     await page.goto("/payments");
     await page.goto("/profile");
-    await expect(sideNav(page).locator(".nav-label")).toHaveText("אזור טרמפיסטית");
+    await expect(sideNav(page).locator(".nav-label")).toHaveText("אזור נוסעת");
   });
 
   test("the side menu reaches every passenger page", async ({ page, seed, signIn }) => {

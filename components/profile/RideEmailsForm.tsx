@@ -56,7 +56,7 @@ export function RideEmailsForm({ email, defaults }: Props) {
 
       {serverError && <p className="auth-error" role="alert">{serverError}</p>}
       <div className="profile-save">
-        <button type="submit" className="btn btn-primary" disabled={!hydrated || pending}>{pending ? "שומר..." : "שמירת הגדרות ההתראות"}</button>
+        <button type="submit" className="btn btn-primary" disabled={!hydrated || pending}>{pending ? "שומר..." : "שמירה"}</button>
       </div>
       <Toast message={saved ? "הגדרות ההתראות נשמרו" : ""} id={saved} />
     </form>

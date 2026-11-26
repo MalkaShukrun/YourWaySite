@@ -43,7 +43,7 @@ export function DailyEmailForm({ email, defaults }: Props) {
       <div className="vehicle-section">
         <div>
           <h3><Mail {...iconProps} size={20} /> מייל יומי לנהגות</h3>
-          <span>רשימת הנוסעות של מחר, עם טלפון, דוא״ל ותחנת עלייה</span>
+          <span>רשימת הנוסעות של מחר, עם טלפון, דוא״ל ותחנת איסוף</span>
         </div>
         <button type="button" className={`btn outlined ${enabled ? "btn-secondary" : "btn-ghost"}`} onClick={() => setValue("enabled", !enabled)}>
           {enabled ? "פעיל" : "כבוי"}
@@ -84,7 +84,7 @@ export function DailyEmailForm({ email, defaults }: Props) {
 
       {serverError && <p className="auth-error" role="alert">{serverError}</p>}
       <div className="profile-save">
-        <button type="submit" className="btn btn-primary" disabled={!hydrated || pending}>{pending ? "שומר..." : "שמירת הגדרות המייל"}</button>
+        <button type="submit" className="btn btn-primary" disabled={!hydrated || pending}>{pending ? "שומר..." : "שמירה"}</button>
       </div>
       <Toast message={saved ? "הגדרות המייל נשמרו" : ""} id={saved} />
     </form>

@@ -18,7 +18,7 @@ import { groupArea } from "@/lib/utils/places";
 import { NOTES_MAX, routeSchema, STOP_LABEL_EMPTY, STOP_LABEL_MAX, type RouteValues } from "@/lib/validation/route";
 import { useHydrated } from "@/components/ui/useHydrated";
 
-const ROUTE_HINT = "לא מצאת את המסלול שלך? להוספת מסלול נסיעה מעיר לעיר יש ליצור קשר";
+const ROUTE_HINT = "לא מצאת את המסלול? צרי קשר להוספתו.";
 
 type Props = { groups: RideGroup[]; route: EditableRoute | null; copyFrom?: EditableRoute | null; today: string };
 
@@ -110,7 +110,7 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
             <div
               key={field.key}
               className={isFixed(field) ? "is-fixed" : ""}
-              title={isFixed(field) ? "כבר נרשמו טרמפיסטיות לתחנה הזו, ולכן אי אפשר לשנות או למחוק אותה" : undefined}
+              title={isFixed(field) ? "כבר נרשמו נוסעות לתחנה הזו, ולכן אי אפשר לשנות או למחוק אותה" : undefined}
             >
               <span>{fields.slice(0, index + 1).filter((f) => f.kind === stopKind).length}</span>
               {/* Read-only rather than disabled: a disabled input drops its value from the form. */}
@@ -188,12 +188,12 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
         <section className="panel editor-form">
           {locked && (
             <p className="editor-locked-note">
-              כבר נרשמו טרמפיסטיות למסלול, ולכן אי אפשר לשנות את פרטיו — אפשר רק לערוך את ההערה, להוסיף תחנות ולשנות או למחוק תחנות שאף אחת לא נרשמה אליהן. תחנות שנרשמו אליהן מסומנות באפור. כדי לשנות פרטים אחרים, שכפלי את הנסיעה ושני בה את מה שצריך, ואחר כך הסירי את המסלול הזה.
+              כבר נרשמו נוסעות למסלול, ולכן אי אפשר לשנות את פרטיו — אפשר רק לערוך את ההערה, להוסיף תחנות ולשנות או למחוק תחנות שאף אחת לא נרשמה אליהן. תחנות שנרשמו אליהן מסומנות באפור. כדי לשנות פרטים אחרים, שכפלי את הנסיעה ושני בה את מה שצריך, ואחר כך הסירי את המסלול הזה.
             </p>
           )}
           {route && !locked && (
             <p className="editor-locked-note">
-              עדיין לא נרשמו טרמפיסטיות למסלול, ולכן אפשר לשנות את כל הפרטים. אחרי שתירשם הטרמפיסטית הראשונה, יהיה אפשר רק לערוך את ההערה ואת התחנות שאף אחת לא נרשמה אליהן.
+              עדיין לא נרשמו נוסעות למסלול, ולכן אפשר לשנות את כל הפרטים. אחרי שתירשם הנוסעת הראשונה, יהיה אפשר רק לערוך את ההערה ואת התחנות שאף אחת לא נרשמה אליהן.
             </p>
           )}
           {copyFrom && (
@@ -274,13 +274,13 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
                   <div className="input-shell"><Users {...iconProps} size={20} /><input inputMode="numeric" {...register("seats")} /></div>
                 </label>
                 <label className="field">
-                  <span>מחיר לכל טרמפיסטית</span>
+                  <span>מחיר לכל נוסעת</span>
                   <div className="input-shell price-input"><span>₪</span><input inputMode="decimal" {...register("price")} placeholder="0" /></div>
                 </label>
               </div>
             </fieldset>
             <label className="field route-notes">
-              <span>הערות לטרמפיסטיות <small className="optional-tag">לא חובה</small></span>
+              <span>הערות לנוסעות <small className="optional-tag">לא חובה</small></span>
               <div className="input-shell textarea-shell">
                 <textarea
                   {...register("notes")}
@@ -305,7 +305,7 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
             <div className="editor-actions">
               <Link className="btn btn-secondary" href="/routes">ביטול</Link>
               <button type="submit" className="btn btn-primary" disabled={!hydrated || pending}>
-                {pending ? "שומר..." : route ? "שמירת השינויים" : "שמירת המסלול"}
+                {pending ? "שומר..." : "שמירה"}
               </button>
             </div>
           </div>

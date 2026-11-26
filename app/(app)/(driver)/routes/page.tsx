@@ -53,7 +53,7 @@ async function Routes({ searchParams }: Pick<PageProps<"/routes">, "searchParams
       {rows.length === 0 ? (
         <section className="panel empty-state">
           {tab === "history" ? (
-            <strong>עוד אין נסיעות שהתקיימו</strong>
+            <strong>עדיין אין נסיעות בהיסטוריה</strong>
           ) : tab === "cancelled" ? (
             <strong>אין מסלולים מבוטלים</strong>
           ) : (
@@ -68,7 +68,7 @@ async function Routes({ searchParams }: Pick<PageProps<"/routes">, "searchParams
           {rows.map((route) => <RouteCard key={route.id} route={route} tab={tab} />)}
         </div>
       )}
-      <Toast message={query.saved === "1" ? "המסלול נשמר ופורסם" : ""} />
+      <Toast message={query.saved === "1" ? "המסלול נשמר ופורסם" : query.saved === "edit" ? "השינויים נשמרו" : ""} />
     </>
   );
 }
@@ -97,7 +97,7 @@ function RouteCard({ route, tab }: { route: DriverRoute; tab: "active" | "histor
         <p>
           <Clock {...iconProps} size={19} /> יציאה ב־{formatTime(route.out_time)}
         </p>
-        <p><Users {...iconProps} size={19} /> {route.seats} מקומות · {formatPrice(route.price)} לטרמפיסטית</p>
+        <p><Users {...iconProps} size={19} /> {route.seats} מקומות · {formatPrice(route.price)} לנוסעת</p>
         {tab === "active" && (
           <div className="route-actions">
             <ArchiveRouteButton routeId={route.id} />

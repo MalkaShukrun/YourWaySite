@@ -52,7 +52,7 @@ async function MyRides({ searchParams }: Pick<PageProps<"/my-rides">, "searchPar
         </div>
         {rows.length === 0 ? (
           <div className="empty-state">
-            <strong>{tab === "history" ? "עוד אין נסיעות קודמות" : "אין לך נסיעות קרובות"}</strong>
+            <strong>{tab === "history" ? "עדיין אין נסיעות קודמות" : "אין לך נסיעות קרובות"}</strong>
             {tab === "upcoming" && <Link className="btn btn-primary" href="/">מציאת נסיעה</Link>}
           </div>
         ) : (
@@ -60,7 +60,7 @@ async function MyRides({ searchParams }: Pick<PageProps<"/my-rides">, "searchPar
         )}
       </section>
       <Toast
-        message={query.booked === "1" ? "הנסיעה נוספה בהצלחה לנסיעות שלי" : query.cancelled === "1" ? "ההרשמה בוטלה והמקום התפנה" : ""}
+        message={query.booked === "1" ? "הנסיעה נוספה לנסיעות שלי" : query.cancelled === "1" ? "ההרשמה בוטלה והמקום התפנה" : ""}
       />
     </>
   );

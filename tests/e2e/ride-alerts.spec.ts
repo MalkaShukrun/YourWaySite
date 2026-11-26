@@ -31,7 +31,7 @@ test.describe("ride alerts", () => {
     const dialog = page.getByRole("dialog", { name: "התראה על נסיעה" });
     await expect(dialog.getByRole("button", { name: /יציאה משעה: 07:00/ })).toBeVisible();
     await expect(dialog.getByRole("button", { name: /עד שעה: 09:00/ })).toBeVisible();
-    await dialog.getByRole("button", { name: "שמירת ההתראה" }).click();
+    await dialog.getByRole("button", { name: "שמירה" }).click();
 
     const saved = page.getByRole("status").filter({ hasText: "ההתראה נשמרה" });
     await expect(saved).toBeVisible();
@@ -73,7 +73,7 @@ test.describe("ride alerts", () => {
 
     await page.getByRole("button", { name: CARD_ALERT_BUTTON }).click();
     const dialog = page.getByRole("dialog", { name: "התראה על נסיעה" });
-    await dialog.getByRole("button", { name: "שמירת ההתראה" }).click();
+    await dialog.getByRole("button", { name: "שמירה" }).click();
 
     const saved = page.locator(".trip-card").getByRole("status").filter({ hasText: "ההתראה נשמרה" });
     await expect(saved).toBeVisible();
@@ -127,7 +127,7 @@ test.describe("ride alerts", () => {
 
     await page.goto(`/?origin=${origin}&destination=${destination}`);
     await page.getByRole("button", { name: ALERT_BUTTON }).click();
-    await page.getByRole("button", { name: "שמירת ההתראה" }).click();
+    await page.getByRole("button", { name: "שמירה" }).click();
     await expect(page.locator(".form-alert")).toHaveText("הגעת למגבלה של 3 התראות פעילות — בטלי התראה קיימת כדי להוסיף חדשה.");
   });
 

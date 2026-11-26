@@ -14,13 +14,13 @@ const ERRORS: Record<string, string> = {
   ROUTE_NOT_FOUND: "המסלול לא נמצא.",
   RIDE_UNAVAILABLE: "הנסיעה בוטלה או לא מתקיימת בתאריך הזה.",
   RIDE_FULL: "אין מקומות פנויים בנסיעה הזו.",
-  ALREADY_BOOKED: "הטרמפיסטית כבר רשומה לנסיעה הזו.",
-  OWN_RIDE: "אי אפשר להוסיף את עצמך כטרמפיסטית.",
+  ALREADY_BOOKED: "הנוסעת כבר רשומה לנסיעה הזו.",
+  OWN_RIDE: "אי אפשר להוסיף את עצמך כנוסעת.",
   INVALID_PASSENGER: "יש להזין שם וטלפון.",
   INVALID_STOP: "התחנה שנבחרה אינה חלק מהמסלול.",
   BOOKING_NOT_FOUND: "ההרשמה לא נמצאה.",
-  ROUTE_LOCKED: "כבר נרשמו טרמפיסטיות למסלול, ולכן אי אפשר לשנות את פרטיו — אפשר רק לערוך את ההערה ואת התחנות שאף אחת לא נרשמה אליהן.",
-  STOP_IN_USE: "בינתיים נרשמה טרמפיסטית לתחנה ששינית או מחקת, ולכן היא נשארת כמו שהיא. טעני את הדף מחדש ונסי שוב.",
+  ROUTE_LOCKED: "כבר נרשמו נוסעות למסלול, ולכן אי אפשר לשנות את פרטיו — אפשר רק לערוך את ההערה ואת התחנות שאף אחת לא נרשמה אליהן.",
+  STOP_IN_USE: "תחנה זו כבר תפוסה. רענני את הדף ונסי שוב.",
   STOP_NOT_FOUND: "אחת התחנות כבר לא קיימת במסלול. טעני את הדף מחדש ונסי שוב.",
   RIDE_CANCELLED: "הנסיעה בוטלה לתאריך הזה, ואי אפשר להחזיר אותה.",
   RIDE_DEPARTED: "הנסיעה כבר יצאה ולא ניתן לבטל אותה.",
@@ -59,7 +59,8 @@ export async function saveRoute(values: RouteValues, routeId: string | null = nu
   });
   if (error) return { error: messageFor(error) };
 
-  redirect("/routes?saved=1");
+  // A new route is published; an edited one only says its changes were saved.
+  redirect(routeId ? "/routes?saved=edit" : "/routes?saved=1");
 }
 
 // The only changes a booked route takes: its note, and its stops — new ones
@@ -80,7 +81,7 @@ export async function updateRoute(routeId: string, values: RouteUpdateValues) {
   });
   if (error) return { error: messageFor(error) };
 
-  redirect("/routes?saved=1");
+  redirect("/routes?saved=edit");
 }
 
 // Stop offering a route. Past bookings stay in passengers' history; upcoming

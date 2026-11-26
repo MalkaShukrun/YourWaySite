@@ -79,7 +79,7 @@ export function GroupDialog({ places, group }: Props) {
           title={editing ? "עריכת קבוצת נסיעה" : "יצירת קבוצת נסיעה"}
           description={enoughPlaces ? "בחרי מוצא ויעד מרשימת המקומות." : "קודם הוסיפי לפחות שני מקומות לרשימת המקומות."}
           error={serverError}
-          submitLabel={pending ? "שומר..." : editing ? "שמירת השינויים" : "יצירת הקבוצה"}
+          submitLabel={pending ? "שומר..." : editing ? "שמירה" : "יצירת הקבוצה"}
           submitDisabled={pending || !enoughPlaces}
           onSubmit={handleSubmit(onSubmit)}
           onClose={close}
@@ -103,7 +103,7 @@ export function GroupDialog({ places, group }: Props) {
           )}
         </ModalForm>
       )}
-      <Toast message={done ? (editing ? "הקבוצה עודכנה" : "הקבוצה נוצרה בהצלחה") : ""} id={done} />
+      <Toast message={done ? (editing ? "הקבוצה עודכנה" : "הקבוצה נוצרה") : ""} id={done} />
     </>
   );
 }

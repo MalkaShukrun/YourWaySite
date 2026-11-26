@@ -12,7 +12,7 @@ export default function NotFound() {
       <header className="legal-header"><Logo /></header>
       <main className="legal-card empty-state">
         <strong>הדף לא נמצא</strong>
-        <span>ייתכן שהקישור שגוי, או שהנסיעה כבר לא קיימת.</span>
+        <span>הקישור שגוי או שהנסיעה כבר לא קיימת.</span>
         <Link className="btn btn-primary" href="/">חזרה לדף הבית</Link>
       </main>
     </div>

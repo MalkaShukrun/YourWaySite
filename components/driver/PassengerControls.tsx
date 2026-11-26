@@ -54,9 +54,9 @@ export function AddPassengerForm({ routeId, date, stops, seatsLeft, hint }: Ride
   if (!open) {
     return (
       <div className="passenger-add">
-        {hint && <p className="passenger-add-hint">סיכמת טרמפ בטלפון? שרייני לה כאן מקום, כדי שמספר המקומות הפנויים יתעדכן.</p>}
+        {hint && <p className="passenger-add-hint">סיכמת בטלפון? שרייני כאן מקום.</p>}
         <button className="btn btn-secondary" onClick={() => setOpen(true)}>
-          <Plus {...iconProps} size={18} /> שריון מקום לטרמפיסטית
+          <Plus {...iconProps} size={18} /> שריון מקום לנוסעת
         </button>
         <Toast message={toast.message} id={toast.id} />
       </div>
@@ -67,8 +67,8 @@ export function AddPassengerForm({ routeId, date, stops, seatsLeft, hint }: Ride
     <div className="passenger-add">
       <form className="add-passenger" onSubmit={(e) => { e.preventDefault(); submit(); }}>
         <div>
-          <strong>הוספת טרמפיסטית לנסיעה</strong>
-          <span>הטרמפיסטית תופיע ברשימה שלך בלבד ותתפוס מקום בנסיעה</span>
+          <strong>הוספת נוסעת לנסיעה</strong>
+          <span>הנוסעת תופיע ברשימה שלך בלבד ותתפוס מקום בנסיעה</span>
         </div>
         <div className="add-passenger-fields">
           <label className="field">
@@ -92,7 +92,7 @@ export function AddPassengerForm({ routeId, date, stops, seatsLeft, hint }: Ride
         {existingGuest !== null ? (
           <div role="alert">
             <ConfirmInline
-              question={`כבר יש הרשמה עם מספר הטלפון הזה${existingGuest ? ` (${existingGuest})` : ""}. להחליף אותה?`}
+              question={`הטלפון הזה כבר רשום${existingGuest ? ` (${existingGuest})` : ""}. להחליף?`}
               confirmLabel="כן, להחליף"
               pendingLabel="מחליף..."
               pending={pending}

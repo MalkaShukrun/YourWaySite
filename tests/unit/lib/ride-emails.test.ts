@@ -65,7 +65,7 @@ describe("buildRideEmail", () => {
       "https://yourway.example",
     );
     expect(subject).toBe("נוסעת ביטלה הרשמה: יום שני, 2 בנובמבר, 07:15");
-    expect(text).toContain("הנוסעת: רחל · תחנת עלייה: תחנה מרכזית");
+    expect(text).toContain("הנוסעת: רחל · תחנת איסוף: תחנה מרכזית");
     expect(text).not.toContain("הורדה");
     expect(html).toContain('href="https://yourway.example/dashboard?date=2026-11-02"');
   });

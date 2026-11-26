@@ -55,7 +55,7 @@ function passengerRow(p: DailyPassenger) {
 }
 
 function rideHtml(ride: DailyRide) {
-  const headers = ["שם", "טלפון", "דוא״ל", "תחנת עלייה"];
+  const headers = ["שם", "טלפון", "דוא״ל", "תחנת איסוף"];
   return `<h3 style="margin:20px 0 8px;">${escapeHtml(rideTitle(ride))}</h3>
 <table dir="rtl" style="border-collapse:collapse;width:100%;">
 <tr>${headers.map((h) => `<th style="${cell}">${h}</th>`).join("")}</tr>
@@ -67,7 +67,7 @@ const mark = (p: DailyPassenger) => (p.is_new ? ` (${NEW_MARK})` : p.is_cancelle
 
 function rideText(ride: DailyRide) {
   const rows = ride.passengers.map(
-    (p) => `- ${p.name}${mark(p)} | טלפון: ${p.phone ?? "—"} | דוא״ל: ${p.email ?? "—"} | תחנת עלייה: ${p.pickup}`,
+    (p) => `- ${p.name}${mark(p)} | טלפון: ${p.phone ?? "—"} | דוא״ל: ${p.email ?? "—"} | תחנת איסוף: ${p.pickup}`,
   );
   return [rideTitle(ride), ...rows, ...(isEmpty(ride) ? [EMPTY_RIDE] : [])].join("\n");
 }
@@ -92,7 +92,7 @@ export function buildEmail(email: DailyEmail, siteUrl = "", today = "") {
   const when = email.ride_date === today ? "להיום" : "למחר";
   const update = Boolean(email.since);
   const intro = update ? updateIntro(email.rides, date) : `אלו הנוסעות הרשומות לנסיעות שלך ב${date}:`;
-  const updatedNote = "הרשימה נכונה לרגע השליחה. ברשימת הנוסעות באתר תמיד מופיע המצב העדכני.";
+  const updatedNote = "המצב המעודכן תמיד זמין בלוח הנהגת באתר.";
   const settingsUrl = siteUrl ? `${siteUrl.replace(/\/$/, "")}/alerts` : "";
   const settings = "אפשר לשנות את השעה או להפסיק את המיילים בעמוד ההתראות";
   return {

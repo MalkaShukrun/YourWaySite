@@ -96,7 +96,7 @@ async function Results({ searchParams }: { searchParams: SearchParams }) {
       {rides.length === 0 ? (
         <div className="panel empty-state">
           <strong>לא נמצאו נסיעות מתאימות</strong>
-          <span>נסי לשנות את המקומות, התאריך או השעה, או שנעדכן אותך במייל כשתפורסם נסיעה חדשה.</span>
+          <span>נסי לשנות את הסינון, או הגדירי התראה כשתפורסם נסיעה מתאימה.</span>
           <RideAlertButton groups={groups} initial={filters} today={today} />
         </div>
       ) : (

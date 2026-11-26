@@ -384,7 +384,7 @@ test.describe("booking (spec C3, C4)", () => {
     await bookButton(page).click();
 
     await expect(page).toHaveURL(/\/my-rides\?booked=1$/);
-    await expect(toast(page, "הנסיעה נוספה בהצלחה לנסיעות שלי")).toBeVisible();
+    await expect(toast(page, "הנסיעה נוספה לנסיעות שלי")).toBeVisible();
     const row = page.locator(".activity-row").filter({ hasText: group.label });
     await expect(row).toContainText("₪18");
     await expect(row).toContainText("איסוף: Pickup A");
@@ -495,7 +495,7 @@ test.describe("when booking isn't possible (spec C6, B6, H2)", () => {
     const own = card(page, group.label);
     await expect(own).toContainText("הנסיעה שלך");
     await own.getByRole("link", { name: /צפייה בנסיעה/ }).click();
-    await expect(page.getByText("זו הנסיעה שלך · כך רואות אותה הטרמפיסטיות")).toBeVisible();
+    await expect(page.getByText("זו הנסיעה שלך · כך רואות אותה הנוסעות")).toBeVisible();
     await expect(bookButton(page)).toHaveCount(0);
     await page.getByRole("link", { name: "למסלולים שלי" }).click();
     await expect(page).toHaveURL(/\/routes$/);

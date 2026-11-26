@@ -7,7 +7,7 @@ import type { Mode } from "./nav";
 // drivers also the daily passenger email (D7).
 const ANNOUNCEMENTS: Record<Mode, string[]> = {
   passenger: ["עדכנו אותי כשנכנסת נסיעה או כשמתפנה מקום בנסיעה."],
-  driver: ["קבלי מייל יומי על הנוסעות שמצטרפות לנסיעה שלך. יש להפעיל בעמוד ההתראות."],
+  driver: ["קבלי מייל יומי על הנוסעות שנרשמות לנסיעה שלך. יש להפעיל בעמוד ההתראות."],
 };
 
 // A click leads to "ההתראות שלי", where the alerts and the email settings are.

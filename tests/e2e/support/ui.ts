@@ -39,6 +39,18 @@ export async function openForm(page: Page, path: string, submit: string) {
   await expect(page.getByRole("button", { name: submit })).toBeEnabled();
 }
 
+// "ההתראות שלי" has two email forms, each with its own "שמירה".
+export const dailyEmailSave = (page: Page) =>
+  page.locator("form", { hasText: "מייל יומי לנהגות" }).getByRole("button", { name: "שמירה" });
+export const rideEmailsSave = (page: Page) =>
+  page.locator("form", { hasText: "מיילים על הנסיעות שלי" }).getByRole("button", { name: "שמירה" });
+
+// Opens "ההתראות שלי" and waits until the given email form is ready.
+export async function openEmailForm(page: Page, save: (page: Page) => Locator) {
+  await page.goto("/alerts");
+  await expect(save(page)).toBeEnabled();
+}
+
 // The app's toast, by its text.
 export const toast = (page: Page, text: string | RegExp) => page.locator(".toast").filter({ hasText: text });
 

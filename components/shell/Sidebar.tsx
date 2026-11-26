@@ -29,7 +29,7 @@ export function Sidebar({ adminSlot }: { adminSlot: ReactNode }) {
     <aside className="sidebar">
       <Logo />
       <nav className="side-nav" aria-label="ניווט ראשי">
-        <p className="nav-label">{mode === "driver" ? "אזור נהגת" : "אזור טרמפיסטית"}</p>
+        <p className="nav-label">{mode === "driver" ? "אזור נהגת" : "אזור נוסעת"}</p>
         {items.map((item) => (
           <NavLink key={item.href} item={item} pathname={pathname} />
         ))}

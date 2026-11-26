@@ -77,7 +77,7 @@ export const price =(value: number) => `₪${Number(value).toLocaleString("he-IL
 
 // The lines under a ride's title.
 function rideLines(ride: EmailRide) {
-  if (ride.passenger_name !== undefined) return [`הנוסעת: ${ride.passenger_name} · תחנת עלייה: ${ride.pickup}`];
+  if (ride.passenger_name !== undefined) return [`הנוסעת: ${ride.passenger_name} · תחנת איסוף: ${ride.pickup}`];
   const lines = [`איסוף: ${ride.pickup} · הורדה: ${ride.dropoff}`];
   if (ride.price !== undefined) lines.push(`מחיר: ${price(ride.price)}`);
   if (ride.driver_name !== undefined) {

@@ -56,7 +56,7 @@ export function PlaceDialog({ place }: Props) {
           title={editing ? "עריכת מקום" : "הוספת מקום"}
           description={editing ? "השם החדש יופיע בכל הקבוצות של המקום." : "עיר ושכונה או אזור בה. הקבוצות נבחרות מרשימת המקומות."}
           error={serverError}
-          submitLabel={pending ? "שומר..." : editing ? "שמירת השינויים" : "הוספת המקום"}
+          submitLabel={pending ? "שומר..." : editing ? "שמירה" : "הוספת המקום"}
           submitDisabled={pending}
           onSubmit={handleSubmit(onSubmit)}
           onClose={close}

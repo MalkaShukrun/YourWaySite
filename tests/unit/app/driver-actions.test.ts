@@ -41,13 +41,13 @@ const DRIVER_MESSAGES: [string, string][] = [
   ["ROUTE_NOT_FOUND", "המסלול לא נמצא."],
   ["RIDE_UNAVAILABLE", "הנסיעה בוטלה או לא מתקיימת בתאריך הזה."],
   ["RIDE_FULL", "אין מקומות פנויים בנסיעה הזו."],
-  ["ALREADY_BOOKED", "הטרמפיסטית כבר רשומה לנסיעה הזו."],
-  ["OWN_RIDE", "אי אפשר להוסיף את עצמך כטרמפיסטית."],
+  ["ALREADY_BOOKED", "הנוסעת כבר רשומה לנסיעה הזו."],
+  ["OWN_RIDE", "אי אפשר להוסיף את עצמך כנוסעת."],
   ["INVALID_PASSENGER", "יש להזין שם וטלפון."],
   ["INVALID_STOP", "התחנה שנבחרה אינה חלק מהמסלול."],
   ["BOOKING_NOT_FOUND", "ההרשמה לא נמצאה."],
-  ["ROUTE_LOCKED", "כבר נרשמו טרמפיסטיות למסלול, ולכן אי אפשר לשנות את פרטיו — אפשר רק לערוך את ההערה ואת התחנות שאף אחת לא נרשמה אליהן."],
-  ["STOP_IN_USE", "בינתיים נרשמה טרמפיסטית לתחנה ששינית או מחקת, ולכן היא נשארת כמו שהיא. טעני את הדף מחדש ונסי שוב."],
+  ["ROUTE_LOCKED", "כבר נרשמו נוסעות למסלול, ולכן אי אפשר לשנות את פרטיו — אפשר רק לערוך את ההערה ואת התחנות שאף אחת לא נרשמה אליהן."],
+  ["STOP_IN_USE", "תחנה זו כבר תפוסה. רענני את הדף ונסי שוב."],
   ["STOP_NOT_FOUND", "אחת התחנות כבר לא קיימת במסלול. טעני את הדף מחדש ונסי שוב."],
   ["RIDE_CANCELLED", "הנסיעה בוטלה לתאריך הזה, ואי אפשר להחזיר אותה."],
   ["RIDE_DEPARTED", "הנסיעה כבר יצאה ולא ניתן לבטל אותה."],
@@ -112,7 +112,7 @@ describe("saveRoute (publish a route)", () => {
 describe("saveRoute (edit a route nobody has booked)", () => {
   it("saves over the route with its stops, saved ones by id", async () => {
     const stops = [{ ...values().stops[0], id: ID.pickup }, values().stops[1]];
-    expect(await runAction(() => saveRoute(values({ seats: "6", stops }), ID.route))).toEqual({ redirectedTo: "/routes?saved=1" });
+    expect(await runAction(() => saveRoute(values({ seats: "6", stops }), ID.route))).toEqual({ redirectedTo: "/routes?saved=edit" });
     const [name, args] = sb.mock.client.rpc.mock.calls[0] as [string, { p_route_id: string; p_route: { seats: string }; p_stops: { id: string }[] }];
     expect(name).toBe("save_route");
     expect(args.p_route_id).toBe(ID.route);
@@ -128,7 +128,7 @@ describe("saveRoute (edit a route nobody has booked)", () => {
   it("shows the lock once a passenger has booked it meanwhile", async () => {
     sb.mock.onRpc("save_route", { error: { message: "P0001: ROUTE_LOCKED" } });
     expect(await runAction(() => saveRoute(values(), ID.route))).toEqual({
-      error: "כבר נרשמו טרמפיסטיות למסלול, ולכן אי אפשר לשנות את פרטיו — אפשר רק לערוך את ההערה ואת התחנות שאף אחת לא נרשמה אליהן.",
+      error: "כבר נרשמו נוסעות למסלול, ולכן אי אפשר לשנות את פרטיו — אפשר רק לערוך את ההערה ואת התחנות שאף אחת לא נרשמה אליהן.",
     });
   });
 });
@@ -142,7 +142,7 @@ describe("updateRoute (edit a booked route)", () => {
 
   it("saves the trimmed note and every stop, saved ones with their ids", async () => {
     expect(await runAction(() => updateRoute(ID.route, { notes: " מחכה 10 דקות ", stops }))).toEqual({
-      redirectedTo: "/routes?saved=1",
+      redirectedTo: "/routes?saved=edit",
     });
     expect(sb.mock.client.rpc).toHaveBeenCalledWith("update_booked_route", {
       p_route_id: ID.route,
@@ -170,7 +170,7 @@ describe("updateRoute (edit a booked route)", () => {
   it("explains a stop a passenger booked meanwhile", async () => {
     sb.mock.onRpc("update_booked_route", { error: { message: "P0001: STOP_IN_USE" } });
     expect(await runAction(() => updateRoute(ID.route, { notes: "", stops }))).toEqual({
-      error: "בינתיים נרשמה טרמפיסטית לתחנה ששינית או מחקת, ולכן היא נשארת כמו שהיא. טעני את הדף מחדש ונסי שוב.",
+      error: "תחנה זו כבר תפוסה. רענני את הדף ונסי שוב.",
     });
   });
 });

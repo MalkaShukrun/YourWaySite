@@ -25,7 +25,7 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
         <div className="brand-copy">
           <span className="brand-eyebrow">טרמפים בקהילה, בין נשים</span>
           <h1>נוסעות יחד,<br /><em>מגיעות רחוק.</em></h1>
-          <p>נהגות מפרסמות את הנסיעות שלהן, טרמפיסטיות נרשמות בלחיצה — והכול מתואם במקום אחד.</p>
+          <p>נהגות מפרסמות את הנסיעות שלהן, נוסעות נרשמות בלחיצה — והכול מתואם במקום אחד.</p>
         </div>
 
         <BrandTicket />

@@ -53,9 +53,9 @@ export function ContactButton() {
         <ModalForm
           icon={<Contact {...iconProps} size={20} />}
           title="צרי קשר"
-          description="צריכה עזרה? כתבי לנו ונחזור אלייך"
+          description="שאלות? כתבי לנו ונחזור אלייך."
           error={serverError}
-          submitLabel={pending ? "שולחת..." : "שליחה"}
+          submitLabel={pending ? "שולח..." : "שליחה"}
           submitDisabled={pending}
           onSubmit={handleSubmit(onSubmit)}
           onClose={close}

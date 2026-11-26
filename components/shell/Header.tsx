@@ -18,7 +18,7 @@ export function Header({ userSlot }: { userSlot: ReactNode }) {
     <header className="topbar">
       <div className="mobile-logo"><Logo /></div>
       <div className="role-switch" role="group" aria-label="בחירת מצב">
-        <Link href="/" className={mode === "passenger" ? "active" : ""}>אני הטרמפיסטית</Link>
+        <Link href="/" className={mode === "passenger" ? "active" : ""}>אני הנוסעת</Link>
         <Link href="/dashboard" className={mode === "driver" ? "active" : ""}>אני הנהגת</Link>
       </div>
       <div className="header-actions"><Announcement mode={mode} compact /><ContactButton />{userSlot}</div>

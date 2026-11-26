@@ -31,7 +31,7 @@ test.describe("publishing (spec B1, B2)", () => {
     const driver = await seed.user("Driver");
     await signIn(page, driver);
 
-    await openForm(page, "/routes/new", "שמירת המסלול");
+    await openForm(page, "/routes/new", "שמירה");
     await choose(page, "קבוצת נסיעה", label);
     const days = page.getByRole("group", { name: "ימים בשבוע" }).getByRole("button");
     await expect(days).toHaveCount(6); // Sunday to Friday
@@ -40,10 +40,10 @@ test.describe("publishing (spec B1, B2)", () => {
     }
     await chooseTime(page, "שעת יציאה", "23:55");
     await page.getByLabel("מקומות פנויים").fill("3");
-    await page.getByLabel("מחיר לכל טרמפיסטית").fill("7");
-    await page.getByLabel("הערות לטרמפיסטיות").fill("מחכה עד 5 דקות");
+    await page.getByLabel("מחיר לכל נוסעת").fill("7");
+    await page.getByLabel("הערות לנוסעות").fill("מחכה עד 5 דקות");
     await addStops(page, "תחנת איסוף א", "תחנת הורדה ב");
-    await page.getByRole("button", { name: "שמירת המסלול" }).click();
+    await page.getByRole("button", { name: "שמירה" }).click();
 
     await expect(page).toHaveURL(/\/routes\?saved=1$/);
     await expect(toast(page, "המסלול נשמר ופורסם")).toBeVisible();
@@ -51,7 +51,7 @@ test.describe("publishing (spec B1, B2)", () => {
     await expect(card).toContainText("נסיעה קבועה");
     await expect(card).toContainText("א׳ · ב׳ · ג׳ · ד׳ · ה׳ · ו׳");
     await expect(card).toContainText("יציאה ב־23:55");
-    await expect(card).toContainText("3 מקומות · ₪7 לטרמפיסטית");
+    await expect(card).toContainText("3 מקומות · ₪7 לנוסעת");
 
     // Passengers find it (spec B1, passenger side).
     const passengerPage = await browser.newPage();
@@ -68,15 +68,15 @@ test.describe("publishing (spec B1, B2)", () => {
   test("a one-time ride is listed under active routes with its date", async ({ page, seed, signIn }) => {
     const { label } = await namedGroup(seed);
     await signIn(page, await seed.user("Driver"));
-    await openForm(page, "/routes/new", "שמירת המסלול");
+    await openForm(page, "/routes/new", "שמירה");
     await choose(page, "קבוצת נסיעה", label);
     await page.getByRole("button", { name: "נסיעה חד־פעמית" }).click();
     await expect(page.getByRole("group", { name: "ימים בשבוע" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: /^תאריך הנסיעה:/ })).toBeVisible();
     await chooseTime(page, "שעת יציאה", "23:55");
-    await page.getByLabel("מחיר לכל טרמפיסטית").fill("12");
+    await page.getByLabel("מחיר לכל נוסעת").fill("12");
     await addStops(page, "תחנת איסוף א", "תחנת הורדה ב");
-    await page.getByRole("button", { name: "שמירת המסלול" }).click();
+    await page.getByRole("button", { name: "שמירה" }).click();
 
     await expect(page).toHaveURL(/\/routes\?saved=1$/);
     await expect(routeCard(page, label)).toContainText("נסיעה חד־פעמית");
@@ -84,14 +84,14 @@ test.describe("publishing (spec B1, B2)", () => {
 
   test("the date picker can't go before today", async ({ page, seed, signIn }) => {
     await signIn(page, await seed.user("Driver"));
-    await openForm(page, "/routes/new", "שמירת המסלול");
+    await openForm(page, "/routes/new", "שמירה");
     await page.getByRole("button", { name: /^תאריך התחלה:/ }).click();
     await expect(page.getByRole("dialog", { name: "תאריך התחלה" }).getByRole("button", { name: "החודש הקודם" })).toBeDisabled();
   });
 
   test("'ביטול' leaves the editor without saving", async ({ page, seed, signIn }) => {
     await signIn(page, await seed.user("Driver"));
-    await openForm(page, "/routes/new", "שמירת המסלול");
+    await openForm(page, "/routes/new", "שמירה");
     await page.getByRole("link", { name: "ביטול" }).click();
     await expect(page).toHaveURL(/\/routes$/);
     await expect(page.getByText("אין לך מסלולים פעילים")).toBeVisible();
@@ -102,10 +102,10 @@ test.describe("form problems (spec B5)", () => {
   test.beforeEach(async ({ page, seed, signIn }) => {
     await namedGroup(seed);
     await signIn(page, await seed.user("Driver"));
-    await openForm(page, "/routes/new", "שמירת המסלול");
+    await openForm(page, "/routes/new", "שמירה");
   });
 
-  const save = (page: Page) => page.getByRole("button", { name: "שמירת המסלול" }).click();
+  const save = (page: Page) => page.getByRole("button", { name: "שמירה" }).click();
   const alert = (page: Page) => page.locator(".form-alert");
 
   test("no weekday", async ({ page }) => {
@@ -114,13 +114,13 @@ test.describe("form problems (spec B5)", () => {
       if ((await days.nth(i).getAttribute("aria-pressed")) === "true") await days.nth(i).click();
     }
     await addStops(page, "תחנה א", "תחנה ב");
-    await page.getByLabel("מחיר לכל טרמפיסטית").fill("10");
+    await page.getByLabel("מחיר לכל נוסעת").fill("10");
     await save(page);
     await expect(alert(page)).toHaveText("יש לבחור לפחות יום אחד");
   });
 
   test("no stops", async ({ page }) => {
-    await page.getByLabel("מחיר לכל טרמפיסטית").fill("10");
+    await page.getByLabel("מחיר לכל נוסעת").fill("10");
     await save(page);
     await expect(alert(page)).toHaveText("יש להוסיף לפחות תחנת איסוף אחת");
   });
@@ -128,13 +128,13 @@ test.describe("form problems (spec B5)", () => {
   test("a pickup but no drop-off", async ({ page }) => {
     await page.getByRole("button", { name: "הוספת תחנת איסוף" }).click();
     await pickupInputs(page).last().fill("תחנה א");
-    await page.getByLabel("מחיר לכל טרמפיסטית").fill("10");
+    await page.getByLabel("מחיר לכל נוסעת").fill("10");
     await save(page);
     await expect(alert(page)).toHaveText("יש להוסיף לפחות תחנת הורדה אחת");
   });
 
   test("a stop without a name, and a one-letter name", async ({ page }) => {
-    await page.getByLabel("מחיר לכל טרמפיסטית").fill("10");
+    await page.getByLabel("מחיר לכל נוסעת").fill("10");
     await addStops(page, "", "תחנה ב");
     await save(page);
     await expect(alert(page)).toHaveText("יש לתת שם לכל תחנה");
@@ -146,11 +146,11 @@ test.describe("form problems (spec B5)", () => {
   test("9 seats, then a bad price", async ({ page }) => {
     await addStops(page, "תחנה א", "תחנה ב");
     await page.getByLabel("מקומות פנויים").fill("9");
-    await page.getByLabel("מחיר לכל טרמפיסטית").fill("10");
+    await page.getByLabel("מחיר לכל נוסעת").fill("10");
     await save(page);
     await expect(alert(page)).toHaveText("בין 1 ל־8 מקומות");
     await page.getByLabel("מקומות פנויים").fill("3");
-    await page.getByLabel("מחיר לכל טרמפיסטית").fill("abc");
+    await page.getByLabel("מחיר לכל נוסעת").fill("abc");
     await save(page);
     await expect(alert(page)).toHaveText("מחיר לא תקין");
   });
@@ -173,17 +173,18 @@ test.describe("editing a published route (spec B4)", () => {
     const route = await seed.route(driver, { kind: "recurring", date: null, seats: 3, price: 7, time: "06:05" });
     await signIn(page, driver);
 
-    await openForm(page, `/routes/${route.id}`, "שמירת השינויים");
-    await expect(page.getByText("עדיין לא נרשמו טרמפיסטיות למסלול")).toBeVisible();
+    await openForm(page, `/routes/${route.id}`, "שמירה");
+    await expect(page.getByText("עדיין לא נרשמו נוסעות למסלול")).toBeVisible();
     await choose(page, "קבוצת נסיעה", label);
     await page.getByLabel("מקומות פנויים").fill("5");
-    await page.getByLabel("מחיר לכל טרמפיסטית").fill("12");
+    await page.getByLabel("מחיר לכל נוסעת").fill("12");
     await pickupInputs(page).first().fill("תחנה ששונתה");
     await expect(page.getByRole("button", { name: "מחיקת התחנה" })).toHaveCount(2);
     await expect(page.locator(".editor-stops > .is-fixed")).toHaveCount(0);
-    await page.getByRole("button", { name: "שמירת השינויים" }).click();
+    await page.getByRole("button", { name: "שמירה" }).click();
 
-    await expect(page).toHaveURL(/\/routes\?saved=1$/);
+    await expect(page).toHaveURL(/\/routes\?saved=edit$/);
+    await expect(toast(page, "השינויים נשמרו")).toBeVisible();
     await expect(routeCard(page, label)).toHaveCount(1); // the same route, moved to the new group
     const { data } = await seed.service.from("routes").select("seats, price").eq("id", route.id).single();
     expect(data).toEqual({ seats: 5, price: 12 });
@@ -197,11 +198,11 @@ test.describe("editing a published route (spec B4)", () => {
     const route = await seed.route(driver, { groupId: hidden });
     await signIn(page, driver);
 
-    await openForm(page, `/routes/${route.id}`, "שמירת השינויים");
+    await openForm(page, `/routes/${route.id}`, "שמירה");
     const shown = await page.getByRole("combobox", { name: "קבוצת נסיעה", exact: true }).inputValue();
-    await page.getByRole("button", { name: "שמירת השינויים" }).click();
+    await page.getByRole("button", { name: "שמירה" }).click();
 
-    await expect(page).toHaveURL(/\/routes\?saved=1$/);
+    await expect(page).toHaveURL(/\/routes\?saved=edit$/);
     const { data } = await seed.service.from("routes").select("group_id, ride_groups(origin)").eq("id", route.id).single();
     expect(data!.group_id).not.toBe(hidden);
     expect(shown).toContain((data!.ride_groups as unknown as { origin: string }).origin);
@@ -221,28 +222,28 @@ test.describe("editing a published route (spec B4)", () => {
     await routeCard(page, label).getByRole("link", { name: "עריכת מסלול" }).click();
     await expect(page).toHaveURL(new RegExp(`/routes/${route.id}$`));
     await expect(page.getByRole("heading", { level: 1, name: "עריכת מסלול" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "שמירת השינויים" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "שמירה" })).toBeEnabled();
 
     await expect(page.getByRole("combobox", { name: "קבוצת נסיעה", exact: true })).toHaveValue(label);
     await expect(page.getByRole("combobox", { name: "קבוצת נסיעה", exact: true })).toBeDisabled();
     await expect(page.getByLabel("מקומות פנויים")).toHaveValue("3");
     await expect(page.getByLabel("מקומות פנויים")).toBeDisabled();
-    await expect(page.getByLabel("מחיר לכל טרמפיסטית")).toBeDisabled();
+    await expect(page.getByLabel("מחיר לכל נוסעת")).toBeDisabled();
     await expect(page.getByRole("button", { name: "שעת יציאה: 06:05" })).toBeDisabled();
     await expect(pickupInputs(page).first()).toHaveAttribute("readonly", "");
     await expect(pickupInputs(page).first()).toHaveAttribute("aria-disabled", "true");
     await expect(page.locator(".editor-stops > .is-fixed")).toHaveCount(2); // shown like the other locked fields
     await expect(page.getByRole("button", { name: "מחיקת התחנה" })).toHaveCount(0);
 
-    await page.getByLabel("הערות לטרמפיסטיות").fill("מחכה עד 10 דקות");
+    await page.getByLabel("הערות לנוסעות").fill("מחכה עד 10 דקות");
     await page.getByRole("button", { name: "הוספת תחנת הורדה" }).click();
     await dropoffInputs(page).last().fill("תחנה חדשה");
-    await page.getByRole("button", { name: "שמירת השינויים" }).click();
+    await page.getByRole("button", { name: "שמירה" }).click();
 
-    await expect(page).toHaveURL(/\/routes\?saved=1$/);
+    await expect(page).toHaveURL(/\/routes\?saved=edit$/);
     await expect(routeCard(page, label)).toHaveCount(1); // the same route, not a new one
     await page.goto(`/routes/${route.id}`);
-    await expect(page.getByLabel("הערות לטרמפיסטיות")).toHaveValue("מחכה עד 10 דקות");
+    await expect(page.getByLabel("הערות לנוסעות")).toHaveValue("מחכה עד 10 דקות");
     await expect(dropoffInputs(page)).toHaveCount(2);
     await expect(dropoffInputs(page).nth(0)).toHaveValue("Dropoff B");
     await expect(dropoffInputs(page).nth(1)).toHaveValue("תחנה חדשה");
@@ -265,15 +266,15 @@ test.describe("editing a published route (spec B4)", () => {
     expect(error).toBeNull();
     await signIn(page, driver);
 
-    await openForm(page, `/routes/${route.id}`, "שמירת השינויים");
+    await openForm(page, `/routes/${route.id}`, "שמירה");
     await expect(page.locator(".editor-stops > .is-fixed")).toHaveCount(2); // the booked pickup and drop-off
     await expect(page.getByRole("button", { name: "מחיקת התחנה" })).toHaveCount(2);
     await expect(dropoffInputs(page).first()).toHaveAttribute("readonly", "");
     await dropoffInputs(page).nth(1).fill("תחנה מתוקנת");
     await page.getByRole("button", { name: "מחיקת התחנה" }).last().click();
-    await page.getByRole("button", { name: "שמירת השינויים" }).click();
+    await page.getByRole("button", { name: "שמירה" }).click();
 
-    await expect(page).toHaveURL(/\/routes\?saved=1$/);
+    await expect(page).toHaveURL(/\/routes\?saved=edit$/);
     const { data } = await seed.service.from("stops").select("label").eq("route_id", route.id).eq("kind", "dropoff").order("position");
     expect(data!.map((s) => s.label)).toEqual(["Dropoff B", "תחנה מתוקנת"]);
   });
@@ -282,10 +283,10 @@ test.describe("editing a published route (spec B4)", () => {
     const driver = await seed.user("Driver");
     const route = await seed.route(driver, { notes: "ישנה" });
     await signIn(page, driver);
-    await openForm(page, `/routes/${route.id}`, "שמירת השינויים");
-    await page.getByLabel("הערות לטרמפיסטיות").fill("");
-    await page.getByRole("button", { name: "שמירת השינויים" }).click();
-    await expect(page).toHaveURL(/\/routes\?saved=1$/);
+    await openForm(page, `/routes/${route.id}`, "שמירה");
+    await page.getByLabel("הערות לנוסעות").fill("");
+    await page.getByRole("button", { name: "שמירה" }).click();
+    await expect(page).toHaveURL(/\/routes\?saved=edit$/);
     const { data } = await seed.service.from("routes").select("notes").eq("id", route.id).single();
     expect(data!.notes).toBeNull();
   });
@@ -294,9 +295,9 @@ test.describe("editing a published route (spec B4)", () => {
     const driver = await seed.user("Driver");
     const route = await seed.route(driver);
     await signIn(page, driver);
-    await openForm(page, `/routes/${route.id}`, "שמירת השינויים");
+    await openForm(page, `/routes/${route.id}`, "שמירה");
     await page.getByRole("button", { name: "הוספת תחנת איסוף" }).click();
-    await page.getByRole("button", { name: "שמירת השינויים" }).click();
+    await page.getByRole("button", { name: "שמירה" }).click();
     await expect(page.locator(".form-alert")).toHaveText("יש לתת שם לכל תחנה");
   });
 });
@@ -312,7 +313,7 @@ test.describe("removing (spec F1)", () => {
 
     await card.getByRole("button", { name: "הסרת המסלול" }).click();
     await expect(card.getByText("להסיר את המסלול?")).toBeVisible();
-    await expect(card.locator(".archive-warning")).toContainText("ודאי שאין טרמפיסטיות רשומות");
+    await expect(card.locator(".archive-warning")).toContainText("ודאי שאין נוסעות רשומות");
     await card.getByRole("button", { name: "ביטול" }).click();
     await expect(card.getByRole("button", { name: "הסרת המסלול" })).toBeVisible();
   });
@@ -361,7 +362,7 @@ test.describe("history and cancelled tabs (spec F2, F3)", () => {
     await routeCard(page, label).getByRole("link", { name: "שכפול נסיעה" }).click();
     await expect(page).toHaveURL(new RegExp(`/routes/new\\?copy=${route.id}$`));
     await expect(page.getByRole("heading", { level: 1, name: "שכפול נסיעה" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "שמירת המסלול" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "שמירה" })).toBeEnabled();
 
     // Its details are filled in and open to change; the date has to be chosen.
     await expect(page.getByRole("combobox", { name: "קבוצת נסיעה", exact: true })).toHaveValue(label);
@@ -370,26 +371,26 @@ test.describe("history and cancelled tabs (spec F2, F3)", () => {
     await expect(page.getByRole("button", { name: "נסיעה קבועה" })).not.toHaveClass(/active/);
     await expect(page.getByRole("button", { name: "שעת יציאה: 06:05" })).toBeEnabled();
     await expect(page.getByLabel("מקומות פנויים")).toHaveValue("3");
-    await expect(page.getByLabel("מחיר לכל טרמפיסטית")).toHaveValue("7");
-    await expect(page.getByLabel("הערות לטרמפיסטיות")).toHaveValue("ישנה");
+    await expect(page.getByLabel("מחיר לכל נוסעת")).toHaveValue("7");
+    await expect(page.getByLabel("הערות לנוסעות")).toHaveValue("ישנה");
     await expect(pickupInputs(page).first()).not.toHaveAttribute("readonly", "");
-    await page.getByRole("button", { name: "שמירת המסלול" }).click();
+    await page.getByRole("button", { name: "שמירה" }).click();
     await expect(page.locator(".form-alert")).toHaveText("יש לבחור תאריך");
 
     await page.getByRole("button", { name: /^תאריך הנסיעה:/ }).click();
     await page.getByRole("dialog", { name: "תאריך הנסיעה" }).getByRole("button", { name: "החודש הבא" }).click();
     await page.getByRole("dialog", { name: "תאריך הנסיעה" }).locator(".calendar-grid button:not(.outside)").first().click();
     await page.getByLabel("מקומות פנויים").fill("5");
-    await page.getByLabel("מחיר לכל טרמפיסטית").fill("12");
+    await page.getByLabel("מחיר לכל נוסעת").fill("12");
     await pickupInputs(page).first().fill("תחנה חדשה");
-    await page.getByRole("button", { name: "שמירת המסלול" }).click();
+    await page.getByRole("button", { name: "שמירה" }).click();
 
     await expect(page).toHaveURL(/\/routes\?saved=1$/);
-    await expect(routeCard(page, label)).toContainText("5 מקומות · ₪12 לטרמפיסטית");
+    await expect(routeCard(page, label)).toContainText("5 מקומות · ₪12 לנוסעת");
 
     // The original stays in history as it was.
     await page.goto("/routes?tab=history");
-    await expect(routeCard(page, label)).toContainText("3 מקומות · ₪7 לטרמפיסטית");
+    await expect(routeCard(page, label)).toContainText("3 מקומות · ₪7 לנוסעת");
   });
 
   test("a copy shows its ride's details after the new-route page or another copy was open", async ({ page, seed, signIn }) => {
@@ -405,8 +406,8 @@ test.describe("history and cancelled tabs (spec F2, F3)", () => {
       await expect(page.getByRole("button", { name: "נסיעה חד־פעמית" })).toHaveClass(/active/);
       await expect(page.getByRole("button", { name: `שעת יציאה: ${time}` })).toBeVisible();
       await expect(page.getByLabel("מקומות פנויים")).toHaveValue(seats);
-      await expect(page.getByLabel("מחיר לכל טרמפיסטית")).toHaveValue(price);
-      await expect(page.getByLabel("הערות לטרמפיסטיות")).toHaveValue(notes);
+      await expect(page.getByLabel("מחיר לכל נוסעת")).toHaveValue(price);
+      await expect(page.getByLabel("הערות לנוסעות")).toHaveValue(notes);
     };
 
     // Each step is a client navigation, so an open page could be kept and reused.
@@ -435,13 +436,13 @@ test.describe("history and cancelled tabs (spec F2, F3)", () => {
     await expect(page).toHaveURL(new RegExp(`/routes/new\\?copy=${route.id}$`));
     await expect(page.getByRole("heading", { level: 1, name: "שכפול נסיעה" })).toBeVisible();
     await expect(page.getByLabel("מקומות פנויים")).toHaveValue("3");
-    await expect(page.getByLabel("הערות לטרמפיסטיות")).toHaveValue("פעילה");
+    await expect(page.getByLabel("הערות לנוסעות")).toHaveValue("פעילה");
 
     await page.getByRole("button", { name: /^תאריך הנסיעה:/ }).click();
     await page.getByRole("dialog", { name: "תאריך הנסיעה" }).getByRole("button", { name: "החודש הבא" }).click();
     await page.getByRole("dialog", { name: "תאריך הנסיעה" }).locator(".calendar-grid button:not(.outside)").first().click();
     await page.getByLabel("מקומות פנויים").fill("5");
-    await page.getByRole("button", { name: "שמירת המסלול" }).click();
+    await page.getByRole("button", { name: "שמירה" }).click();
 
     await expect(page).toHaveURL(/\/routes\?saved=1$/);
     await expect(routeCard(page, label)).toHaveCount(2);
@@ -486,7 +487,7 @@ test.describe("history and cancelled tabs (spec F2, F3)", () => {
     await expect(page).toHaveURL(new RegExp(`/routes/new\\?copy=${route.id}$`));
     await expect(page.getByRole("heading", { level: 1, name: "שכפול נסיעה" })).toBeVisible();
     await expect(page.getByLabel("מקומות פנויים")).toHaveValue("3");
-    await expect(page.getByLabel("הערות לטרמפיסטיות")).toHaveValue("מבוטלת");
+    await expect(page.getByLabel("הערות לנוסעות")).toHaveValue("מבוטלת");
 
     await page.goto("/routes");
     await expect(page.locator(".route-card")).toHaveCount(0);
@@ -498,6 +499,6 @@ test.describe("history and cancelled tabs (spec F2, F3)", () => {
     await seed.route(driver, { kind: "recurring", date: israelDate(-30) });
     await signIn(page, driver);
     await page.goto("/routes?tab=history");
-    await expect(page.getByText("עוד אין נסיעות שהתקיימו")).toBeVisible();
+    await expect(page.getByText("עדיין אין נסיעות בהיסטוריה")).toBeVisible();
   });
 });

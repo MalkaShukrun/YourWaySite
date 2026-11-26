@@ -29,7 +29,7 @@ export function CancelAlertButton({ alertId, highlighted = false }: { alertId: s
   return (
     <>
       <button ref={ref} className="btn btn-ghost" onClick={cancel} disabled={pending}>
-        {pending ? "מבטלת…" : "ביטול"}
+        {pending ? "מבטל…" : "ביטול"}
       </button>
       <Toast message={message} />
     </>

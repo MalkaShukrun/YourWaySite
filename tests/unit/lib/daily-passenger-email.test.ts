@@ -59,7 +59,7 @@ describe("buildEmail", () => {
     const { subject, text, html } = buildEmail(email({ rides, since: "2026-11-01T18:00:00+00:00" }));
     expect(subject).toMatch(/^עדכון: /);
     expect(text).toContain("נוסעות ביטלו את ההרשמה");
-    expect(text).toContain("- רחל (ביטלה) | טלפון: — | דוא״ל: — | תחנת עלייה: תחנה מרכזית");
+    expect(text).toContain("- רחל (ביטלה) | טלפון: — | דוא״ל: — | תחנת איסוף: תחנה מרכזית");
     expect(text).not.toContain("אורחת (ביטלה)");
     expect(html).toContain("<s>רחל</s> (ביטלה)");
     expect(text).not.toContain("אין כרגע נוסעות");
