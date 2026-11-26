@@ -277,7 +277,7 @@ test("recent searches: kept when she presses search or smart search's arrow, off
   await expect(options.first().locator(".recent-detail.date")).toContainText(`, ${Number(date.slice(8))} ב`);
 
   // Leaving the box hides it.
-  await page.getByRole("heading", { name: "בואי נמצא לך נסיעה" }).click();
+  await page.getByRole("heading", { name: "בואי נמצא לך טרמפ" }).click();
   await expect(recentMenu(page)).toHaveCount(0);
 
   // A pick fills the filters, like smart search, and closes the list — no search yet.
@@ -312,7 +312,7 @@ test("recent searches: kept when she presses search or smart search's arrow, off
   // Writing puts it away; it's back on the next focus, with the sentence still in the box.
   await box.fill("שלום");
   await expect(recentMenu(page)).toHaveCount(0);
-  await page.getByRole("heading", { name: "בואי נמצא לך נסיעה" }).click();
+  await page.getByRole("heading", { name: "בואי נמצא לך טרמפ" }).click();
   await box.click();
   await expect(box).toHaveValue("שלום");
   await expect(recentMenu(page)).toBeVisible();

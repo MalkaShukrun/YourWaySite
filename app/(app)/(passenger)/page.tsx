@@ -20,7 +20,7 @@ export const metadata: Metadata = { title: "חיפוש נסיעה" };
 export default function FindRidePage({ searchParams }: PageProps<"/">) {
   return (
     <main className="page-content page-wide">
-      <Suspense fallback={<div className="welcome"><div><p>&nbsp;</p><h1>בואי נמצא לך נסיעה</h1></div></div>}>
+      <Suspense fallback={<div className="welcome"><div><p>&nbsp;</p><h1>בואי נמצא לך טרמפ</h1></div></div>}>
         <Welcome />
       </Suspense>
       <SearchTransitionProvider>
@@ -68,7 +68,7 @@ async function Welcome() {
     <div className="welcome">
       <div>
         <p>{greetingFor(hour)}, {firstName}</p>
-        <h1>בואי נמצא לך נסיעה</h1>
+        <h1>בואי נמצא לך טרמפ</h1>
       </div>
     </div>
   );
