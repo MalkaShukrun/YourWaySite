@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { iconProps } from "@/components/ui/icon";
-import { adminNavItem, driverNavItems, isNavItemActive, passengerNavItems, profileNavItem } from "./nav";
+import { adminNavItem, alertsNavItem, driverNavItems, isNavItemActive, passengerNavItems, profileNavItem } from "./nav";
 import { useMode } from "./useMode";
 import { useShellPathname } from "./useShellPathname";
 
@@ -11,8 +11,8 @@ import { useShellPathname } from "./useShellPathname";
 export function BottomNav({ isAdmin }: { isAdmin: boolean }) {
   const pathname = useShellPathname();
   const items = useMode() === "driver"
-    ? [...driverNavItems, ...(isAdmin ? [adminNavItem] : []), profileNavItem]
-    : [...passengerNavItems, profileNavItem];
+    ? [...driverNavItems, alertsNavItem, ...(isAdmin ? [adminNavItem] : []), profileNavItem]
+    : [...passengerNavItems, alertsNavItem, profileNavItem];
 
   return (
     <nav className="bottom-nav" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}>

@@ -10,7 +10,7 @@ test("the bottom bar reaches every passenger page", async ({ page, seed, signIn 
   await expect(bar).toBeVisible();
   await expect(page.locator(".sidebar").filter({ visible: true })).toHaveCount(0);
 
-  for (const [name, url] of [["נסיעות", /\/my-rides$/], ["תשלומים", /\/payments$/], ["פרופיל", /\/profile$/], ["חיפוש", /\/$/]] as const) {
+  for (const [name, url] of [["נסיעות", /\/my-rides$/], ["התראות", /\/alerts$/], ["תשלומים", /\/payments$/], ["פרופיל", /\/profile$/], ["חיפוש", /\/$/]] as const) {
     await bar.getByRole("link", { name }).click();
     await expect(page).toHaveURL(url);
     await expect(bar.getByRole("link", { name })).toHaveClass(/active/);
@@ -45,7 +45,7 @@ test("no page scrolls sideways", async ({ page, seed, signIn }) => {
   const route = await seed.route(driver);
   const { data } = await seed.service.from("routes").select("ride_date").eq("id", route.id).single();
   await signIn(page, driver);
-  for (const path of ["/", "/my-rides", "/payments", "/dashboard", "/routes", "/routes/new", "/profile", `/ride/${route.id}?date=${data!.ride_date}`]) {
+  for (const path of ["/", "/my-rides", "/alerts", "/payments", "/dashboard", "/routes", "/routes/new", "/profile", `/ride/${route.id}?date=${data!.ride_date}`]) {
     await page.goto(path);
     await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

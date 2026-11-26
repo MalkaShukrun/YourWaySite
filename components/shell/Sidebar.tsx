@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { iconProps } from "@/components/ui/icon";
 import { Announcement } from "./Announcement";
-import { adminNavItem, driverNavItems, isNavItemActive, passengerNavItems, profileNavItem, type NavItem } from "./nav";
+import { adminNavItem, alertsNavItem, driverNavItems, isNavItemActive, passengerNavItems, profileNavItem, type NavItem } from "./nav";
 import { useMode } from "./useMode";
 import { useShellPathname } from "./useShellPathname";
 
@@ -34,6 +34,7 @@ export function Sidebar({ adminSlot }: { adminSlot: ReactNode }) {
           <NavLink key={item.href} item={item} pathname={pathname} />
         ))}
         <div className="nav-divider"></div>
+        <NavLink item={alertsNavItem} pathname={pathname} />
         <NavLink item={profileNavItem} pathname={pathname} />
         {adminSlot}
       </nav>

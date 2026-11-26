@@ -49,6 +49,22 @@ export function isPlaced<T extends { lat: number | null; lng: number | null }>(s
   return stop.lat !== null && stop.lng !== null;
 }
 
+// A passenger's ride alert (0051): the places picked at each end, as search
+// keeps them ("city:<name>" or a place id), and the ranges she set; null = not set.
+export type RideAlert = {
+  id: string;
+  origins: string[];
+  destinations: string[];
+  start_date: string | null;
+  end_date: string | null;
+  from_time: string | null; // "HH:MM:SS"
+  until_time: string | null;
+  expires_at: string;
+};
+
+// She has at most this many at a time (create_ride_alert, 0051).
+export const MAX_RIDE_ALERTS = 3;
+
 type BookingStatus = "active" | "cancelled";
 
 export type MyBooking = {

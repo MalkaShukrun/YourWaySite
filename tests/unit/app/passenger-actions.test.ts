@@ -11,7 +11,7 @@ const sb = vi.hoisted(() => ({ mock: null as unknown as ReturnType<typeof create
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => sb.mock.client }));
 vi.mock("@/lib/auth/session", () => ({ requireUser: vi.fn(async () => ({ id: ID.user })) }));
 sb.mock = createSupabaseMock();
-const { bookRide, cancelBooking, setBookingPaid } = await import("@/app/(app)/(passenger)/actions");
+const { bookRide, cancelBooking, cancelRideAlert, createRideAlert, setBookingPaid } = await import("@/app/(app)/(passenger)/actions");
 
 const booking = (dates: string[]) => ({ routeId: ID.route, dates, pickupStopId: ID.pickup, dropoffStopId: ID.dropoff });
 const bookedDates = () => sb.mock.client.rpc.mock.calls.map(([, args]) => (args as { p_date: string }).p_date);
@@ -72,7 +72,7 @@ describe("bookRide: several dates (spec C4)", () => {
     sb.mock.onRpc("book_ride", { data: "b1" }, { error: { message: "RIDE_FULL" } }, { error: { message: "RIDE_UNAVAILABLE" } });
     expect(await runAction(() => bookRide(booking(["2026-11-01", "2026-11-04", "2026-11-05"])))).toEqual({
       error:
-        "נרשמת ל־1 מתוך 3 הימים. לא נרשמת ל: ד׳ 4.11 — הנסיעה התמלאה — אין יותר מקומות פנויים. ה׳ 5.11 — הנסיעה אינה זמינה יותר (בוטלה או שכבר יצאה).",
+        "נרשמת ל־1 מתוך 3 הימים. לא נרשמת ל: ד 4.11 — הנסיעה התמלאה — אין יותר מקומות פנויים. ה 5.11 — הנסיעה אינה זמינה יותר (בוטלה או שכבר יצאה).",
     });
     expect(refresh).toHaveBeenCalledOnce(); // the page shows the dates that were booked
   });
@@ -80,7 +80,7 @@ describe("bookRide: several dates (spec C4)", () => {
   it("lists the reasons, without a count, when no date worked", async () => {
     sb.mock.onRpc("book_ride", { error: { message: "RIDE_FULL" } });
     expect(await runAction(() => bookRide(booking(["2026-11-04", "2026-11-05"])))).toEqual({
-      error: "ד׳ 4.11 — הנסיעה התמלאה — אין יותר מקומות פנויים. ה׳ 5.11 — הנסיעה התמלאה — אין יותר מקומות פנויים.",
+      error: "ד 4.11 — הנסיעה התמלאה — אין יותר מקומות פנויים. ה 5.11 — הנסיעה התמלאה — אין יותר מקומות פנויים.",
     });
     expect(refresh).not.toHaveBeenCalled();
   });
@@ -155,5 +155,65 @@ describe("setBookingPaid (spec G2)", () => {
   it("shows the general message when saving fails", async () => {
     sb.mock.onTable("bookings", { error: { message: "down" } });
     expect(await setBookingPaid(ID.booking, true)).toEqual({ error: "משהו השתבש. נסי שוב בעוד רגע." });
+  });
+});
+
+describe("createRideAlert (spec C10)", () => {
+  const PLACE = "11111111-1111-4111-8111-111111111111";
+  const alert = (overrides: Record<string, unknown> = {}) => ({ origins: ["city:בית שמש"], destinations: [PLACE], ...overrides });
+
+  it("saves the places and the ranges she set", async () => {
+    expect(await createRideAlert(alert({ startDate: "2026-11-02", endDate: "2026-11-04", fromTime: "22:00", untilTime: "02:00" }))).toEqual({});
+    expect(sb.mock.client.rpc).toHaveBeenCalledWith("create_ride_alert", {
+      p_origins: ["city:בית שמש"],
+      p_destinations: [PLACE],
+      p_start_date: "2026-11-02",
+      p_end_date: "2026-11-04",
+      // Crossing midnight: kept as it is, not swapped like the search.
+      p_from_time: "22:00",
+      p_until_time: "02:00",
+    });
+  });
+
+  it("sends no range she didn't set", async () => {
+    expect(await createRideAlert(alert())).toEqual({});
+    expect(sb.mock.client.rpc).toHaveBeenCalledWith("create_ride_alert", expect.objectContaining({
+      p_start_date: null, p_end_date: null, p_from_time: null, p_until_time: null,
+    }));
+  });
+
+  it.each([
+    ["ALERT_LIMIT", "הגעת למגבלה של 3 התראות פעילות — בטלי התראה קיימת כדי להוסיף חדשה."],
+    ["ALERT_DUPLICATE", "כבר יש לך התראה עם אותם מקומות, תאריכים ושעות."],
+    ["INVALID_ALERT", "יש לבחור מאיפה ולאן, ותאריכים מהיום והלאה — תאריך ההתחלה לא אחרי תאריך הסיום."],
+  ])("maps %s to its message", async (code, message) => {
+    sb.mock.onRpc("create_ride_alert", { error: { message: code } });
+    expect(await createRideAlert(alert())).toEqual({ error: message });
+  });
+
+  it.each([
+    ["no origin", alert({ origins: [] })],
+    ["no destination", alert({ destinations: [] })],
+    ["a pick that isn't one", alert({ origins: ["Jerusalem"] })],
+    ["a start after the end", alert({ startDate: "2026-11-05", endDate: "2026-11-04" })],
+    ["a malformed time", alert({ fromTime: "7am" })],
+  ])("refuses %s without calling the database", async (_, input) => {
+    expect((await createRideAlert(input)).error).toBeTruthy();
+    expect(sb.mock.client.rpc).not.toHaveBeenCalled();
+  });
+});
+
+describe("cancelRideAlert (spec C11)", () => {
+  it("deletes her alert and returns to the alerts tab with a notice", async () => {
+    expect(await runAction(() => cancelRideAlert(ID.booking))).toEqual({ redirectedTo: "/alerts?cancelled=1" });
+    expect(sb.mock.callsOn("ride_alerts")).toEqual([
+      ["delete", []],
+      ["eq", ["id", ID.booking]],
+    ]);
+  });
+
+  it("refuses a malformed id", async () => {
+    expect(await cancelRideAlert("x")).toEqual({ error: "ההתראה לא נמצאה." });
+    expect(sb.mock.client.from).not.toHaveBeenCalled();
   });
 });

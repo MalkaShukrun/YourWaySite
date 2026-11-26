@@ -84,7 +84,7 @@ test.describe("daily passenger email (spec D7)", () => {
         .single()).data;
     const updates = page.getByRole("button", { name: "מייל עדכון על שינוי ברשימת הנוסעות" });
 
-    await openForm(page, "/profile", "שמירת הגדרות המייל");
+    await openForm(page, "/alerts", "שמירת הגדרות המייל");
     await page.getByRole("button", { name: "כבוי", exact: true }).click();
     await page.getByRole("button", { name: "שעת השליחה: 20:00" }).click();
     await page.getByRole("option", { name: "07" }).click();
@@ -113,7 +113,7 @@ test.describe("emails about her rides (spec A7)", () => {
       (await seed.service.from("profiles").select("ride_emails_enabled").eq("id", user.id).single()).data;
     const toggle = page.getByRole("button", { name: "מיילים על הנסיעות שלי" });
 
-    await openForm(page, "/profile", "שמירת הגדרות ההתראות");
+    await openForm(page, "/alerts", "שמירת הגדרות ההתראות");
     await expect(toggle).toHaveAttribute("aria-pressed", "true");
     await expect(toggle).toHaveText("פעיל");
 
@@ -192,15 +192,14 @@ test.describe("modes (spec §1, A4)", () => {
     // Each mode announces its own email news.
     const announcements = page.locator(".side-announce");
     await expect(announcements).toHaveCount(1);
-    await expect(announcements).toContainText("וכשהנהגת מבטלת נסיעה שלך");
+    await expect(announcements).toContainText("עדכנו אותי כשנכנסת נסיעה או כשמתפנה מקום");
 
     await page.getByRole("group", { name: "בחירת מצב" }).getByRole("link", { name: "אני הנהגת" }).click();
     await expect(page).toHaveURL(/\/dashboard$/);
     await expect(sideNav(page).locator(".nav-label")).toHaveText("אזור נהגת");
     for (const name of ["לוח נהגת שבועי", "המסלולים שלי"]) await expect(sideNav(page).getByRole("link", { name })).toBeVisible();
-    await expect(announcements).toHaveCount(2);
-    await expect(announcements.first()).toContainText("על הטרמפיסטיות שלך, בתזמון שאפשר להתאים");
-    await expect(announcements.last()).toContainText("כשטרמפיסטית מבטלת הרשמה לנסיעה שלך");
+    await expect(announcements).toHaveCount(1);
+    await expect(announcements).toContainText("קבלי מייל יומי על הנוסעות שמצטרפות לנסיעה שלך");
 
     await page.getByRole("group", { name: "בחירת מצב" }).getByRole("link", { name: "אני הטרמפיסטית" }).click();
     await expect(page).toHaveURL(/\/$/);
@@ -222,7 +221,7 @@ test.describe("modes (spec §1, A4)", () => {
   test("the side menu reaches every passenger page", async ({ page, seed, signIn }) => {
     await signIn(page, await seed.user("Passenger"));
     await page.goto("/");
-    for (const [name, url] of [["הנסיעות שלי", /\/my-rides$/], ["מעקב תשלומים", /\/payments$/], ["הפרופיל שלי", /\/profile$/], ["מציאת נסיעה", /\/$/]] as const) {
+    for (const [name, url] of [["הנסיעות שלי", /\/my-rides$/], ["ההתראות שלי", /\/alerts$/], ["מעקב תשלומים", /\/payments$/], ["הפרופיל שלי", /\/profile$/], ["מציאת נסיעה", /\/$/]] as const) {
       await sideNav(page).getByRole("link", { name }).click();
       await expect(page).toHaveURL(url);
       await expect(sideNav(page).getByRole("link", { name })).toHaveClass(/active/);

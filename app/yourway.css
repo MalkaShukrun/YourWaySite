@@ -67,13 +67,13 @@ button { cursor: pointer; }
 .role-switch button { border: 0; background: transparent; color: #59665F; padding: 7px 18px; min-width: 132px; border-radius: 8px; font-size: 16px; font-weight: 600; transition: .2s ease; text-align: center; }
 .role-switch button.active { color: var(--green-dark); background: var(--lime); font-weight: 800; box-shadow: 0 3px 9px rgba(42,74,96,.14); }
 .header-actions { display: flex; align-items: center; gap: 22px; }
-.side-announce { display: flex; align-items: flex-start; gap: 10px; margin-top: 18px; padding: 12px; border-radius: 13px; background: var(--green-soft); border: 1px solid #D3DFE7; color: var(--green-dark); font-size: 14px; line-height: 1.45; text-align: right; text-decoration: none; transition: background .2s ease, box-shadow .2s ease; }
-.side-announce:hover { background: #DFE9F0; box-shadow: 0 3px 9px rgba(42,74,96,.12); }
+.side-announce { display: flex; align-items: flex-start; gap: 10px; margin-top: 18px; padding: 12px; border-radius: 13px; background: #FDF3E3; border: 1px solid #F2D9B0; color: #7A4A0C; font-size: 14px; line-height: 1.45; text-align: right; text-decoration: none; transition: background .2s ease, box-shadow .2s ease; }
+.side-announce:hover { background: #FAE9CC; box-shadow: 0 3px 9px rgba(122,74,12,.14); }
 .side-announce strong { font-weight: 800; }
 /* Phones only: there the sidebar, and its card, are hidden. */
 .header-announce { display: none; }
-.announce-bell { position: relative; flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--lime); color: var(--green-dark); display: grid; place-items: center; }
-.announce-bell::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--lime); z-index: -1; animation: announce-ring 2.4s ease-out infinite; }
+.announce-bell { position: relative; flex: none; width: 32px; height: 32px; border-radius: 50%; background: #F9D9A6; color: #7A4A0C; display: grid; place-items: center; }
+.announce-bell::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: #F9D9A6; z-index: -1; animation: announce-ring 2.4s ease-out infinite; }
 /* The bell swings from its top, dying down like a rung bell, then rests until the next ring. */
 .announce-bell svg { transform-origin: 50% 10%; animation: announce-swing 2.4s ease-in-out infinite; }
 @keyframes announce-swing {
@@ -96,7 +96,7 @@ button { cursor: pointer; }
 .header-user > div:nth-child(2) { display: flex; flex-direction: column; min-width: 86px; }
 .header-user strong { font-size: 17px; }
 .header-user span { color: #59665F; font-size: 16px; }
-.user-menu { position: absolute; top: calc(100% + 9px); left: 0; width: 175px; padding: 6px; background: white; border: 1px solid var(--line); border-radius: 11px; box-shadow: 0 13px 30px rgba(36,52,47,.13); z-index: 30; }
+.user-menu { position: absolute; top: calc(100% + 9px); left: 50%; transform: translateX(-50%); width: 175px; padding: 6px; background: white; border: 1px solid var(--line); border-radius: 11px; box-shadow: 0 13px 30px rgba(36,52,47,.13); z-index: 30; }
 .user-menu button { width: 100%; min-height: 38px; border: 0; background: transparent; border-radius: 7px; color: #59665F; display: flex; align-items: center; gap: 9px; padding: 0 10px; font-size: 16px; text-align: right; }
 .user-menu button:hover { background: #F3F5F4; }
 .user-menu .logout-item { color: #A8584E; }
@@ -152,7 +152,7 @@ button { cursor: pointer; }
 .smart-search-go:hover:not(:disabled) { background: var(--green-dark); transform: translateX(-2px); }
 .smart-search-go:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
 .smart-search-go:disabled { background: #DCE3E0; color: #fff; cursor: default; }
-/* "חיפוש נסיעה": its icon turns while the results load. */
+/* "חיפוש": its icon turns while the results load. */
 .search-button { min-height: 45px; padding: 0 23px; }
 .search-button .spin { animation: spin .8s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .search-button .spin { animation-duration: 2.4s; } }
@@ -232,7 +232,7 @@ button { cursor: pointer; }
 .driver span { color: #66736C; font-size: 16px; }
 .driver strong { color: #39453f; font-size: 17px; }
 .trip-type { font-size: 16px; color: var(--green); background: var(--mint); padding: 5px 9px; border-radius: 20px; font-weight: 700; }
-.trip-type.special { color: #FFFFFF; background: #5E8F3A; }
+.trip-type.special { color: #6B4E16; background: var(--sand); }
 .route-line { height: 25px; display: flex; align-items: center; margin: 18px 7px 0; direction: rtl; }
 .route-node { flex: 0 0 auto; }
 .route-node.start { width: 9px; height: 9px; border: 2px solid var(--green); border-radius: 50%; background: white; }
@@ -246,6 +246,7 @@ button { cursor: pointer; }
 .trip-info { flex: 1; border-top: 1px solid #edf0ee; border-bottom: 1px solid #edf0ee; margin: 18px 0; padding: 13px 0; display: flex; flex-direction: column; gap: 8px; }
 .trip-info > div { display: flex; align-items: center; gap: 8px; color: #75827c; font-size: 16px; }
 .trip-info b { color: #3b4842; }
+.trip-info .trip-weekdays { word-spacing: .45em; } /* "א ב ד" — bare letters need more than one space between them */
 .trip-info .trip-price { margin-top: auto; padding-top: 9px; border-top: 1px dashed var(--line); justify-content: space-between; color: #65736C; }
 .trip-price b { color: var(--green); font-size: 17px; }
 .trip-notes { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 9px 11px; border-radius: 11px; background: #f5f7f6; color: #4f5c56; font-size: 15px; line-height: 1.45; white-space: pre-line; overflow-wrap: anywhere; }
@@ -262,7 +263,8 @@ button { cursor: pointer; }
 .seats > div { display: flex; flex-direction: column; }
 .seats strong { font-size: 16px; color: #43504a; }
 .seats span { font-size: 15px; color: #66736C; }
-.trip-footer .btn { padding: 0 11px; min-height: 37px; font-size: 16px; }
+/* One size for every card's button: "לפרטים והרשמה", "צפייה בנסיעה", "עדכנו אותי". */
+.trip-footer .btn { padding: 0 11px; min-height: 37px; height: 37px; min-width: 168px; font-size: 16px; line-height: 1; }
 
 .dashboard-actions { display: flex; gap: 10px; }
 .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; }
@@ -286,6 +288,9 @@ button { cursor: pointer; }
 .ride-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
 .ride-chip { white-space: nowrap; padding: 2px 10px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: #59665F; font-size: 14px; font-weight: 600; }
 .ride-chip.full { border-color: transparent; background: var(--lime); color: var(--green-dark); }
+/* The ride's kind, in the colors of the search cards' tag (.trip-type). */
+.ride-chip.kind { border-color: transparent; background: var(--mint); color: var(--green); font-weight: 700; }
+.ride-chip.kind.special { background: var(--sand); color: #6B4E16; }
 .route-badge { width: 44px; height: 44px; color: var(--green); background: var(--green-soft); border-radius: 12px; display: grid; place-items: center; }
 .today-route h2 { font-size: 19px; margin: 1px 0; }
 .status-pill { background: #edf6f1; color: #447765; border-radius: 20px; padding: 6px 11px; display: flex; align-items: center; gap: 7px; font-size: 16px; font-weight: 600; }
@@ -301,7 +306,7 @@ input[type="time"] { direction: ltr; }
 .passenger-name strong { font-size: 16px; }
 .passenger-name small { font-size: 14px; color: #66736C; }
 /* "שריון מקום לטרמפיסטית" closes the list, as a light row; its form opens there. */
-.passenger-add { padding: 6px 25px 4px; }
+.passenger-add { padding: 6px 25px 20px; }
 .passenger-add-hint { margin: 4px 0 8px; font-size: 15px; color: #59665F; }
 .passenger-add > .btn-secondary { width: 100%; border: 1px dashed #88B65D; background: var(--lime); color: var(--green-dark); font-weight: 700; }
 .passenger-add > .btn-secondary:hover { border-color: #5E8F3A; background: #C8E995; }
@@ -387,7 +392,8 @@ input[type="time"] { direction: ltr; }
 .detail-hero .driver small { display: block; color: #59665F; font-size: 16px; margin-top: 2px; }
 .detail-summary-top { align-items: center; }
 .ride-summary-title { display: flex; flex-direction: column; }
-.ride-summary-title span { color: #59665F; font-size: 16px; }
+.ride-summary-title span:not(.trip-type) { color: #59665F; font-size: 16px; }
+.ride-summary-title .trip-type { align-self: flex-start; margin-top: 6px; }
 .ride-summary-title strong { color: var(--ink); font-size: 19px; }
 .vehicle-chip { display: flex; align-items: center; gap: 9px; color: var(--green); background: #F0F4F6; border-radius: 11px; padding: 9px 12px; text-align: right; }
 .vehicle-chip > div { display: flex; flex-direction: column; }
@@ -515,6 +521,50 @@ fieldset.editor-section { min-width: 0; margin: 0; border-top: 0; border-inline:
 .row-cancelled { opacity: .55; }
 .profile-save { gap: 10px; }
 
+/* Ride alerts (spec C10, C11): the button under a search with nothing to book,
+   its form, and the rows in "ההתראות שלי". */
+/* A short strip, centred above the results. */
+/* Saved: a soft confirmation chip — a lime check, the note, and the way to
+   her alerts as an underlined link with an arrow. */
+.ride-alert-saved { display: inline-flex; align-items: center; gap: 10px; margin: 0; padding: 10px 16px 10px 14px; border: 1px solid #C9DBA9; border-radius: 14px; background: #F4FBE8; color: var(--green-dark); font-weight: 700; text-align: start; animation: ride-alert-saved-in .25s ease-out; }
+.ride-alert-saved-icon { width: 28px; height: 28px; flex: 0 0 auto; border-radius: 50%; background: var(--lime); color: var(--green-dark); display: grid; place-items: center; }
+.ride-alert-saved-text { display: grid; gap: 2px; }
+.ride-alert-saved-text small { color: var(--green); font-size: 14px; font-weight: 500; }
+.ride-alert-saved-link { display: inline-flex; align-items: center; gap: 3px; color: var(--green); text-decoration: underline; text-underline-offset: 3px; }
+.ride-alert-saved-link:hover { color: var(--green-dark); }
+.ride-alert-saved-link svg { transition: transform .15s; }
+.ride-alert-saved-link:hover svg { transform: translateX(-3px); }
+.ride-alert-saved.on-card { gap: 7px; padding: 6px 10px 6px 8px; border-radius: 11px; font-size: 15px; }
+.ride-alert-saved.on-card .ride-alert-saved-icon { width: 22px; height: 22px; }
+.ride-alert-saved.on-card .ride-alert-saved-link { text-decoration: none; }
+@keyframes ride-alert-saved-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ride-alert-saved, .ride-alert-saved-link svg { animation: none; transition: none; } }
+.form-grid.ride-alert-fields { grid-template-columns: 1fr 1fr; }
+/* Two columns wide enough for a date in full ("28 בנובמבר 2026"). */
+.small-modal:has(.ride-alert-fields) { width: min(560px, 100%); }
+/* The calendar and the time list open up, over the fields above. */
+.ride-alert-fields .dropdown-options.time-panel,
+.ride-alert-fields .dropdown-options.calendar { top: auto; bottom: calc(100% + 6px); }
+/* Every list fits inside the form as it is: a more compact calendar (it may
+   cover the form's top, as any open list does) and shorter place lists. */
+.ride-alert-fields .calendar-head { margin-bottom: 2px; }
+.ride-alert-fields .calendar-head button { height: 28px; }
+.ride-alert-fields .calendar-weekday { height: 22px; }
+.ride-alert-fields .calendar-grid { gap: 1px; }
+.ride-alert-fields .dropdown-options .calendar-grid button { height: 25px; }
+.ride-alert-fields .calendar-foot { margin-top: 6px; padding-top: 6px; }
+.ride-alert-fields .dropdown-options .calendar-foot button { min-height: 28px; }
+.ride-alert-fields .combobox .dropdown-options { max-height: 240px; }
+/* "כל שעה", under the time fields: a regular button, the same space above
+   and below it as between the fields. */
+.modal-card .form-grid.ride-alert-fields:has(+ .ride-alert-clear-times) { padding-bottom: 0; }
+.ride-alert-clear-times { margin: 11px 0 18px; }
+.activity-row.alert-row { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; }
+.activity-row.alert-row > .row-actions { grid-column: 3; }
+.alert-row .activity-stops { color: #59665F; font-size: 16px; }
+.panel-title .count-pill { white-space: nowrap; }
+.row-highlighted { background: #F6FBEE; box-shadow: inset -4px 0 0 #9BC56D; }
+
 .modal-backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(25,41,35,.48); display: grid; place-items: center; padding: 18px; backdrop-filter: blur(4px); }
 .modal-card { width: min(580px, 100%); max-height: calc(100vh - 36px); overflow: auto; background: white; border-radius: 20px; padding: 28px; box-shadow: 0 24px 70px rgba(20,42,34,.24); position: relative; }
 .small-modal { width: min(440px, 100%); }
@@ -524,6 +574,8 @@ fieldset.editor-section { min-width: 0; margin: 0; border-top: 0; border-inline:
 .modal-card h2 { margin: 15px 0 3px; font-size: 22px; }
 .modal-card > p { color: #59665F; font-size: 16px; margin: 0; }
 .modal-card .form-grid { padding-bottom: 18px; }
+/* A modal form's error (ModalForm): space before its button, as above it. */
+.modal-card > p.form-alert { margin: 0 0 18px; }
 .optional-car { display: flex; align-items: center; gap: 11px; background: #F3F5F4; padding: 13px; border-radius: 11px; margin-bottom: 18px; color: var(--green); }
 .onboarding-card .form-grid .field:last-child, .profile-panel .form-grid .field:last-child { grid-column: 1 / -1; }
 .optional-car > div { flex: 1; display: flex; flex-direction: column; }
@@ -654,6 +706,10 @@ fieldset.editor-section { min-width: 0; margin: 0; border-top: 0; border-inline:
   .activity-row { grid-template-columns: 1fr auto; gap: 12px; }
   .activity-route { grid-row: 2; }
   .activity-row > .row-actions { grid-column: 2; grid-row: 1 / 3; }
+  .activity-row.alert-row { grid-template-columns: 1fr auto; }
+  .alert-row .activity-route { grid-row: 1; }
+  .activity-row.alert-row > .row-actions { grid-column: 2; }
+  .form-grid.ride-alert-fields { grid-template-columns: 1fr; }
   .paid-pill { display: none; }
   .form-grid { grid-template-columns: 1fr; }
   .onboarding-card .form-grid .field:last-child, .profile-panel .form-grid .field:last-child { grid-column: auto; }

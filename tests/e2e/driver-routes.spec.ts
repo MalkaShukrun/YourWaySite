@@ -48,7 +48,7 @@ test.describe("publishing (spec B1, B2)", () => {
     await expect(page).toHaveURL(/\/routes\?saved=1$/);
     await expect(toast(page, "המסלול נשמר ופורסם")).toBeVisible();
     const card = routeCard(page, label);
-    await expect(card).toContainText("מסלול קבוע");
+    await expect(card).toContainText("נסיעה קבועה");
     await expect(card).toContainText("א׳ · ב׳ · ג׳ · ד׳ · ה׳ · ו׳");
     await expect(card).toContainText("יציאה ב־23:55");
     await expect(card).toContainText("3 מקומות · ₪7 לטרמפיסטית");

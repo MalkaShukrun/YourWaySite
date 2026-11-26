@@ -83,7 +83,7 @@ async function RideDetailsView({ params, searchParams }: PageProps<"/ride/[id]">
           <div className="trip-top detail-summary-top">
             <div className="ride-summary-title">
               <strong>פרטי הנסיעה</strong>
-              <span>נסיעה {kindLabel(ride.kind)}</span>
+              <span className={`trip-type ${ride.kind === "one_time" ? "special" : ""}`}>נסיעה {kindLabel(ride.kind)}</span>
             </div>
             {vehicle && (
               <div className="vehicle-chip">

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, type PointerEvent, type ReactNode } from "react";
-import { LogOut } from "lucide-react";
+import { DoorOpen } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { Announcement } from "./Announcement";
 import { ContactButton } from "@/components/contact/ContactButton";
@@ -68,7 +68,7 @@ export function UserMenu({ name, initials }: { name: string; initials: string })
         <div className="user-menu">
           <form action={signOut}>
             <button type="submit" className="logout-item">
-              <LogOut {...iconProps} size={16} /> התנתקות
+              <DoorOpen {...iconProps} size={17} /> התנתקות
             </button>
           </form>
         </div>

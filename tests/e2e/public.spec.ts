@@ -98,7 +98,7 @@ test.describe("terms of use", () => {
 });
 
 test.describe("signed-out redirects (spec A2)", () => {
-  for (const path of ["/", "/my-rides", "/payments", "/dashboard", "/routes", "/routes/new", "/profile", "/admin/groups", "/ride/00000000-0000-4000-8000-000000000000?date=2030-01-01"]) {
+  for (const path of ["/", "/my-rides", "/alerts", "/payments", "/dashboard", "/routes", "/routes/new", "/profile", "/admin/groups", "/ride/00000000-0000-4000-8000-000000000000?date=2030-01-01"]) {
     test(`${path} sends visitors to sign-in`, async ({ page }) => {
       await page.goto(path);
       await expect(page).toHaveURL(/\/login$/);

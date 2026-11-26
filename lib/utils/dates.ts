@@ -39,13 +39,18 @@ export function formatRideDate(isoDate: string) {
 // "2025-06-22" → "א׳ 22.6"
 export function formatShortRideDate(isoDate: string) {
   const date = parseISO(isoDate);
-  return `${WEEKDAY_LETTERS[date.getDay()]} ${format(date, "d.M")}`;
+  return `${bareLetter(date.getDay())} ${format(date, "d.M")}`;
 }
 
-// The weekdays of some dates, Sunday first: ["2025-06-24", "2025-06-22"] → "א׳ · ג׳"
+// The weekdays of some dates, Sunday first: ["2025-06-24", "2025-06-22"] → "א ג"
 export function weekdaysOf(isoDates: string[]) {
   const days = [...new Set(isoDates.map((d) => parseISO(d).getDay()))].sort((a, b) => a - b);
-  return days.map((d) => WEEKDAY_LETTERS[d]).join(" · ");
+  return days.map(bareLetter).join(" ");
+}
+
+// A weekday's letter without the geresh, for the compact ride-card labels: 0 → "א".
+function bareLetter(day: number) {
+  return WEEKDAY_LETTERS[day].replace("׳", "");
 }
 
 // The ride week (Sunday … Saturday) that holds a date: "2025-06-24" → ["2025-06-22", …, "2025-06-28"].

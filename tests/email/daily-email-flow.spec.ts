@@ -51,7 +51,7 @@ test("the driver gets tomorrow's passenger by email", async ({ browser, page, se
   await passengerPage.context().close();
 
   // The driver turns the email on, with a time that has already passed.
-  await openForm(page, "/profile", "שמירת הגדרות המייל");
+  await openForm(page, "/alerts", "שמירת הגדרות המייל");
   await page.getByRole("button", { name: "כבוי", exact: true }).click();
   await chooseTime(page, "שעת השליחה", "00:00");
   await page.getByRole("button", { name: "שמירת הגדרות המייל" }).click();

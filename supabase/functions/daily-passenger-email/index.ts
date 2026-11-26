@@ -7,6 +7,7 @@
 import { buildEmail, type DailyEmail } from "./email.ts";
 import { gmailSender } from "./mailer.ts";
 import { buildRideEmail, type RideEmail } from "./ride-emails.ts";
+import { buildAlertEmail, type AlertEmail } from "./alert-emails.ts";
 import { sendEmails } from "./send.ts";
 
 // The editor checks this file as plain TypeScript, without Deno's own types.
@@ -70,6 +71,19 @@ async function releaseRide(email: RideEmail) {
   if (!response.ok) console.error("daily-passenger-email: release failed", email.ids, response.status);
 }
 
+// A ride-alert email's matches wait again, for the next run (0051; a seat
+// opening's, 0052, are kept per date).
+async function releaseAlert(email: AlertEmail) {
+  const matches = email.reason === "seat"
+    ? `alert_seat_matches?ride_date=eq.${email.ride.dates[0]}&`
+    : "alert_matches?";
+  const response = await rest(`${matches}alert_id=in.(${email.alert_ids.join(",")})&route_id=eq.${email.route_id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ sent_at: null }),
+  });
+  if (!response.ok) console.error("daily-passenger-email: release failed", email.alert_ids, response.status);
+}
+
 const israelToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date());
 
 const wait = () => new Promise<void>((resolve) => setTimeout(resolve, 600));
@@ -96,7 +110,20 @@ const sendRides = () =>
     label: (email) => `${email.kind} ${email.ids.join(",")}`,
   });
 
-// Each kind goes out even when the other fails; the answer is 500 if either did.
+// New routes (0051), then seats that opened (0052). The first claim also
+// deletes expired alerts.
+const sendAlerts = (fn: "claim_alert_emails" | "claim_seat_alert_emails") => () =>
+  sendEmails({
+    claim: () => claimFrom<AlertEmail>(fn),
+    send: async (email: AlertEmail) => {
+      await sendMail({ to: email.to_email, ...buildAlertEmail(email, env("SITE_URL")) });
+    },
+    release: releaseAlert,
+    wait,
+    label: (email) => `alert ${email.reason ?? "new"} ${email.route_id} ${email.alert_ids.join(",")}`,
+  });
+
+// Each kind goes out even when another fails; the answer is 500 if any did.
 Deno.serve(async (request) => {
   const secret = env("CRON_SECRET");
   if (!secret || request.headers.get("Authorization") !== `Bearer ${secret}`) {
@@ -104,7 +131,7 @@ Deno.serve(async (request) => {
   }
   const total = { sent: 0, failed: 0 };
   let ok = true;
-  for (const run of [sendDaily, sendRides]) {
+  for (const run of [sendDaily, sendRides, sendAlerts("claim_alert_emails"), sendAlerts("claim_seat_alert_emails")]) {
     try {
       const result = await run();
       total.sent += result.sent;

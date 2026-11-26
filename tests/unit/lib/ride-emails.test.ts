@@ -73,7 +73,7 @@ describe("buildRideEmail", () => {
   it("links to my rides and the profile when the site address is known", () => {
     const { html } = buildRideEmail(email(), "https://yourway.example/");
     expect(html).toContain('href="https://yourway.example/my-rides"');
-    expect(html).toContain('href="https://yourway.example/profile"');
+    expect(html).toContain('href="https://yourway.example/alerts"');
     expect(buildRideEmail(email()).html).not.toContain("href");
   });
 

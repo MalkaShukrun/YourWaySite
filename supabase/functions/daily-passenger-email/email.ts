@@ -93,8 +93,8 @@ export function buildEmail(email: DailyEmail, siteUrl = "", today = "") {
   const update = Boolean(email.since);
   const intro = update ? updateIntro(email.rides, date) : `אלו הנוסעות הרשומות לנסיעות שלך ב${date}:`;
   const updatedNote = "הרשימה נכונה לרגע השליחה. ברשימת הנוסעות באתר תמיד מופיע המצב העדכני.";
-  const profileUrl = siteUrl ? `${siteUrl.replace(/\/$/, "")}/profile` : "";
-  const settings = "אפשר לשנות את השעה או להפסיק את המיילים בעמוד הפרופיל";
+  const settingsUrl = siteUrl ? `${siteUrl.replace(/\/$/, "")}/alerts` : "";
+  const settings = "אפשר לשנות את השעה או להפסיק את המיילים בעמוד ההתראות";
   return {
     subject: `${update ? "עדכון: " : ""}הנוסעות שלך ${when}, ${date}`,
     text: [
@@ -102,14 +102,14 @@ export function buildEmail(email: DailyEmail, siteUrl = "", today = "") {
       intro,
       ...email.rides.map(rideText),
       updatedNote,
-      profileUrl ? `${settings}: ${profileUrl}` : `${settings}.`,
+      settingsUrl ? `${settings}: ${settingsUrl}` : `${settings}.`,
     ].join("\n\n"),
     html: `<div dir="rtl" style="font-family:Arial,sans-serif;color:#22302a;text-align:right;">
 <p>שלום ${escapeHtml(email.driver_name)},</p>
 <p>${intro}</p>
 ${email.rides.map(rideHtml).join("\n")}
 <p style="margin-top:24px;">${updatedNote}</p>
-<p style="color:#59665f;font-size:13px;">${profileUrl ? `<a href="${escapeHtml(profileUrl)}">${settings}</a>` : settings}.</p>
+<p style="color:#59665f;font-size:13px;">${settingsUrl ? `<a href="${escapeHtml(settingsUrl)}">${settings}</a>` : settings}.</p>
 </div>`,
   };
 }

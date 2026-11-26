@@ -11,7 +11,7 @@
 1. [Overview](#1-overview)
 2. [Core concepts and rules](#2-core-concepts-and-rules)
 3. [Screens and where things appear](#3-screens-and-where-things-appear)
-4. [Scenarios](#4-scenarios) (44): [A. Accounts and access](#a-accounts-and-access) · [B. Publishing routes](#b-publishing-routes) · [C. Finding and booking a ride](#c-finding-and-booking-a-ride) · [D. The driver's day](#d-the-drivers-day) · [E. A passenger cancels](#e-a-passenger-cancels) · [F. Removing routes](#f-removing-routes) · [G. After the ride](#g-after-the-ride) · [H. Admin](#h-admin) · [I. Support and errors](#i-support-and-errors)
+4. [Scenarios](#4-scenarios) (46): [A. Accounts and access](#a-accounts-and-access) · [B. Publishing routes](#b-publishing-routes) · [C. Finding and booking a ride](#c-finding-and-booking-a-ride) · [D. The driver's day](#d-the-drivers-day) · [E. A passenger cancels](#e-a-passenger-cancels) · [F. Removing routes](#f-removing-routes) · [G. After the ride](#g-after-the-ride) · [H. Admin](#h-admin) · [I. Support and errors](#i-support-and-errors)
 5. [Who sees what](#5-who-sees-what)
 6. [Booking and ride states](#6-booking-and-ride-states)
 7. [Messages reference](#7-messages-reference)
@@ -39,7 +39,7 @@ The interface has a passenger mode and a driver mode, each with its own menu. Op
 |---|---|
 | Passenger | “מציאת נסיעה” (search) · “הנסיעות שלי” (my rides) · “מעקב תשלומים” (payments) |
 | Driver | “לוח נהגת שבועי” (weekly dashboard) · “המסלולים שלי” (my routes) |
-| Both | “הפרופיל שלי” (profile) · “ניהול קבוצות” (admins only) |
+| Both | “ההתראות שלי” (my alerts, C11) · “הפרופיל שלי” (profile) · “ניהול קבוצות” (admins only) |
 
 On phones the menu becomes a bottom tab bar with short labels.
 
@@ -100,9 +100,10 @@ Open for booking → Cancelled for this date → Shown as cancelled · never cha
 | Sign-in | `/login` | Anyone | Google sign-in, or a personal code for approved addresses (A6), consent to the terms of use and the privacy policy, site totals (members, and active routes (“קווי נסיעה פעילים”) counted as on the admin page, migration 0049; refreshed hourly). Opens the onboarding window for new users. After an automatic sign-out it says she was signed out after 10 minutes without activity (A8). |
 | Terms of use | `/terms` | Anyone | The terms text, including the cancellation policy. |
 | Privacy policy | `/privacy` | Anyone | The policy text, including the mailing and messages section. |
-| Ride search | `/` | All | Greeting, the smart search box “חדש! חיפוש חכם ומהיר” with its arrow (C8) and, when it's focused, her recent searches under it (C9), filter bar (“מאיפה” and “לאן” with a swap button, date; departure from/until and ride type behind the filters icon; “ניקוי”; “חיפוש נסיעה”), result cards for the next 7 days. Each recurring route appears as one card with a chip per date showing free seats. |
+| Ride search | `/` | All | Greeting, the smart search box “חדש! חיפוש חכם ומהיר” with its arrow (C8) and, when it's focused, her recent searches under it (C9), filter bar (“מאיפה” and “לאן” with a swap button, date; departure from/until and ride type behind the filters icon; “ניקוי”; “חיפוש”), result cards for the next 7 days. Each recurring route appears as one card with a chip per date showing free seats. With no results, “עדכנו אותי כשתהיה נסיעה”; on a full card, “עדכנו אותי” (C10). |
 | Ride details and booking | `/ride/[id]?date=` | All | Day picker (recurring), pickup and drop-off choice, price total, booking button, route map, driver card (contact details only after booking), vehicle, note. |
 | My rides | `/my-rides` | Passenger | Tabs “נסיעות קרובות” (upcoming) and “היסטוריה” (past, newest first). Each row: time, date, route, price, stops, driver contact, cancel button, and “הנהגת ביטלה את הנסיעה” when the driver cancelled. |
+| My alerts | `/alerts?alert=` | Passenger | Her ride alerts with “N מתוך 3”, each with its places, dates, times, last valid day and “ביטול”; the one named in `?alert=` highlighted (C11). In the passenger menu only. |
 | Payments | `/payments` | Passenger | Month picker (this month and the 3 before), totals for the month (total, paid, left to pay), one row per charged ride with a paid/unpaid toggle, and an all-time unpaid balance per driver. |
 | Weekly dashboard | `/dashboard?date=` | Driver | Week (Sunday–Saturday) containing the chosen date. Totals for the week; one folding section per day that has rides; one card per ride with its passengers and contact details, the day's stops, a map, cancel-for-date and add-passenger controls. |
 | My routes | `/routes` | Driver | Tabs “מסלולים פעילים” (active), “היסטוריה” (one-time rides that departed) and “מסלולים מבוטלים” (one-time rides cancelled for their date). Every card has “שכפול נסיעה” (F2, F3). |
@@ -192,7 +193,7 @@ Sidebar on desktop, bottom tab bar on phones. Profile and group pages keep the l
 
 #### A5. A user signs out
 
-**Trigger:** She chooses sign-out from the user menu.
+**Trigger:** She opens the user menu (her name and initials in the top bar; it opens centred under them) and chooses “התנתקות”, beside an open-door icon.
 
 **Driver side**
 
@@ -236,6 +237,7 @@ Her session cookies are removed, even if Google already ended the session, and s
 - When she books: “נרשמת לנסיעה: …”, with the ride, her stops, the price and the driver's name and phone (C3, C4).
 - When she cancels: “ההרשמה בוטלה: …”, without the driver's phone (E1).
 - When the driver cancels a date she booked, or removes the route: “הנהגת ביטלה את הנסיעה: …”, with the driver's name and phone and that she won't be charged (D2, F1).
+- When a newly published route matches one of her ride alerts: “נמצאה נסיעה מתאימה: …”; when a seat opens on a full ride that matches one: “התפנה מקום בנסיעה: …” (C10).
 
 **Where it shows**
 
@@ -382,7 +384,7 @@ Not applicable.
 
 #### C1. A passenger searches
 
-**Trigger:** She opens “מציאת נסיעה”, optionally filters, and presses “חיפוש נסיעה” (or Enter in a filter), or writes a sentence in smart search and presses its arrow or Enter (C8).
+**Trigger:** She opens “מציאת נסיעה”, optionally filters, and presses “חיפוש” (or Enter in a filter), or writes a sentence in smart search and presses its arrow or Enter (C8).
 
 **Driver side**
 
@@ -390,7 +392,7 @@ Nothing. Her searches are kept for her alone (C9).
 
 **Passenger side**
 
-- The results load only when she runs the search. Changing a filter, swapping places or picking a recent search (C9) only fills the filters; “ניקוי” (always shown, beside the filters icon) empties them, and the results stay until she searches again. While a search's results load, the current ones stay, dimmed, and the icon on “חיפוש נסיעה” turns.
+- The results load only when she runs the search. Changing a filter, swapping places or picking a recent search (C9) only fills the filters; “ניקוי” (always shown, beside the filters icon) empties them, and the results stay until she searches again. While a search's results load, the current ones stay, dimmed, and the icon on “חיפוש” turns.
 - Without a date: rides from today through the next 6 days. With a date: that day only.
 - Filters: “מאיפה” (from) and “לאן” (to), each one or more cities or places — a whole city (“בית שמש (כל העיר)”) covers every place in it; rides are found only in the direction picked, and “החלפת כיוון” swaps the two for the ride back. The list shows each city's whole-city option with its places indented under it by neighborhood only (“רמה ג”); while she types, matches show in full (“בית שמש, רמה ג”), since their city may be filtered out. Also ride type, and departure from and until (inclusive), behind the filters icon (named “עוד סינונים” for screen readers), which shows how many of them are set. An older link with `?group=` still narrows to those groups.
 - Results are sorted by date then time; each route is one card. The heading shows how many were found (“N תוצאות”), with or without filters.
@@ -398,7 +400,7 @@ Nothing. Her searches are kept for her alone (C9).
 
 **Where it shows**
 
-`/`; the filters are kept in the address, so the search can be shared or reloaded (opening such a link isn't kept as a recent search). On a phone, “חיפוש נסיעה” scrolls down to the results. “חזרה לכל הנסיעות” on a ride page returns to the last search in that browser tab, with its filters.
+`/`; the filters are kept in the address, so the search can be shared or reloaded (opening such a link isn't kept as a recent search). On a phone, “חיפוש” scrolls down to the results. “חזרה לכל הנסיעות” on a ride page returns to the last search in that browser tab, with its filters.
 
 **Rules:** search never lists rides that departed, dates the driver cancelled, removed routes, or routes in hidden groups (which also can't be booked by link, H2). A past date in the address is ignored. "From" later than "until" is swapped. Full dates still appear, with a “מלאה” chip.
 
@@ -527,7 +529,7 @@ Nothing.
 **Passenger side**
 
 - As she types, after a short pause, the filters fill in from the sentence: “מאיפה”, “לאן”, the date, departure from and until, and ride type (the filters icon opens for the last three). A filter it fills or changes flashes, and stays green until she changes it herself. A filter the sentence no longer names is emptied, so deleting a word takes it out.
-- The arrow at the end of the box (pale until there's a sentence), or Enter, runs the search, as “חיפוש נסיעה” would with those filters (C1), and keeps those filters as a recent search (C9) — never the sentence. Until then the results don't change. The ✕ in the box clears the sentence and every filter; the results stay until she searches again.
+- The arrow at the end of the box (pale until there's a sentence), or Enter, runs the search, as “חיפוש” would with those filters (C1), and keeps those filters as a recent search (C9) — never the sentence. Until then the results don't change. The ✕ in the box clears the sentence and every filter; the results stay until she searches again.
 - **Places:** names from the place list. A city (“בית שמש”) is the whole city; “בית שמש רמה ג” or the neighborhood alone (“רמה ג”) is that place. Quotes, ׳ and dashes don't matter (“רמה ג׳”). Hebrew's joined letters are read too: “מבית שמש”, “לירושלים”, “ומרמה ג”. “מ” in front, or “מ” / “מכיוון” before it, means from; “ל”, “ל” / “לכיוון” means to. Places without either fill the ends in order: “בית שמש ירושלים” goes from the first to the second, and a single place is where from.
 - **A neighborhood in several cities:** all of them are searched, and under the box “התכוונת ל…?” offers them (up to 6; any more are in the filter itself). A pick puts that place only in the filter (the arrow searches it); it stays picked, without asking again, while the sentence still names that neighborhood.
 - **Date:** “היום”, “מחר”, “מחרתיים”, “יום ראשון”–“יום שישי” or “יום א׳”–“יום ו׳”, and “שבת” — a weekday is the next one to come (today's weekday means next week). No day: the next 7 days.
@@ -542,7 +544,7 @@ Nothing.
 
 #### C9. A passenger reuses a recent search
 
-**Trigger:** She runs a search (“חיפוש נסיעה”, or smart search's arrow or Enter), and later clicks into the smart search box.
+**Trigger:** She runs a search (“חיפוש”, or smart search's arrow or Enter), and later clicks into the smart search box.
 
 **Driver side**
 
@@ -552,13 +554,64 @@ Nothing.
 
 - Each search she runs is kept: its filters — the places at each end, the date, departure from and until, the ride type — never the sentence she typed. Opening a search's link, reloading, changing filters or picking a recent search keeps nothing. A search with no filter isn't kept.
 - Every time the smart search box gets focus (empty or not) a list opens under it, “חיפושים אחרונים”: her latest 3, the search on screen included, so one she just ran shows at once. Each shows every place picked, each city in bold with its neighborhoods in brackets (“**ירושלים** (גבעת שאול, רמות) ← **בית שמש**”; nothing picked reads “מכל מקום” / “לכל מקום”), and under it the full date, the departure times and the ride type, each with an icon — only those she set.
-- A pick fills the filters with it (they flash, as smart search's do) and closes the list; “חיפוש נסיעה” then runs it. Typing, running a search, Esc or leaving the box closes the list; ↓ / ↑ open it and move, Enter picks. “ניקוי החיפושים האחרונים” deletes them all.
+- A pick fills the filters with it (they flash, as smart search's do) and closes the list; “חיפוש” then runs it. Typing, running a search, Esc or leaving the box closes the list; ↓ / ↑ open it and move, Enter picks. “ניקוי החיפושים האחרונים” deletes them all.
 
 **Where it shows**
 
 `/`, a dropdown under the smart search box, over the filters.
 
 **Rules:** the database keeps them (`search_history`, migration 0050), saved only through `record_search`: the same filters, picked in any order, move up instead of repeating; a search for a past date isn't kept, and one whose date passes is removed; she keeps her 4 latest. She reads and deletes only her own; they're deleted with her account. One whose places are no longer offered (a hidden group) isn't listed.
+
+#### C10. A passenger asks to hear when a matching ride is published, or a seat opens
+
+**Trigger:** One of two entry points, which open the same form and save the same kind of alert:
+- Her search finds no rides, and she presses “עדכנו אותי כשתהיה נסיעה” under the results.
+- A ride card in the results is full (every date on it full), and she presses its “עדכנו אותי” (named “עדכנו אותי כשיתפנה מקום”, shown on hover; the same size as the other cards' buttons). Her own rides never offer it.
+
+**Driver side**
+
+Nothing when the alert is saved. When she later publishes a new route that matches it, or a passenger cancels on a full ride that matches it, the passenger with the alert is emailed (below); the driver isn't told.
+
+**Passenger side**
+
+- No results: the button is inside the “לא נמצאו נסיעות מתאימות” card, under “נסי לשנות את המקומות, התאריך או השעה, או שנעדכן אותך במייל כשתפורסם נסיעה חדשה.”. Results that are all full show no banner: each full card has its own button, in place of the booking button. A card with a free date has none.
+- It opens “התראה על נסיעה” (“נשלח לך מייל כשנהגת תפרסם נסיעה חדשה שמתאימה, או כשיתפנה מקום בנסיעה מלאה שמתאימה. …”): “מאיפה” and “לאן” (required, one or more cities or places, as in search), “מתאריך” and “עד תאריך”, “יציאה משעה” and “עד שעה”. From no results, filled from the search: its places, its date in both date fields (or empty), its times. From a card, filled from the card: its two places, its first date as “מתאריך” and its last as “עד תאריך”, no times. She can change any of them before “שמירת ההתראה”; “כל שעה” empties both times. A time range may cross midnight (“22:00–02:00”), so it isn't swapped as the search's is.
+- Saved: the button gives way to a light-green confirmation with a check mark and “ההתראה נשמרה, להתראות שלי ←”, where “להתראות שלי” links to her alerts (C11). Under no results, a second line adds “נשלח לך מייל כשתהיה נסיעה מתאימה עם מקום פנוי.”. On a card, it's compact: the check and the link only (“ההתראה נשמרה” is still read out to screen readers).
+- Refused with “הגעת למגבלה של 3 התראות פעילות — בטלי התראה קיימת כדי להוסיף חדשה.” when she has 3; with “כבר יש לך התראה עם אותם מקומות, תאריכים ושעות.” for an exact duplicate.
+- When a newly published route matches, she gets “נמצאה נסיעה מתאימה: [מוצא] ← [יעד]” within about 5 minutes (A7): the matching dates (the first 7, “ועוד N” after), the departure time, the price and the driver's name; “כדאי לבדוק שעדיין יש מקום פנוי — ייתכן שהנסיעה התמלאה בינתיים.”; a link to the ride; each alert that fired, with “הסרת ההתראה” (to C11 with that alert highlighted); and a link to “ההתראות שלי”.
+- When a seat opens on a full ride that matches, she gets “התפנה מקום בנסיעה: [מוצא] ← [יעד]” within about 5 minutes (A7): that date, the departure time, the price and the driver's name; “המקום פנוי למי שנרשמת ראשונה — כדאי למהר.”; a link to the ride on that date; and the same alert links.
+
+**Where it shows**
+
+`/`, under the results and on full ride cards; the email in her mailbox.
+
+**Rules:** the database keeps alerts (`ride_alerts`, migration 0051), saved only through `create_ride_alert`. Every alert has both triggers, whichever entry point saved it (migration 0052).
+- **Expiry:** with a start and an end date, at the end of the end date; a start date only, at the end of the 7th day after it; an end date only, at the end of the end date (matching starts at once); no dates, 7 days after saving. An expired alert is deleted on the next 5-minute run, with no history; until then it isn't listed or counted.
+- **Limit and duplicates:** at most 3 at a time. Two alerts are the same only when the places, the date range and the time range all match exactly; one without dates and one with dates for the same places may coexist.
+- **Matching a new route:** only a newly published route triggers this — editing a route, at any stage, never does, and neither does a route published before the alert. A route matches when its group's places are among the alert's picks at each end (a whole city covers its places, exactly as search finds rides), at least one date it runs is in the future and within the alert's range (and before the alert expires), its departure time is in the time range (inclusive), the alert hasn't expired, it has a free seat on such a date, and she isn't its driver. Routes in hidden groups match nothing.
+- **Matching a seat that opens:** a booking on a ride stops being active — the passenger cancels, or the driver removes a passenger she added — and the ride, full before, has a free seat after. Checked when the change is saved as a whole, so a booking replaced in the same step (a guest's booking taken over by her account) opens nothing. The ride matches as a new route would, for that one date: same places, the date in the alert's range, still ahead and not cancelled, the departure time (that date's, if the driver changed it) in the time range. Not told: the driver, a passenger already booked on that date, and the passenger who just cancelled. An alert hears about a given date of a route once; a seat opening on it again sends nothing more.
+- **Email:** for a new route, one per passenger per route, listing every alert of hers it matched; for a seat, one per passenger, route and date. They follow “מיילים על הנסיעות שלי” (A7): off, nothing is sent, including what was waiting. For a new route, seats aren't checked again before sending; a route removed before the run isn't sent. For a seat, it's checked again: a seat taken again, a date cancelled or past, a route removed, or her booking on it since, sends nothing. A fired alert stays until it expires and fires again. A failed send is tried again on the next run.
+
+#### C11. A passenger manages her alerts
+
+**Trigger:** She opens “ההתראות שלי” from the menu, in either mode (“התראות” on a phone's bottom bar), or the email's “הסרת ההתראה” or “ההתראות שלי” link.
+
+**Driver side**
+
+Nothing.
+
+**Passenger side**
+
+- A page of its own, “התראות פעילות” with “נשלח לך מייל כשתפורסם נסיעה חדשה שמתאימה, או כשיתפנה מקום בנסיעה מלאה שמתאימה” and “N מתוך 3”. Each row: the places at each end (each city in bold with its neighborhoods in brackets, as in C9), the date range and “יציאה …” times she set (or “כל תאריך וכל שעה”), “בתוקף עד …” (the last day it's valid), and “ביטול”.
+- “ביטול” deletes it at once, with “ההתראה בוטלה”.
+- From the email's “הסרת ההתראה” link, the page opens with that alert highlighted and scrolled into view; nothing is cancelled until she presses its “ביטול”. The link needs her signed in, like every app page (A2).
+- No alerts: “אין לך התראות פעילות”, “לא מצאת נסיעה? אנחנו נעדכן אותך כשתיכנס נסיעה מתאימה”, and “מציאת נסיעה”.
+
+**Where it shows**
+
+`/alerts` (`?alert=<id>` from the email), its own page in the passenger menu, between “הנסיעות שלי” and “מעקב תשלומים”. Not in the driver menu.
+
+**Rules:** she reads and cancels only her own; they're deleted with her account. There is no editing — she cancels and saves a new one.
 
 ### D. The driver's day
 
@@ -1050,6 +1103,9 @@ In place of the page.
 | `RIDE_PAST` | Driver | “הנסיעה כבר התקיימה ונשמרת בהיסטוריה — אי אפשר להסיר אותה.” | Removing a one-time ride that took place |
 | `ROUTE_LOCKED` | Driver | “כבר נרשמו טרמפיסטיות למסלול, ולכן אי אפשר לשנות אותו — אפשר רק לערוך את ההערה ולהוסיף תחנות.” | Editing a booked route beyond its note and new stops |
 | `INVALID_PASSENGER` | Driver | “יש להזין שם וטלפון.” | Bad guest name or phone |
+| `ALERT_LIMIT` | Passenger | “הגעת למגבלה של 3 התראות פעילות — בטלי התראה קיימת כדי להוסיף חדשה.” | Saving a 4th ride alert (C10) |
+| `ALERT_DUPLICATE` | Passenger | “כבר יש לך התראה עם אותם מקומות, תאריכים ושעות.” | The same places and ranges as one she has |
+| `INVALID_ALERT` | Passenger | “יש לבחור מאיפה ולאן, ותאריכים מהיום והלאה — תאריך ההתחלה לא אחרי תאריך הסיום.” | No places, a past date, or a start after the end |
 | `GUEST_EXISTS` | Driver | Not shown as an error: the form asks “כבר יש הרשמה עם מספר הטלפון הזה (…). להחליף אותה?” | Adding a guest phone that already has a seat on that ride and date (D5) |
 
 ## 8. Not in the system
@@ -1058,7 +1114,7 @@ In place of the page.
 
 | Topic | Current behaviour |
 |---|---|
-| Notifications and mailing | Email only, within about 5 minutes, never instantly: the emails about her own rides (A7), and the optional daily email of tomorrow's passengers, for drivers (D7). No reminders before a ride, no push notifications, SMS or WhatsApp, and nothing about passengers the driver added. Coordination is by phone. |
+| Notifications and mailing | Email only, within about 5 minutes, never instantly: the emails about her own rides (A7), ride alerts (C10), and the optional daily email of tomorrow's passengers, for drivers (D7). No reminder before an alert expires, nothing when a matching ride fills up, no price filter on alerts. No reminders before a ride, no push notifications, SMS or WhatsApp, and nothing about passengers the driver added. Coordination is by phone. |
 | Reports, suspending accounts, removing others' rides | No screens. Reports arrive through the contact form or by email; the terms reserve these rights, and they are carried out by hand in the database. |
 | Consent records | The sign-in consent to the terms and the privacy policy isn't saved, and existing users aren't asked again. |
 | Paid subscriptions | None. The terms allow adding paid features later. |

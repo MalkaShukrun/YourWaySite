@@ -103,7 +103,7 @@ const recentSearchSchema = z.object({
   kind: z.enum(["recurring", "one_time"]).optional(),
 });
 
-// Keeps the search she just ran ("חיפוש נסיעה", or smart search's arrow): its
+// Keeps the search she just ran ("חיפוש", or smart search's arrow): its
 // filters, never smart search's text. record_search moves the same filters
 // up, skips a past date, and keeps her 4 latest. A failed save never stops
 // the search itself, so it says nothing.
@@ -121,6 +121,59 @@ export async function saveRecentSearch(input: z.infer<typeof recentSearchSchema>
     p_to: s.to ?? null,
     p_kind: s.kind ?? null,
   });
+}
+
+// ─── Ride alerts (ride_alerts, 0051) ─────────────────────────────────────────
+
+const ALERT_ERRORS: Record<string, string> = {
+  ALERT_LIMIT: "הגעת למגבלה של 3 התראות פעילות — בטלי התראה קיימת כדי להוסיף חדשה.",
+  ALERT_DUPLICATE: "כבר יש לך התראה עם אותם מקומות, תאריכים ושעות.",
+  INVALID_ALERT: "יש לבחור מאיפה ולאן, ותאריכים מהיום והלאה — תאריך ההתחלה לא אחרי תאריך הסיום.",
+};
+
+const alertSchema = z
+  .object({
+    origins: picksSchema.refine((picks) => picks.length > 0),
+    destinations: picksSchema.refine((picks) => picks.length > 0),
+    startDate: z.iso.date().optional(),
+    endDate: z.iso.date().optional(),
+    fromTime: timeSchema.optional(),
+    untilTime: timeSchema.optional(),
+  })
+  .refine((a) => !a.startDate || !a.endDate || a.startDate <= a.endDate);
+
+// "עדכנו אותי כשתהיה נסיעה": saves an alert from the form on the search page.
+// The database checks the limit of 3, duplicates and past dates. A time range
+// may cross midnight, so "from" after "until" is kept as it is.
+export async function createRideAlert(input: z.infer<typeof alertSchema>) {
+  await requireUser();
+  const parsed = alertSchema.safeParse(input);
+  if (!parsed.success) return { error: ALERT_ERRORS.INVALID_ALERT };
+
+  const a = parsed.data;
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("create_ride_alert", {
+    p_origins: a.origins,
+    p_destinations: a.destinations,
+    p_start_date: a.startDate ?? null,
+    p_end_date: a.endDate ?? null,
+    p_from_time: a.fromTime ?? null,
+    p_until_time: a.untilTime ?? null,
+  });
+  if (error) return { error: messageForCode(error, ALERT_ERRORS) };
+  return {};
+}
+
+// "ביטול" on one of her alerts in "ההתראות שלי" (/alerts). Her own only (the table's rules).
+export async function cancelRideAlert(alertId: string) {
+  await requireUser();
+  if (!z.uuid().safeParse(alertId).success) return { error: "ההתראה לא נמצאה." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("ride_alerts").delete().eq("id", alertId);
+  if (error) return { error: messageForCode(error, {}) };
+
+  redirect("/alerts?cancelled=1");
 }
 
 // "ניקוי החיפושים האחרונים": all of hers.

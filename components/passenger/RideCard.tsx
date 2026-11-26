@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { ArrowLeft, CalendarDays, Clock, MapPin, MessageSquareText, Users } from "lucide-react";
 import { formatTime, weekdaysOf } from "@/lib/utils/dates";
-import type { RideSummary } from "@/lib/rides/types";
+import type { RideGroup, RideSummary } from "@/lib/rides/types";
 import { avatarColorFor, formatPrice, initialsOf, kindLabel } from "@/lib/utils/format";
 import { iconProps } from "@/components/ui/icon";
 import { RideDateChips } from "@/components/passenger/RideDateChips";
+import { RideAlertButton } from "@/components/passenger/RideAlertButton";
 import { PlaceName } from "@/components/ui/PlaceName";
 
 const rideHref = (ride: RideSummary) => `/ride/${ride.route_id}?date=${ride.ride_date}`;
@@ -12,10 +13,14 @@ const rideHref = (ride: RideSummary) => `/ride/${ride.route_id}?date=${ride.ride
 // A search result (SRS §4.1): one route, with every date it runs in the
 // results — a recurring route shows its dates together on one card. The
 // driver sees her `own` rides too, to check how they look, but can't book them.
-export function RideCard({ rides, own = false }: { rides: RideSummary[]; own?: boolean }) {
+// A card with every date full offers an alert (spec C10), filled with its
+// places and its dates; `groups` (the search's) has its places.
+export function RideCard({ rides, own = false, groups, today }: { rides: RideSummary[]; own?: boolean; groups: RideGroup[]; today: string }) {
   const [first] = rides;
   const next = rides.find((r) => r.seats_left > 0);
   const severalDates = rides.length > 1;
+  // A group's two places name it (ride_groups_place_pair, 0040).
+  const group = groups.find((g) => g.origin === first.origin && g.destination === first.destination);
 
   return (
     <article className="trip-card">
@@ -38,7 +43,7 @@ export function RideCard({ rides, own = false }: { rides: RideSummary[]; own?: b
       <div className="trip-info">
         <div>
           <CalendarDays {...iconProps} size={20} />
-          <span>{severalDates ? "בימים" : "ביום"} <b>{weekdaysOf(rides.map((r) => r.ride_date))}</b></span>
+          <span>{severalDates ? "בימים:" : "ביום:"} <b className="trip-weekdays">{weekdaysOf(rides.map((r) => r.ride_date))}</b></span>
         </div>
         {/* Every card shows its dates as chips — one for a single date — so all cards share one layout. */}
         <RideDateChips rides={rides} />
@@ -70,6 +75,18 @@ export function RideCard({ rides, own = false }: { rides: RideSummary[]; own?: b
           <Link className="btn btn-primary" href={rideHref(next)}>
             לפרטים והרשמה <ArrowLeft {...iconProps} size={18} />
           </Link>
+        ) : group ? (
+          <RideAlertButton
+            onCard
+            groups={groups}
+            initial={{
+              origins: [group.origin_place_id],
+              destinations: [group.destination_place_id],
+              date: first.ride_date,
+              endDate: rides[rides.length - 1].ride_date,
+            }}
+            today={today}
+          />
         ) : (
           <span className="btn btn-secondary is-disabled" aria-disabled="true">אין מקום</span>
         )}

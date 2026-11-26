@@ -1,4 +1,4 @@
-import { CalendarDays, Check, Home, Route, Search, Settings, User, type LucideIcon } from "lucide-react";
+import { BellRing, CalendarDays, Check, Home, Route, Search, Settings, User, type LucideIcon } from "lucide-react";
 
 // `shortLabel` and `mobileIcon` are for the mobile tab bar.
 export type NavItem = { href: string; label: string; shortLabel: string; icon: LucideIcon; mobileIcon?: LucideIcon };
@@ -14,16 +14,18 @@ export const driverNavItems: NavItem[] = [
   { href: "/routes", label: "המסלולים שלי", shortLabel: "מסלולים", icon: Route },
 ];
 
+// Shared by both modes, under the divider: her ride alerts with all her email settings, and her profile.
+export const alertsNavItem: NavItem = { href: "/alerts", label: "ההתראות שלי", shortLabel: "התראות", icon: BellRing };
 export const profileNavItem: NavItem = { href: "/profile", label: "הפרופיל שלי", shortLabel: "פרופיל", icon: User };
 export const adminNavItem: NavItem = { href: "/admin/groups", label: "ניהול קבוצות", shortLabel: "קבוצות", icon: Settings };
 
 export type Mode = "passenger" | "driver";
 
 // The mode a page belongs to, or null for pages shared by both modes
-// (profile, admin) — those keep whichever mode the user was in.
+// (profile, alerts, admin) — those keep whichever mode the user was in.
 export function modeForPath(pathname: string): Mode | null {
   if (pathname.startsWith("/dashboard") || pathname.startsWith("/routes")) return "driver";
-  if (pathname.startsWith("/profile") || pathname.startsWith("/admin")) return null;
+  if (pathname.startsWith("/profile") || pathname.startsWith("/alerts") || pathname.startsWith("/admin")) return null;
   return "passenger";
 }
 

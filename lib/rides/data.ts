@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
-import type { MyBooking, RideDetails, RideGroup, RideKind, RideSummary, Stop } from "@/lib/rides/types";
+import type { MyBooking, RideAlert, RideDetails, RideGroup, RideKind, RideSummary, Stop } from "@/lib/rides/types";
 import { clockOf } from "@/lib/utils/dates";
 import { asRecentSearch, MAX_RECENT_SEARCHES, type RecentSearch } from "@/lib/rides/recentSearches";
 
@@ -107,6 +107,20 @@ export async function getRide(routeId: string, date: string) {
   const ride = (rows as RideDetails[] | null)?.[0];
   if (!ride) return null;
   return { ride, stops };
+}
+
+// Her ride alerts that haven't expired (ride_alerts, 0051; the table's rules
+// show her her own only), oldest first. Expired ones are deleted on the next
+// email run; until then they're left out here.
+export async function getMyAlerts(): Promise<RideAlert[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("ride_alerts")
+    .select("id, origins, destinations, start_date, end_date, from_time, until_time, expires_at")
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at");
+  if (error) throw new Error(error.message);
+  return (data ?? []) as RideAlert[];
 }
 
 export async function getMyBookings(): Promise<MyBooking[]> {

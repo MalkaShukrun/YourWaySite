@@ -34,7 +34,7 @@ export function DriverRideCard({ ride, date, departed = false, open = false }: {
           <div>
             <h2><GroupName origin={ride.origin} destination={ride.destination} /></h2>
             <div className="ride-chips">
-              <span className="ride-chip">{routeKindLabel(ride.kind)}</span>
+              <span className={`ride-chip kind ${ride.kind === "one_time" ? "special" : ""}`}>{routeKindLabel(ride.kind)}</span>
               <span className={`ride-chip ${seatsLeft <= 0 ? "full" : ""}`}>{seatsLeftText(seatsLeft)}</span>
             </div>
           </div>

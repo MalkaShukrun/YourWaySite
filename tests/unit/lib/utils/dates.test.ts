@@ -57,13 +57,13 @@ describe("ride date labels", () => {
   });
 
   it("writes the short date for chips", () => {
-    expect(formatShortRideDate("2025-06-22")).toBe("א׳ 22.6");
-    expect(formatShortRideDate("2026-01-09")).toBe("ו׳ 9.1");
+    expect(formatShortRideDate("2025-06-22")).toBe("א 22.6");
+    expect(formatShortRideDate("2026-01-09")).toBe("ו 9.1");
   });
 
   it("lists the distinct weekdays of some dates, Sunday first", () => {
-    expect(weekdaysOf(["2025-06-24", "2025-06-22"])).toBe("א׳ · ג׳");
-    expect(weekdaysOf(["2025-06-22", "2025-06-29"])).toBe("א׳"); // two Sundays
+    expect(weekdaysOf(["2025-06-24", "2025-06-22"])).toBe("א ג");
+    expect(weekdaysOf(["2025-06-22", "2025-06-29"])).toBe("א"); // two Sundays
     expect(weekdaysOf([])).toBe("");
   });
 

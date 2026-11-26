@@ -63,10 +63,10 @@ export function israelDate(offsetDays = 0) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(Date.now() + offsetDays * 86_400_000));
 }
 
-// How the app writes a date on chips: "ד׳ 4.11".
+// How the app writes a date on chips: "ד 4.11".
 export function shortDate(date: string) {
   const d = new Date(`${date}T12:00:00Z`);
-  return `${["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"][d.getUTCDay()]} ${d.getUTCDate()}.${d.getUTCMonth() + 1}`;
+  return `${["א", "ב", "ג", "ד", "ה", "ו", "ש"][d.getUTCDay()]} ${d.getUTCDate()}.${d.getUTCMonth() + 1}`;
 }
 
 // ─── Names ───────────────────────────────────────────────────────────────────

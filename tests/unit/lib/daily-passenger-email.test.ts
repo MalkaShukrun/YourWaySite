@@ -94,7 +94,7 @@ describe("buildEmail", () => {
   });
 
   it("links to the profile when the site address is known", () => {
-    expect(buildEmail(email(), "https://yourway.example/").html).toContain('href="https://yourway.example/profile"');
+    expect(buildEmail(email(), "https://yourway.example/").html).toContain('href="https://yourway.example/alerts"');
     expect(buildEmail(email()).html).not.toContain("href");
   });
 });

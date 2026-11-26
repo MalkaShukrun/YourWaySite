@@ -68,7 +68,7 @@ const FLASH: Keyframe[] = [
 // Smart filter bar (SRS §4.1): from and to (a city, or places in it), date;
 // under the filters button, departure time range and ride type.
 //
-// The results load only when she runs the search: "חיפוש נסיעה" (or Enter in
+// The results load only when she runs the search: "חיפוש" (or Enter in
 // a filter), or smart search's arrow (or Enter in it). Changing a filter, or
 // picking a recent search, only fills the filters. Running a search is also
 // what keeps it among her recent searches (search_history, 0050).
@@ -148,7 +148,7 @@ export function SearchPanel({
     }
   }, [flash]);
 
-  // "חיפוש נסיעה", or Enter in a filter: runs the search, and on a phone,
+  // "חיפוש", or Enter in a filter: runs the search, and on a phone,
   // where the results are below the filters, takes her down to them.
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -336,7 +336,7 @@ export function SearchPanel({
           </button>
           <button type="submit" className="btn btn-primary search-button">
             {updating ? <LoaderCircle {...iconProps} size={20} className="icon spin" aria-hidden="true" /> : <Search {...iconProps} size={20} />}
-            חיפוש נסיעה
+            חיפוש
           </button>
         </div>
         {moreOpen && (

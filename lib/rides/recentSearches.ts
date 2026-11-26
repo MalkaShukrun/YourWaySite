@@ -1,6 +1,6 @@
 // Recent ride searches, offered under smart search — safe to import from
 // Client Components. Kept in the database (search_history, 0050) for each
-// passenger; saved only when she runs a search ("חיפוש נסיעה", or smart
+// passenger; saved only when she runs a search ("חיפוש", or smart
 // search's arrow).
 import type { RideGroup, RideKind } from "@/lib/rides/types";
 import { cityPick } from "@/lib/rides/search";

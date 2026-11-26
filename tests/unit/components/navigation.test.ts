@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { pickSummary, toggleValue } from "@/components/ui/multiSelect";
-import { adminNavItem, driverNavItems, isNavItemActive, modeForPath, passengerNavItems, profileNavItem } from "@/components/shell/nav";
+import { adminNavItem, alertsNavItem, driverNavItems, isNavItemActive, modeForPath, passengerNavItems, profileNavItem } from "@/components/shell/nav";
 
 // Passenger and driver modes (spec §1 Modes, A4).
 describe("modeForPath", () => {
@@ -12,8 +12,8 @@ describe("modeForPath", () => {
     expect(modeForPath(path)).toBe("passenger");
   });
 
-  // The profile and group pages keep whichever mode was used last.
-  it.each(["/profile", "/admin/groups"])("%s belongs to both modes", (path) => {
+  // The profile, alerts and group pages keep whichever mode was used last.
+  it.each(["/profile", "/alerts", "/admin/groups"])("%s belongs to both modes", (path) => {
     expect(modeForPath(path)).toBeNull();
   });
 });
@@ -34,8 +34,8 @@ describe("menus", () => {
     ]);
   });
 
-  it("has the shared items: profile, and group management for admins", () => {
-    expect([profileNavItem.label, adminNavItem.label]).toEqual(["הפרופיל שלי", "ניהול קבוצות"]);
+  it("has the shared items: alerts, profile, and group management for admins", () => {
+    expect([alertsNavItem.label, profileNavItem.label, adminNavItem.label]).toEqual(["ההתראות שלי", "הפרופיל שלי", "ניהול קבוצות"]);
   });
 });
 

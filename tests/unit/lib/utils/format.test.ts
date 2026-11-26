@@ -23,7 +23,7 @@ describe("labels", () => {
   it("names the ride kind for passengers and for drivers", () => {
     expect(kindLabel("recurring")).toBe("קבועה");
     expect(kindLabel("one_time")).toBe("חד־פעמית");
-    expect(routeKindLabel("recurring")).toBe("מסלול קבוע");
+    expect(routeKindLabel("recurring")).toBe("נסיעה קבועה");
     expect(routeKindLabel("one_time")).toBe("נסיעה חד־פעמית");
   });
 

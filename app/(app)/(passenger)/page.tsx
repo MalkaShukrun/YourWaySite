@@ -9,6 +9,7 @@ import { groupByRoute, groupIdsFrom, placePicksFrom, searchedGroups } from "@/li
 import { TIME_PATTERN } from "@/lib/validation/patterns";
 import { SearchPanel } from "@/components/passenger/SearchPanel";
 import { RideCard } from "@/components/passenger/RideCard";
+import { RideAlertButton } from "@/components/passenger/RideAlertButton";
 import { SearchResultsFrame, SearchTransitionProvider } from "@/components/passenger/SearchTransition";
 
 type SearchParams = PageProps<"/">["searchParams"];
@@ -80,24 +81,28 @@ async function Search({ searchParams }: { searchParams: SearchParams }) {
 }
 
 async function Results({ searchParams }: { searchParams: SearchParams }) {
-  const [user, filters, groups] = await Promise.all([requireUser(), readFilters(searchParams), getRideGroups()]);
+  const [user, filters, groups, today] = await Promise.all([requireUser(), readFilters(searchParams), getRideGroups(), israelToday()]);
   // The groups between the picked places; when none is, there's nothing to search.
   const groupIds = searchedGroups(groups, filters);
   const rides = groupIds?.length === 0 ? [] : await searchRides({ ...filters, groupIds });
   const routes = groupByRoute(rides);
 
+  // She can ask to hear about a ride (spec C10): with no results, from the
+  // card that says so, filled from the search; with full rides, from each
+  // full ride's own card (RideCard), filled from it.
   return (
     <>
       <ResultsHead subtitle={`${routes.length} תוצאות`} />
       {rides.length === 0 ? (
         <div className="panel empty-state">
           <strong>לא נמצאו נסיעות מתאימות</strong>
-          <span>נסי לשנות את המקומות, התאריך או השעה.</span>
+          <span>נסי לשנות את המקומות, התאריך או השעה, או שנעדכן אותך במייל כשתפורסם נסיעה חדשה.</span>
+          <RideAlertButton groups={groups} initial={filters} today={today} />
         </div>
       ) : (
         <div className="trip-grid">
           {routes.map((dates) => (
-            <RideCard key={dates[0].route_id} rides={dates} own={dates[0].driver_id === user.id} />
+            <RideCard key={dates[0].route_id} rides={dates} own={dates[0].driver_id === user.id} groups={groups} today={today} />
           ))}
         </div>
       )}
@@ -109,7 +114,7 @@ function ResultsHead({ subtitle }: { subtitle: string }) {
   return (
     <div className="results-head">
       {/* Announced as the filters change the results. */}
-      <div><h2>נסיעות זמינות</h2><span aria-live="polite">{subtitle}</span></div>
+      <div><span aria-live="polite">{subtitle}</span></div>
     </div>
   );
 }

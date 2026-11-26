@@ -28,7 +28,7 @@ afterEach(() => vi.unstubAllEnvs());
 // Only sign-in, the legal pages, the auth callback and the files for search
 // engines are open to visitors (spec A2, §3).
 describe("signed-out visitors", () => {
-  it.each(["/", "/my-rides", "/payments", "/dashboard", "/routes", "/routes/new", "/profile", "/admin/groups", "/ride/abc?date=2026-11-01"])(
+  it.each(["/", "/my-rides", "/alerts", "/payments", "/dashboard", "/routes", "/routes/new", "/profile", "/admin/groups", "/ride/abc?date=2026-11-01"])(
     "are sent from %s to /login",
     async (path) => {
       const response = await updateSession(request(path));

@@ -31,7 +31,7 @@ test.describe("search (spec C1)", () => {
     await page.goto("/");
     await choose(page, "מאיפה", group.origin);
     await choose(page, "לאן", "יעד, מרכז");
-    await page.getByRole("button", { name: "חיפוש נסיעה" }).click();
+    await page.getByRole("button", { name: "חיפוש", exact: true }).click();
     await expect(page).toHaveURL(/\?origin=[0-9a-f-]{36}&destination=[0-9a-f-]{36}$/);
 
     const result = card(page, group.label);
@@ -55,13 +55,13 @@ test.describe("search (spec C1)", () => {
 
     await page.goto("/");
     await choose(page, "מאיפה", `${group.city} (כל העיר)`);
-    await page.getByRole("button", { name: "חיפוש נסיעה" }).click();
+    await page.getByRole("button", { name: "חיפוש", exact: true }).click();
     await expect(page).toHaveURL(/\?origin=city%3A/);
     await expect(card(page, group.label)).toHaveCount(1);
 
     // Now to that city: the ride goes the other way, so it isn't found.
     await page.getByRole("button", { name: "החלפת כיוון" }).click();
-    await page.getByRole("button", { name: "חיפוש נסיעה" }).click();
+    await page.getByRole("button", { name: "חיפוש", exact: true }).click();
     await expect(page).toHaveURL(/\?destination=city%3A/);
     await expect(card(page, group.label)).toHaveCount(0);
   });
@@ -174,7 +174,6 @@ test.describe("search (spec C1)", () => {
     await page.goto(`/?group=${group.id}`);
     const result = card(page, group.label);
     await expect(result.locator(".trip-dates .is-full")).toContainText("מלאה");
-    await expect(result.getByText("אין מקום")).toBeVisible();
     await expect(result.getByRole("link", { name: /לפרטים והרשמה/ })).toHaveCount(0);
   });
 });
@@ -204,7 +203,7 @@ test("the filters change nothing until she presses search", async ({ page, seed,
   await expect(page).toHaveURL(/\/$/);
   await expect(card(page, b.label)).toHaveCount(1);
 
-  await page.getByRole("button", { name: "חיפוש נסיעה" }).click();
+  await page.getByRole("button", { name: "חיפוש", exact: true }).click();
   await expect(page).toHaveURL(/\?origin=[0-9a-f-]{36}$/);
   await expect(card(page, b.label)).toHaveCount(0);
   await expect(card(page, a.label)).toHaveCount(1);
@@ -256,10 +255,10 @@ test("recent searches: kept when she presses search or smart search's arrow, off
   await box.click();
   await expect(recentMenu(page)).toHaveCount(0);
 
-  // "חיפוש נסיעה" keeps the search.
+  // "חיפוש" keeps the search.
   await choose(page, "מאיפה", group.origin);
   let saved = serverAction(page); // the save is sent alongside the search
-  await page.getByRole("button", { name: "חיפוש נסיעה" }).click();
+  await page.getByRole("button", { name: "חיפוש", exact: true }).click();
   await expect(page).toHaveURL(/\?origin=[0-9a-f-]{36}&date=/);
   const searched = page.url();
   await saved;
@@ -288,7 +287,7 @@ test("recent searches: kept when she presses search or smart search's arrow, off
   await expect(recentMenu(page)).toHaveCount(0);
   await page.waitForLoadState("networkidle");
   await expect(page).toHaveURL(/\/$/);
-  await page.getByRole("button", { name: "חיפוש נסיעה" }).click();
+  await page.getByRole("button", { name: "חיפוש", exact: true }).click();
   await expect(page).toHaveURL(searched);
 
   // Smart search's arrow keeps what it read from the sentence, not the sentence.

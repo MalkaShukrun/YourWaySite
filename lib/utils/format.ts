@@ -37,9 +37,9 @@ export function kindLabel(kind: RideKind) {
   return kind === "recurring" ? "קבועה" : "חד־פעמית";
 }
 
-// The driver's wording: "מסלול קבוע" / "נסיעה חד־פעמית".
+// The driver's wording: "נסיעה קבועה" / "נסיעה חד־פעמית".
 export function routeKindLabel(kind: RideKind) {
-  return kind === "recurring" ? "מסלול קבוע" : "נסיעה חד־פעמית";
+  return kind === "recurring" ? "נסיעה קבועה" : "נסיעה חד־פעמית";
 }
 
 export function formatPrice(price: number) {

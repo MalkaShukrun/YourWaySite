@@ -73,7 +73,7 @@ const rideTitle = (ride: EmailRide) =>
   `${formatDate(ride.ride_date)}, ${ride.out_time} · ${ride.origin} ← ${ride.destination}`;
 
 // As formatPrice in lib/utils/format.ts, which the function can't import.
-const price = (value: number) => `₪${Number(value).toLocaleString("he-IL", { maximumFractionDigits: 2 })}`;
+export const price =(value: number) => `₪${Number(value).toLocaleString("he-IL", { maximumFractionDigits: 2 })}`;
 
 // The lines under a ride's title.
 function rideLines(ride: EmailRide) {
@@ -94,8 +94,8 @@ export function buildRideEmail(email: RideEmail, siteUrl = "") {
   const base = siteUrl.replace(/\/$/, "");
   const pagePath = copy.page === "dashboard" ? `/dashboard?date=${email.rides[0].ride_date}` : "/my-rides";
   const pageUrl = base ? `${base}${pagePath}` : "";
-  const profileUrl = base ? `${base}/profile` : "";
-  const settings = "אפשר להפסיק את המיילים האלה בעמוד הפרופיל";
+  const settingsUrl = base ? `${base}/alerts` : "";
+  const settings = "אפשר להפסיק את המיילים האלה בעמוד ההתראות";
   const link = (url: string, label: string) => (url ? `<a href="${escapeHtml(url)}">${label}</a>` : label);
 
   return {
@@ -105,7 +105,7 @@ export function buildRideEmail(email: RideEmail, siteUrl = "") {
       intro,
       ...email.rides.map((ride) => [rideTitle(ride), ...rideLines(ride)].join("\n")),
       ...(pageUrl ? [`${PAGE_LABEL[copy.page]}: ${pageUrl}`] : []),
-      profileUrl ? `${settings}: ${profileUrl}` : `${settings}.`,
+      settingsUrl ? `${settings}: ${settingsUrl}` : `${settings}.`,
     ].join("\n\n"),
     html: `<div dir="rtl" style="font-family:Arial,sans-serif;color:#22302a;text-align:right;">
 <p>${escapeHtml(hello)}</p>
@@ -117,7 +117,7 @@ ${rideLines(ride).map((line) => `<p style="margin:2px 0;">${escapeHtml(line)}</p
   )
   .join("\n")}
 ${pageUrl ? `<p style="margin-top:24px;">${link(pageUrl, PAGE_LABEL[copy.page])}</p>` : ""}
-<p style="color:#59665f;font-size:13px;">${link(profileUrl, settings)}.</p>
+<p style="color:#59665f;font-size:13px;">${link(settingsUrl, settings)}.</p>
 </div>`,
   };
 }

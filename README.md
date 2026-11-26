@@ -36,7 +36,7 @@ A Supabase Edge Function (`supabase/functions/daily-passenger-email`), called by
 
 1. **Gmail** — turn on 2-Step Verification on the sending account, then create an App Password
    at https://myaccount.google.com/apppasswords.
-2. **Database** — run `supabase/migrations/0031_daily_passenger_email.sql`, `0034_daily_email_all_drivers.sql`, `0035_daily_email_retry_after_midnight.sql`, `0036_passenger_update_emails.sql`, `0043_ride_emails.sql` and `0047_cancellation_update_emails.sql` (or `setup.sql`). Bookings queue their emails from then on.
+2. **Database** — run `supabase/migrations/0031_daily_passenger_email.sql`, `0034_daily_email_all_drivers.sql`, `0035_daily_email_retry_after_midnight.sql`, `0036_passenger_update_emails.sql`, `0043_ride_emails.sql`, `0047_cancellation_update_emails.sql`, `0051_ride_alerts.sql` and `0052_seat_alerts.sql` (or `setup.sql`). Bookings, cancellations and new routes queue their emails from then on.
 3. **Function** — deploy it and set its secrets (deploy it again after changing its code). `CRON_SECRET` is any long random string:
    ```bash
    npx supabase login
