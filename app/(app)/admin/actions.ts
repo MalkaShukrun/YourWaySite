@@ -33,17 +33,27 @@ const groupRow = ({ originId, destinationId }: GroupValues) => ({
   destination_place_id: destinationId,
 });
 
-export async function createGroup(values: GroupValues) {
+export async function createGroup(values: GroupValues): Promise<{ error?: string; created?: number }> {
   await requireAdmin();
   const parsed = groupSchema.safeParse(values);
   if (!parsed.success) return { error: firstIssue(parsed.error) };
 
+  // A group comes with its way back: both directions are added in one insert.
+  // A direction that already exists is skipped; only both existing is a duplicate.
+  const { originId, destinationId } = parsed.data;
   const supabase = await createClient();
-  const { error } = await supabase.from("ride_groups").insert(groupRow(parsed.data));
+  const { data, error } = await supabase
+    .from("ride_groups")
+    .upsert([groupRow(parsed.data), groupRow({ originId: destinationId, destinationId: originId })], {
+      onConflict: "origin_place_id,destination_place_id",
+      ignoreDuplicates: true,
+    })
+    .select("id");
   if (error) return { error: messageFor(error, GROUP_EXISTS, PLACE_NOT_FOUND) };
+  if (!data?.length) return { error: GROUP_EXISTS };
 
   refresh();
-  return {};
+  return { created: data.length };
 }
 
 // Change a group's places. Routes keep pointing at it, so drivers and

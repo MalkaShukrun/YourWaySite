@@ -39,8 +39,8 @@ export function RideEmailsForm({ email, defaults }: Props) {
         <div>
           <h3><BellRing {...iconProps} size={20} /> מיילים על הנסיעות שלי</h3>
           <span>
-            כשאת נרשמת לנסיעה או מבטלת הרשמה, כשהנהגת מבטלת נסיעה שנרשמת אליה, וכשנוסעת מבטלת הרשמה לנסיעה שאת
-            נוהגת בה. נשלחים אל <span dir="ltr">{email}</span> עד כ־5 דקות אחרי מה שקרה.
+            הרשמה, ביטול, ביטול של נהגת, ביטול של נוסעת — כל אחד מאלה שולח מייל.
+            נשלח אל <span dir="ltr">{email}</span> עד כ־5 דקות אחרי מה שקרה.
           </span>
         </div>
         <button
@@ -58,7 +58,7 @@ export function RideEmailsForm({ email, defaults }: Props) {
       <div className="profile-save">
         <button type="submit" className="btn btn-primary" disabled={!hydrated || pending}>{pending ? "שומר..." : "שמירה"}</button>
       </div>
-      <Toast message={saved ? "הגדרות ההתראות נשמרו" : ""} id={saved} />
+      <Toast message={saved ? "ההגדרות נשמרו" : ""} id={saved} />
     </form>
   );
 }

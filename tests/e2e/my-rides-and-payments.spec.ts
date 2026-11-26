@@ -22,7 +22,7 @@ test.describe("my rides", () => {
     await rows(page).first().getByRole("button", { name: "ביטול" }).click();
 
     await expect(page).toHaveURL(/\/my-rides\?cancelled=1$/);
-    await expect(toast(page, "ההרשמה בוטלה והמקום התפנה")).toBeVisible();
+    await expect(toast(page, "ההרשמה בוטלה")).toBeVisible();
     await expect(rows(page)).toHaveCount(0);
     expect(await seed.seatsLeft(passenger, route, date)).toBe(1);
   });

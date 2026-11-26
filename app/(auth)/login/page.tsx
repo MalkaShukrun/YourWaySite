@@ -23,7 +23,7 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
 
       <section className="auth-brand" aria-label="על בדרך שלך">
         <div className="brand-copy">
-          <span className="brand-eyebrow">טרמפים בקהילה, בין נשים</span>
+          <span className="brand-eyebrow">נסיעות בקהילה, בין נשים</span>
           <h1>נוסעות יחד,<br /><em>מגיעות רחוק.</em></h1>
           <p>נהגות מפרסמות את הנסיעות שלהן, נוסעות נרשמות בלחיצה — והכול מתואם במקום אחד.</p>
         </div>
@@ -42,11 +42,11 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
           <span className="mobile-auth-logo"><Logo /></span>
           <h1 className="mobile-auth-title">נוסעות יחד,<br />מגיעות רחוק</h1>
           <div className="mobile-ticket-panel"><BrandTicket /></div>
-          <span className="auth-form-eyebrow">קהילת הטרמפים לנשים</span>
+          <span className="auth-form-eyebrow">קהילת הנסיעות לנשים</span>
           <h2>הדרך שלך.<br /><em>ביחד.</em></h2>
-          <p>מוצאות טרמפ שמתאים בדיוק לדרך שלך, מתחברות לנהגות מהקהילה ומתאמות הכול בפשטות.</p>
+          <p>מוצאות נסיעה שמתאימה בדיוק לדרך שלך, ומתאמות הכול בפשטות.</p>
           <div className="auth-role-pills">
-            <span><Search {...iconProps} size={17} /> אני מחפשת טרמפ</span>
+            <span><Search {...iconProps} size={17} /> אני מחפשת נסיעה</span>
             <span><Car {...carIconProps} size={17} /> אני מציעה נסיעה</span>
           </div>
           <SignInOptions />

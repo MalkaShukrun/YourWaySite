@@ -57,7 +57,7 @@ async function MyAlerts({ searchParams }: Pick<PageProps<"/alerts">, "searchPara
         {alerts.length === 0 ? (
           <div className="empty-state">
             <strong>אין לך התראות פעילות</strong>
-            <span>לא מצאת נסיעה? אנחנו נעדכן אותך כשתיכנס נסיעה מתאימה</span>
+            <span>לא מצאת נסיעה? הגדירי התראה ונשלח לך מייל כשתפורסם אחת מתאימה.</span>
             <Link className="btn btn-primary" href="/">מציאת נסיעה</Link>
           </div>
         ) : (

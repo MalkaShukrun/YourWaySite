@@ -6,7 +6,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_ORIGIN),
   title: { default: "בדרך שלך", template: "%s · בדרך שלך" },
-  description: "ניהול טרמפים ונסיעות קבוצתיות — נוסעות יחד, מגיעות רחוק",
+  description: "ניהול נסיעות שיתופיות — נוסעות יחד, מגיעות רחוק",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

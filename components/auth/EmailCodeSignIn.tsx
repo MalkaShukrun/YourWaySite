@@ -58,7 +58,7 @@ export function EmailCodeSignIn({ accepted, onNotAccepted }: { accepted: boolean
         {pending ? "בודק..." : "כניסה"}
       </button>
       {/* The contact form is for signed-in users, so this goes by email. */}
-      <button type="button" className="email-code-link" onClick={copySupportEmail}>משתמשת חדשה או שכחת את הקוד? שלחי לנו מייל לקבלת קוד</button>
+      <button type="button" className="email-code-link" onClick={copySupportEmail}>משתמשת חדשה או שכחת את הקוד? שלחי לנו מייל</button>
       {copyNote && <p className="email-code-note" role="status">{copyNote} <span dir="ltr">{SUPPORT_EMAIL}</span></p>}
     </form>
   );

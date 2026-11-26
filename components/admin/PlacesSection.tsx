@@ -17,7 +17,7 @@ export function PlacesSection({ places, groups }: { places: Place[]; groups: Adm
   const cities = Map.groupBy(places, (place) => place.city);
 
   return (
-    <CollapsiblePanel title="מקומות" subtitle="עיר ושכונה. כל קבוצה נוסעת ממקום אחד ברשימה למקום אחר" action={<PlaceDialog />}>
+    <CollapsiblePanel title="מקומות" subtitle="עיר ושכונה — המקורות ליצירת קבוצות נסיעה." action={<PlaceDialog />}>
       {places.length === 0 ? (
         <div className="empty-state"><strong>עדיין אין מקומות</strong><span>הוסיפי מקומות, ואז צרי קבוצה ממקום אחד לאחר.</span></div>
       ) : (

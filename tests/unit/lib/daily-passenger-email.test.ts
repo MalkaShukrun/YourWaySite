@@ -46,7 +46,7 @@ describe("buildEmail", () => {
     rides[0].passengers[0].is_new = true;
     const { subject, text, html } = buildEmail(email({ rides, since: "2026-11-01T18:00:00+00:00" }));
     expect(subject).toMatch(/^עדכון: הנוסעות שלך למחר,/);
-    expect(text).toContain("זו הרשימה המעודכנת");
+    expect(text).toContain("הרשימה המעודכנת — החדשות מסומנות");
     expect(text).toContain("- רחל (חדשה) |");
     expect(text).not.toContain("אורחת (חדשה)");
     expect(html).toContain("<strong>רחל</strong> (חדשה)");
@@ -58,7 +58,7 @@ describe("buildEmail", () => {
     rides[0].passengers[0] = { name: "רחל", phone: null, email: null, pickup: "תחנה מרכזית", is_cancelled: true };
     const { subject, text, html } = buildEmail(email({ rides, since: "2026-11-01T18:00:00+00:00" }));
     expect(subject).toMatch(/^עדכון: /);
-    expect(text).toContain("נוסעות ביטלו את ההרשמה");
+    expect(text).toContain("הרשימה המעודכנת — הביטולים מסומנים");
     expect(text).toContain("- רחל (ביטלה) | טלפון: — | דוא״ל: — | תחנת איסוף: תחנה מרכזית");
     expect(text).not.toContain("אורחת (ביטלה)");
     expect(html).toContain("<s>רחל</s> (ביטלה)");

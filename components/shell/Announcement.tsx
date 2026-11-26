@@ -6,8 +6,8 @@ import type { Mode } from "./nav";
 // The news for each mode: the ride emails (spec A7) each side now gets, and for
 // drivers also the daily passenger email (D7).
 const ANNOUNCEMENTS: Record<Mode, string[]> = {
-  passenger: ["עדכנו אותי כשנכנסת נסיעה או כשמתפנה מקום בנסיעה."],
-  driver: ["קבלי מייל יומי על הנוסעות שנרשמות לנסיעה שלך. יש להפעיל בעמוד ההתראות."],
+  passenger: ["עדכנו אותי כשתפורסם נסיעה מתאימה או יתפנה מקום."],
+  driver: ["מייל יומי עם רשימת הנוסעות למחר — להפעלה בעמוד ההתראות."],
 };
 
 // A click leads to "ההתראות שלי", where the alerts and the email settings are.

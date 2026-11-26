@@ -10,7 +10,7 @@ export async function OtpEmailsSection() {
   const emails = await getOtpEmails();
 
   return (
-    <CollapsiblePanel title="כניסה עם קוד אישי" subtitle="למשתמשות בלי חשבון Google. הוספת כתובת יוצרת לה חשבון וקוד קבוע, שאת מעבירה אליה">
+    <CollapsiblePanel title="כניסה עם קוד אישי" subtitle="למשתמשות בלי חשבון Google. הוספת כתובת יוצרת לה חשבון וקוד — שתעבירי אליה.">
       <OtpEmailForm />
       {emails.length === 0 ? (
         <div className="empty-state"><strong>עדיין אין כתובות</strong><span>הוסיפי כתובת מייל כדי ליצור לה קוד אישי.</span></div>

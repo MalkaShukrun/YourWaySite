@@ -24,7 +24,8 @@ type Props = {
 };
 
 // "קבוצה חדשה" / "עריכה" — the design's small modal: an origin and a
-// destination, each picked from the list of places.
+// destination, each picked from the list of places. A new group is created in
+// both directions (there and back); editing changes this one group only.
 export function GroupDialog({ places, group }: Props) {
   const editing = Boolean(group);
   // The selects show the first places until others are picked, so start there.
@@ -34,7 +35,7 @@ export function GroupDialog({ places, group }: Props) {
   };
   const [open, setOpen] = useState(false);
   const [serverError, setServerError] = useState("");
-  const [done, setDone] = useState(0);
+  const [done, setDone] = useState({ id: 0, message: "" });
   const [pending, startTransition] = useTransition();
   const { control, handleSubmit, reset, formState: { errors } } = useForm<GroupValues>({
     resolver: zodResolver(groupSchema),
@@ -58,11 +59,18 @@ export function GroupDialog({ places, group }: Props) {
   const onSubmit = (values: GroupValues) =>
     startTransition(async () => {
       setServerError("");
-      const result = group ? await updateGroup(group.id, values) : await createGroup(values);
+      if (group) {
+        const result = await updateGroup(group.id, values);
+        if (result.error) return setServerError(result.error);
+        setOpen(false);
+        return setDone((d) => ({ id: d.id + 1, message: "הקבוצה עודכנה" }));
+      }
+      const result = await createGroup(values);
       if (result.error) return setServerError(result.error);
       setOpen(false);
-      if (!group) reset(initial);
-      setDone((n) => n + 1);
+      reset(initial);
+      const message = result.created === 1 ? "נוצרה קבוצה אחת — הכיוון השני כבר היה קיים" : "נוצרו שתי קבוצות — הלוך וחזור";
+      setDone((d) => ({ id: d.id + 1, message }));
     });
 
   return (
@@ -77,9 +85,15 @@ export function GroupDialog({ places, group }: Props) {
         <ModalForm
           icon={<Route {...iconProps} size={20} />}
           title={editing ? "עריכת קבוצת נסיעה" : "יצירת קבוצת נסיעה"}
-          description={enoughPlaces ? "בחרי מוצא ויעד מרשימת המקומות." : "קודם הוסיפי לפחות שני מקומות לרשימת המקומות."}
+          description={
+            !enoughPlaces
+              ? "קודם הוסיפי לפחות שני מקומות לרשימה."
+              : editing
+                ? "בחרי מוצא ויעד מרשימת המקומות."
+                : "בחרי מוצא ויעד. ייווצרו שתי קבוצות: הלוך וחזור."
+          }
           error={serverError}
-          submitLabel={pending ? "שומר..." : editing ? "שמירה" : "יצירת הקבוצה"}
+          submitLabel={pending ? "שומר..." : editing ? "שמירה" : "יצירת הקבוצות"}
           submitDisabled={pending || !enoughPlaces}
           onSubmit={handleSubmit(onSubmit)}
           onClose={close}
@@ -103,7 +117,7 @@ export function GroupDialog({ places, group }: Props) {
           )}
         </ModalForm>
       )}
-      <Toast message={done ? (editing ? "הקבוצה עודכנה" : "הקבוצה נוצרה") : ""} id={done} />
+      <Toast message={done.message} id={done.id} />
     </>
   );
 }

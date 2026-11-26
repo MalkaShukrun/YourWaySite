@@ -188,17 +188,17 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
         <section className="panel editor-form">
           {locked && (
             <p className="editor-locked-note">
-              כבר נרשמו נוסעות למסלול, ולכן אי אפשר לשנות את פרטיו — אפשר רק לערוך את ההערה, להוסיף תחנות ולשנות או למחוק תחנות שאף אחת לא נרשמה אליהן. תחנות שנרשמו אליהן מסומנות באפור. כדי לשנות פרטים אחרים, שכפלי את הנסיעה ושני בה את מה שצריך, ואחר כך הסירי את המסלול הזה.
+              כבר נרשמו נוסעות — אפשר לערוך את ההערה, להוסיף תחנות ולשנות תחנות שאף אחת לא נרשמה אליהן. לשינוי פרטים אחרים: שכפלי את הנסיעה, שני את מה שצריך והסירי את המסלול הזה.
             </p>
           )}
           {route && !locked && (
             <p className="editor-locked-note">
-              עדיין לא נרשמו נוסעות למסלול, ולכן אפשר לשנות את כל הפרטים. אחרי שתירשם הנוסעת הראשונה, יהיה אפשר רק לערוך את ההערה ואת התחנות שאף אחת לא נרשמה אליהן.
+              עדיין לא נרשמו נוסעות — אפשר לשנות הכול. אחרי ההרשמה הראשונה אפשר לשנות רק את ההערה ותחנות שאף אחת לא נרשמה אליהן.
             </p>
           )}
           {copyFrom && (
             <p className="editor-locked-note">
-              פרטי הנסיעה הועתקו, ואפשר לשנות את כולם. בחרי תאריך חדש ושמרי כדי לפרסם.
+              פרטי הנסיעה הועתקו. בחרי תאריך ושמרי.
             </p>
           )}
           <fieldset className="editor-section" disabled={locked}>
@@ -239,7 +239,7 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
           <div className="editor-section">
             {/* The note stays editable on a booked route; the rest is fixed. */}
             <fieldset className="editor-fields" disabled={locked}>
-              <div className="section-heading"><span>2</span><div><h2>ימים ושעות</h2><p>מתי את יוצאת וחוזרת?</p></div></div>
+              <div className="section-heading"><span>2</span><div><h2>ימים ושעות</h2><p>מתי את יוצאת?</p></div></div>
               {kind === "recurring" && (
                 <div className="day-picker" role="group" aria-label="ימים בשבוע">
                   {RIDE_WEEKDAYS.map((day, index) => (
@@ -295,7 +295,7 @@ export function RouteEditor({ groups, route, copyFrom, today }: Props) {
           </div>
 
           <div className="editor-section">
-            <div className="section-heading"><span>3</span><div><h2>תחנות איסוף והורדה</h2><p>הגדירי בנפרד היכן ניתן לעלות והיכן ניתן לרדת</p></div></div>
+            <div className="section-heading"><span>3</span><div><h2>תחנות איסוף והורדה</h2><p>הגדירי בנפרד תחנות איסוף ותחנות הורדה</p></div></div>
             {renderStopList("pickup")}
             {renderStopList("dropoff")}
           </div>

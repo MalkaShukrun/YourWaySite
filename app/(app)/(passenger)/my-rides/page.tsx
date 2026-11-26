@@ -45,8 +45,8 @@ async function MyRides({ searchParams }: Pick<PageProps<"/my-rides">, "searchPar
       <section className="panel">
         <div className="panel-title">
           <div>
-            <h2>{tab === "history" ? "נסיעות קודמות" : "הנסיעות הקרובות שלי"}</h2>
-            <span>פרטי הנסיעה והקשר עם הנהגת</span>
+            <h2>{tab === "history" ? "היסטוריה" : "הנסיעות הקרובות שלי"}</h2>
+            <span>פרטי הנסיעה</span>
           </div>
           <span className="count-pill">{rows.length} נסיעות</span>
         </div>
@@ -60,7 +60,7 @@ async function MyRides({ searchParams }: Pick<PageProps<"/my-rides">, "searchPar
         )}
       </section>
       <Toast
-        message={query.booked === "1" ? "הנסיעה נוספה לנסיעות שלי" : query.cancelled === "1" ? "ההרשמה בוטלה והמקום התפנה" : ""}
+        message={query.booked === "1" ? "הנסיעה נוספה לנסיעות שלי" : query.cancelled === "1" ? "ההרשמה בוטלה" : ""}
       />
     </>
   );

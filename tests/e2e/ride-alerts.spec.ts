@@ -7,7 +7,7 @@ import type { Seed } from "../integration/support/seed";
 // no results or from a full ride's card, and "ההתראות שלי" in the passenger menu.
 
 const alertRows = (page: Page) => page.locator(".alert-row");
-const ALERT_BUTTON = "עדכנו אותי כשתהיה נסיעה";
+const ALERT_BUTTON = "עדכנו אותי"; // the empty results' button; a card's is named in full
 const CARD_ALERT_BUTTON = "עדכנו אותי כשיתפנה מקום";
 
 // The places of a new group, as search picks them.
@@ -26,7 +26,7 @@ test.describe("ride alerts", () => {
 
     await page.goto(`/?origin=${origin}&destination=${destination}&date=${date}&from=07:00&to=09:00`);
     await expect(page.getByText("לא נמצאו נסיעות מתאימות")).toBeVisible();
-    await page.getByRole("button", { name: ALERT_BUTTON }).click();
+    await page.getByRole("button", { name: ALERT_BUTTON, exact: true }).click();
 
     const dialog = page.getByRole("dialog", { name: "התראה על נסיעה" });
     await expect(dialog.getByRole("button", { name: /יציאה משעה: 07:00/ })).toBeVisible();
@@ -36,7 +36,7 @@ test.describe("ride alerts", () => {
     const saved = page.getByRole("status").filter({ hasText: "ההתראה נשמרה" });
     await expect(saved).toBeVisible();
     await expect(saved).toContainText("ההתראה נשמרה, להתראות שלי");
-    await expect(saved).toContainText("נשלח לך מייל כשתהיה נסיעה מתאימה עם מקום פנוי.");
+    await expect(saved).toContainText("נשלח לך מייל כשתפורסם נסיעה מתאימה או יתפנה בה מקום.");
     const { data } = await seed.service.from("ride_alerts").select("*").eq("passenger_id", passenger.id);
     expect(data).toEqual([
       expect.objectContaining({
@@ -69,7 +69,7 @@ test.describe("ride alerts", () => {
     await expect(page.locator(".trip-card")).toHaveCount(2);
     // On the full card only, and no strip above the results.
     await expect(page.getByRole("button", { name: CARD_ALERT_BUTTON })).toHaveCount(1);
-    await expect(page.getByRole("button", { name: ALERT_BUTTON })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: ALERT_BUTTON, exact: true })).toHaveCount(0);
 
     await page.getByRole("button", { name: CARD_ALERT_BUTTON }).click();
     const dialog = page.getByRole("dialog", { name: "התראה על נסיעה" });
@@ -102,7 +102,7 @@ test.describe("ride alerts", () => {
 
     await page.goto(`/?origin=${origin}&destination=${destination}`);
     await expect(page.locator(".trip-card")).toHaveCount(1);
-    await expect(page.getByRole("button", { name: ALERT_BUTTON })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: ALERT_BUTTON, exact: true })).toHaveCount(0);
     await expect(page.getByRole("button", { name: CARD_ALERT_BUTTON })).toHaveCount(0);
   });
 
@@ -114,7 +114,7 @@ test.describe("ride alerts", () => {
 
     await page.goto(`/?origin=${origin}&destination=${destination}`);
     await expect(page.locator(".trip-card")).toHaveCount(1);
-    await expect(page.getByRole("button", { name: ALERT_BUTTON })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: ALERT_BUTTON, exact: true })).toHaveCount(0);
   });
 
   test("shows the limit of 3 alerts", async ({ page, seed, signIn }) => {
@@ -126,7 +126,7 @@ test.describe("ride alerts", () => {
     await signIn(page, passenger);
 
     await page.goto(`/?origin=${origin}&destination=${destination}`);
-    await page.getByRole("button", { name: ALERT_BUTTON }).click();
+    await page.getByRole("button", { name: ALERT_BUTTON, exact: true }).click();
     await page.getByRole("button", { name: "שמירה" }).click();
     await expect(page.locator(".form-alert")).toHaveText("הגעת למגבלה של 3 התראות פעילות — בטלי התראה קיימת כדי להוסיף חדשה.");
   });

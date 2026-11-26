@@ -6,7 +6,7 @@ import { iconProps } from "@/components/ui/icon";
 
 const ITEMS: { key: keyof Stats; label: string; icon: ReactNode }[] = [
   { key: "members", label: "משתמשות במערכת", icon: <Users {...iconProps} size={22} /> },
-  { key: "routes", label: "קווי נסיעה פעילים", icon: <Route {...iconProps} size={22} /> },
+  { key: "routes", label: "מסלולים פעילים", icon: <Route {...iconProps} size={22} /> },
 ];
 
 // The login page's stats row: site-wide totals that count up into view.

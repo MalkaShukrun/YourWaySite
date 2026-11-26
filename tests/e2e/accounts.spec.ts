@@ -15,14 +15,14 @@ test.describe("onboarding (spec A1)", () => {
     await expect(page).toHaveURL(/\/login$/);
     const dialog = page.getByRole("dialog", { name: "עוד רגע ואת בדרך" });
     await expect(dialog.getByLabel("שם מלא")).toHaveValue("רחל חדשה");
-    await expect(dialog.getByRole("button", { name: "שמירה וכניסה למערכת" })).toBeEnabled();
+    await expect(dialog.getByRole("button", { name: "כניסה" })).toBeEnabled();
 
     await dialog.getByLabel("מספר טלפון").fill("12345");
-    await dialog.getByRole("button", { name: "שמירה וכניסה למערכת" }).click();
+    await dialog.getByRole("button", { name: "כניסה" }).click();
     await expect(dialog.getByText("מספר טלפון לא תקין (לדוגמה 050-000-0000)")).toBeVisible();
 
     await dialog.getByLabel("מספר טלפון").fill("050-123-4567");
-    await dialog.getByRole("button", { name: "שמירה וכניסה למערכת" }).click();
+    await dialog.getByRole("button", { name: "כניסה" }).click();
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
@@ -34,15 +34,15 @@ test.describe("onboarding (spec A1)", () => {
     await signIn(page, await seed.user("Newbie", { phone: null }));
     await page.goto("/login");
     const dialog = page.getByRole("dialog", { name: "עוד רגע ואת בדרך" });
-    await expect(dialog.getByRole("button", { name: "שמירה וכניסה למערכת" })).toBeEnabled();
+    await expect(dialog.getByRole("button", { name: "כניסה" })).toBeEnabled();
 
     await dialog.getByRole("button", { name: "הוספת רכב" }).click();
     await dialog.getByLabel("מספר טלפון").fill("050-123-4567");
-    await dialog.getByRole("button", { name: "שמירה וכניסה למערכת" }).click();
+    await dialog.getByRole("button", { name: "כניסה" }).click();
     await expect(dialog.getByText("יש להזין סוג רכב")).toBeVisible();
 
     await dialog.getByRole("button", { name: "בלי רכב כרגע" }).click();
-    await dialog.getByRole("button", { name: "שמירה וכניסה למערכת" }).click();
+    await dialog.getByRole("button", { name: "כניסה" }).click();
     await expect(page).toHaveURL(/\/$/);
   });
 
@@ -50,9 +50,9 @@ test.describe("onboarding (spec A1)", () => {
     await signIn(page, await seed.user("NewAdmin", { phone: null, admin: true }));
     await page.goto("/login");
     const dialog = page.getByRole("dialog", { name: "עוד רגע ואת בדרך" });
-    await expect(dialog.getByRole("button", { name: "שמירה וכניסה למערכת" })).toBeEnabled();
+    await expect(dialog.getByRole("button", { name: "כניסה" })).toBeEnabled();
     await dialog.getByLabel("מספר טלפון").fill("050-123-4567");
-    await dialog.getByRole("button", { name: "שמירה וכניסה למערכת" }).click();
+    await dialog.getByRole("button", { name: "כניסה" }).click();
     await expect(page).toHaveURL(/\/admin\/groups$/);
   });
 
@@ -92,7 +92,7 @@ test.describe("daily passenger email (spec D7)", () => {
     await expect(updates).toHaveAttribute("aria-pressed", "false");
     await updates.click();
     await dailyEmailSave(page).click();
-    await expect(toast(page, "הגדרות המייל נשמרו")).toBeVisible();
+    await expect(toast(page, "ההגדרות נשמרו")).toBeVisible();
     expect(await saved()).toEqual({ daily_email_enabled: true, daily_email_updates_enabled: true, daily_email_time: "07:30:00" });
 
     await page.reload();
@@ -120,7 +120,7 @@ test.describe("emails about her rides (spec A7)", () => {
     await toggle.click();
     await expect(toggle).toHaveText("כבוי");
     await rideEmailsSave(page).click();
-    await expect(toast(page, "הגדרות ההתראות נשמרו")).toBeVisible();
+    await expect(toast(page, "ההגדרות נשמרו")).toBeVisible();
     expect(await saved()).toEqual({ ride_emails_enabled: false });
 
     await page.reload();
@@ -192,14 +192,14 @@ test.describe("modes (spec §1, A4)", () => {
     // Each mode announces its own email news.
     const announcements = page.locator(".side-announce");
     await expect(announcements).toHaveCount(1);
-    await expect(announcements).toContainText("עדכנו אותי כשנכנסת נסיעה או כשמתפנה מקום");
+    await expect(announcements).toContainText("עדכנו אותי כשתפורסם נסיעה מתאימה או יתפנה מקום");
 
     await page.getByRole("group", { name: "בחירת מצב" }).getByRole("link", { name: "אני הנהגת" }).click();
     await expect(page).toHaveURL(/\/dashboard$/);
     await expect(sideNav(page).locator(".nav-label")).toHaveText("אזור נהגת");
     for (const name of ["לוח נהגת שבועי", "המסלולים שלי"]) await expect(sideNav(page).getByRole("link", { name })).toBeVisible();
     await expect(announcements).toHaveCount(1);
-    await expect(announcements).toContainText("קבלי מייל יומי על הנוסעות שנרשמות לנסיעה שלך");
+    await expect(announcements).toContainText("מייל יומי עם רשימת הנוסעות למחר");
 
     await page.getByRole("group", { name: "בחירת מצב" }).getByRole("link", { name: "אני הנוסעת" }).click();
     await expect(page).toHaveURL(/\/$/);

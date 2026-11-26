@@ -80,7 +80,7 @@ export function OnboardingModal({ defaultName }: Props) {
 
         {serverError && <p className="auth-error" role="alert">{serverError}</p>}
         <button type="submit" className="btn btn-primary full-button" disabled={!hydrated || pending}>
-          {pending ? "שומר…" : "שמירה וכניסה למערכת"}
+          {pending ? "שומר…" : "כניסה"}
         </button>
         {/* Signed in with the wrong Google account? Back to the login screen. */}
         <button type="button" className="btn btn-ghost full-button onboarding-switch" disabled={pending} onClick={() => startTransition(() => signOut())}>

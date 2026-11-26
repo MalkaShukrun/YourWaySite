@@ -47,9 +47,9 @@ describe("routeSchema", () => {
     });
 
     it("asks a recurring route for its start date, and a one-time ride for its date", () => {
-      expect(issues({ rideDate: "" })).toEqual(["יש לבחור תאריך התחלה"]);
+      expect(issues({ rideDate: "" })).toEqual(["יש לבחור תאריך"]);
       expect(issues({ kind: "one_time", weekdays: [], rideDate: "" })).toEqual(["יש לבחור תאריך"]);
-      expect(issues({ rideDate: "1.11.2026" })).toEqual(["יש לבחור תאריך התחלה"]);
+      expect(issues({ rideDate: "1.11.2026" })).toEqual(["יש לבחור תאריך"]);
     });
   });
 

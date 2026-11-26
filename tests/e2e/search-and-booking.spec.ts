@@ -14,7 +14,7 @@ async function namedGroup(seed: Seed, options: { active?: boolean } = {}) {
 }
 
 const card = (page: Page, label: string) => page.locator(".trip-card").filter({ hasText: label.split(" ← ")[0] });
-const bookButton = (page: Page) => page.getByRole("button", { name: /^אישור הרשמה/ });
+const bookButton = (page: Page) => page.getByRole("button", { name: /^הרשמה/ });
 
 async function openRide(page: Page, routeId: string, date: string) {
   await page.goto(`/ride/${routeId}?date=${date}`);
@@ -277,7 +277,7 @@ test("recent searches: kept when she presses search or smart search's arrow, off
   await expect(options.first().locator(".recent-detail.date")).toContainText(`, ${Number(date.slice(8))} ב`);
 
   // Leaving the box hides it.
-  await page.getByRole("heading", { name: "בואי נמצא לך טרמפ" }).click();
+  await page.getByRole("heading", { name: "בואי נמצא לך נסיעה" }).click();
   await expect(recentMenu(page)).toHaveCount(0);
 
   // A pick fills the filters, like smart search, and closes the list — no search yet.
@@ -312,7 +312,7 @@ test("recent searches: kept when she presses search or smart search's arrow, off
   // Writing puts it away; it's back on the next focus, with the sentence still in the box.
   await box.fill("שלום");
   await expect(recentMenu(page)).toHaveCount(0);
-  await page.getByRole("heading", { name: "בואי נמצא לך טרמפ" }).click();
+  await page.getByRole("heading", { name: "בואי נמצא לך נסיעה" }).click();
   await box.click();
   await expect(box).toHaveValue("שלום");
   await expect(recentMenu(page)).toBeVisible();
@@ -338,7 +338,7 @@ test.describe("the ride page (spec C2)", () => {
     await openRide(page, route.id, date);
     const driverCard = page.locator(".driver-info-card");
     await expect(driverCard).toContainText("דנה נהגת");
-    await expect(driverCard).toContainText("הטלפון והדוא״ל של הנהגת יוצגו אחרי ההרשמה לנסיעה.");
+    await expect(driverCard).toContainText("פרטי הקשר יוצגו אחרי ההרשמה.");
     await expect(driverCard).not.toContainText(driver.phone!);
     await expect(page.locator(".vehicle-chip")).toContainText("יונדאי לבן");
     await expect(page.locator(".detail-notes")).toContainText("מחכה 5 דקות");
@@ -409,7 +409,7 @@ test.describe("booking (spec C3, C4)", () => {
     await expect(page.getByRole("heading", { name: "בחרי ימים" })).toBeVisible();
     await page.locator(".trip-dates button").filter({ hasText: shortDate(d2) }).click();
     await expect(page.locator(".booking-summary strong")).toHaveText("₪20");
-    await page.getByRole("button", { name: "אישור הרשמה ל־2 ימים" }).click();
+    await page.getByRole("button", { name: "הרשמה ל־2 ימים" }).click();
 
     await expect(page).toHaveURL(/\/my-rides\?booked=1$/);
     await expect(page.locator(".activity-row")).toHaveCount(2);
@@ -429,7 +429,7 @@ test.describe("booking (spec C3, C4)", () => {
     await page.locator(".trip-dates button").filter({ hasText: shortDate(d2) }).click();
     // Someone takes d2's only seat while the page is open.
     await seed.book(await seed.user("Faster"), route, d2);
-    await page.getByRole("button", { name: "אישור הרשמה ל־2 ימים" }).click();
+    await page.getByRole("button", { name: "הרשמה ל־2 ימים" }).click();
 
     await expect(page.locator(".auth-error")).toHaveText(
       `נרשמת ל־1 מתוך 2 הימים. לא נרשמת ל: ${shortDate(d2)} — הנסיעה התמלאה — אין יותר מקומות פנויים.`,

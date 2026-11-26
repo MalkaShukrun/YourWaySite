@@ -7,7 +7,7 @@ import { carIconProps, iconProps } from "@/components/ui/icon";
 export function AdminStatsSection({ stats }: { stats: AdminStats }) {
   return (
     <div className="admin-stats">
-      <StatCard icon={<Users {...iconProps} size={20} />} value={stats.passengers_today} label="נוסעות נוסעות היום" tone="peach" />
+      <StatCard icon={<Users {...iconProps} size={20} />} value={stats.passengers_today} label="נוסעות שיוצאות היום" tone="peach" />
       <StatCard icon={<Car {...carIconProps} size={20} />} value={stats.rides_today} label="נסיעות יוצאות היום" tone="green" />
       <StatCard icon={<History {...iconProps} size={20} />} value={stats.rides_departed} label="נסיעות שיצאו עם נוסעות" tone="blue" />
       <StatCard icon={<CalendarDays {...iconProps} size={20} />} value={stats.passengers_departed} label="נוסעות שנסעו עד היום" tone="peach" />

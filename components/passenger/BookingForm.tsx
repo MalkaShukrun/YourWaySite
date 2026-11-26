@@ -50,8 +50,8 @@ export function BookingForm({ routeId, date, price, stops, canBook, blockedReaso
   const buttonLabel = pending
     ? "רושם…"
     : pickDays
-      ? dates.length === 0 ? "בחרי לפחות יום אחד" : dates.length > 1 ? `אישור הרשמה ל־${dates.length} ימים` : "אישור הרשמה לנסיעה"
-      : canBook ? "אישור הרשמה לנסיעה" : blockedReason;
+      ? dates.length === 0 ? "בחרי לפחות יום אחד" : dates.length > 1 ? `הרשמה ל־${dates.length} ימים` : "הרשמה לנסיעה"
+      : canBook ? "הרשמה לנסיעה" : blockedReason;
 
   return (
     <>
@@ -59,7 +59,7 @@ export function BookingForm({ routeId, date, price, stops, canBook, blockedReaso
         <section className="booking-card ride-days">
           <div className="booking-step">
             <span className="step-number"><CalendarDays {...iconProps} size={16} /></span>
-            <div><h2>בחרי ימים</h2><p>נסיעה קבועה — אפשר לסמן כמה ימים ולהירשם לכולם יחד</p></div>
+            <div><h2>בחרי ימים</h2><p>אפשר לסמן כמה ימים</p></div>
           </div>
           <DayOptions days={days} selected={dates} booked={bookedDates} onToggle={toggleDate} disabled={ownRide} />
         </section>
@@ -85,7 +85,7 @@ export function BookingForm({ routeId, date, price, stops, canBook, blockedReaso
               </span>
               <strong>{formatPrice(price * Math.max(dates.length, 1))}</strong>
             </div>
-            <p className="booking-note">החיוב מופיע אחרי היציאה, אלא אם הנסיעה בוטלה.</p>
+            <p className="booking-note">הנסיעה תופיע במעקב התשלומים אחרי היציאה.</p>
           </div>
           {ownRide ? (
             <div className="booked-link">
@@ -113,7 +113,7 @@ export function BookingForm({ routeId, date, price, stops, canBook, blockedReaso
       {stops.some(isPlaced) && (
         <section className="panel map-panel">
           <div className="panel-title">
-            <div><h2>המסלול והתחנות</h2><span>תחנות האיסוף וההורדה שסומנו על ידי הנהגת</span></div>
+            <div><h2>המסלול והתחנות</h2><span>תחנות שהגדירה הנהגת</span></div>
           </div>
           <LazyRouteMap stops={stops} selectedIds={[pickupId, dropoffId]} />
         </section>

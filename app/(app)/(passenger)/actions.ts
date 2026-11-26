@@ -18,7 +18,7 @@ const ERRORS: Record<string, string> = {
   INVALID_STOP: "יש לבחור תחנת איסוף ותחנת הורדה מהרשימה.",
   OWN_RIDE: "אי אפשר להירשם לנסיעה שאת נוהגת בה.",
   BOOKING_NOT_FOUND: "ההרשמה לא נמצאה או שכבר בוטלה.",
-  RIDE_DEPARTED: "הנסיעה כבר יצאה ולא ניתן לבטל אותה.",
+  RIDE_DEPARTED: "הנסיעה כבר יצאה — אי אפשר לבטל.",
 };
 
 const messageFor = (error: { message: string }) => messageForCode(error, ERRORS);
@@ -128,7 +128,7 @@ export async function saveRecentSearch(input: z.infer<typeof recentSearchSchema>
 const ALERT_ERRORS: Record<string, string> = {
   ALERT_LIMIT: "הגעת למגבלה של 3 התראות פעילות — בטלי התראה קיימת כדי להוסיף חדשה.",
   ALERT_DUPLICATE: "כבר יש לך התראה עם אותם מקומות, תאריכים ושעות.",
-  INVALID_ALERT: "יש לבחור מאיפה ולאן, ותאריכים מהיום והלאה — תאריך ההתחלה לא אחרי תאריך הסיום.",
+  INVALID_ALERT: "יש לבחור מקום יציאה, יעד ותאריכים תקינים.",
 };
 
 const alertSchema = z

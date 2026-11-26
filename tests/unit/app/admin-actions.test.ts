@@ -14,14 +14,24 @@ const { requireAdmin } = await import("@/lib/auth/session");
 
 const group = { originId: ID.place, destinationId: ID.place2 };
 const saved = { origin_place_id: ID.place, destination_place_id: ID.place2 };
+const reversed = { origin_place_id: ID.place2, destination_place_id: ID.place };
 
 beforeEach(() => sb.mock.reset());
 
 describe("createGroup", () => {
-  it("saves the two places and refreshes", async () => {
-    expect(await createGroup(group)).toEqual({});
-    expect(sb.mock.callsOn("ride_groups")).toEqual([["insert", [saved]]]);
+  it("adds both directions in one insert, skipping one that exists, and refreshes", async () => {
+    sb.mock.onTable("ride_groups", { data: [{ id: "a" }, { id: "b" }] });
+    expect(await createGroup(group)).toEqual({ created: 2 });
+    expect(sb.mock.callsOn("ride_groups")).toEqual([
+      ["upsert", [[saved, reversed], { onConflict: "origin_place_id,destination_place_id", ignoreDuplicates: true }]],
+      ["select", ["id"]],
+    ]);
     expect(refresh).toHaveBeenCalledOnce();
+  });
+
+  it("says when only the missing direction was added", async () => {
+    sb.mock.onTable("ride_groups", { data: [{ id: "b" }] });
+    expect(await createGroup(group)).toEqual({ created: 1 });
   });
 
   it("is for admins only", async () => {
@@ -29,7 +39,13 @@ describe("createGroup", () => {
     expect(requireAdmin).toHaveBeenCalledOnce();
   });
 
-  it("refuses a duplicate (spec H1)", async () => {
+  it("refuses a group that exists in both directions (spec H1)", async () => {
+    sb.mock.onTable("ride_groups", { data: [] });
+    expect(await createGroup(group)).toEqual({ error: "הקבוצה הזו כבר קיימת." });
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it("refuses a duplicate the database reports", async () => {
     sb.mock.onTable("ride_groups", { error: { message: "duplicate key", code: "23505" } });
     expect(await createGroup(group)).toEqual({ error: "הקבוצה הזו כבר קיימת." });
   });

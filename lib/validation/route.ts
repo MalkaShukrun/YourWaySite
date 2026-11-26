@@ -59,7 +59,7 @@ export const routeSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["rideDate"],
-        message: v.kind === "recurring" ? "יש לבחור תאריך התחלה" : "יש לבחור תאריך",
+        message: v.kind === "recurring" ? "יש לבחור תאריך" : "יש לבחור תאריך",
       });
     }
     requireBothKinds(v.stops, ctx);

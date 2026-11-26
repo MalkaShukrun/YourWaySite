@@ -76,7 +76,7 @@ export function DailyEmailForm({ email, defaults }: Props) {
               {updates ? "פעיל" : "כבוי"}
             </button>
             <p className="daily-email-note">
-              אם נוסעת נרשמת או מבטלת אחרי שהמייל היומי נשלח, תקבלי מייל נוסף עם הרשימה המעודכנת. נוסעות שהוספת בעצמך מופיעות ברשימה, אבל לא שולחות מייל עדכון לאחר שעת השליחה.
+              אחרי שהמייל היומי נשלח — אם נוסעת נרשמת או מבטלת, תקבלי מייל עדכון. נוסעות שהוספת בעצמך לא מפעילות מייל עדכון.
             </p>
           </div>
         </div>
@@ -86,7 +86,7 @@ export function DailyEmailForm({ email, defaults }: Props) {
       <div className="profile-save">
         <button type="submit" className="btn btn-primary" disabled={!hydrated || pending}>{pending ? "שומר..." : "שמירה"}</button>
       </div>
-      <Toast message={saved ? "הגדרות המייל נשמרו" : ""} id={saved} />
+      <Toast message={saved ? "ההגדרות נשמרו" : ""} id={saved} />
     </form>
   );
 }

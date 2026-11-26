@@ -11,7 +11,7 @@ export function UpcomingPassengersSection({ days }: { days: UpcomingDay[] }) {
   const passengers = days.reduce((sum, d) => sum + d.passengers, 0);
   const rides = days.reduce((sum, d) => sum + d.rides, 0);
   return (
-    <CollapsiblePanel title="נוסעות בשבוע הקרוב" subtitle="כמה נוסעות נרשמו לנסיעות בכל אחד מ־7 הימים הקרובים">
+    <CollapsiblePanel title="נוסעות בשבוע הקרוב" subtitle="נוסעות רשומות לכל יום מ־7 הימים הקרובים">
       <p className="upcoming-total">
         סה״כ <strong>{passengers}</strong> נוסעות ב־<strong>{rides}</strong> נסיעות
       </p>

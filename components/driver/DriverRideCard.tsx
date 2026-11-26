@@ -55,7 +55,7 @@ export function DriverRideCard({ ride, date, departed = false, open = false }: {
         {ride.passengers.length === 0 ? (
           <p className="passenger-empty">
             {canAdd
-              ? "עדיין אין נוסעות רשומות. אפשר לשריין מקום למטה."
+              ? "עדיין אין נוסעות. אפשר להוסיף ידנית למטה."
               : "עדיין אין נוסעות רשומות לנסיעה הזו."}
           </p>
         ) : (

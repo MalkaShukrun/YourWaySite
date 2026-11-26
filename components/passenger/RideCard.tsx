@@ -59,7 +59,7 @@ export function RideCard({ rides, own = false, groups, today }: { rides: RideSum
             </span>
           </p>
         )}
-        <div className="trip-price"><span>מחיר שקבעה הנהגת</span><b>{formatPrice(first.price)}</b></div>
+        <div className="trip-price"><span>מחיר</span><b>{formatPrice(first.price)}</b></div>
       </div>
       <div className="trip-footer">
         <div className="seats">

@@ -17,7 +17,7 @@ export async function completeProfile(values: ProfileValues) {
 
   const parsed = profileSchema.safeParse(values);
   if (!parsed.success) {
-    return { error: "חלק מהפרטים אינם תקינים, נא לבדוק ולנסות שוב." };
+    return { error: "חלק מהפרטים לא תקינים." };
   }
 
   const v = parsed.data;

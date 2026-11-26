@@ -214,6 +214,9 @@ a.nav-item { text-decoration: none; }
 .group-row .row-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .group-row > .confirm-inline { flex-wrap: wrap; }
 .group-dialog-fields { padding: 20px 0 16px; }
+/* The place list opens past the bottom of this short dialog: let it show
+   instead of being cut off by the card's scroll box. */
+.modal-card:has(.group-dialog-fields .dropdown.open) { overflow: visible; }
 @media (max-width: 780px) { .group-row > .confirm-inline { grid-column: 2; } }
 
 /* Admin — daily charts. Bars grow from the baseline, oldest day on the left;

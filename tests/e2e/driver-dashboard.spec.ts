@@ -24,7 +24,7 @@ async function openCard(card: Locator) {
 }
 
 async function addGuest(page: Page, card: Locator, name: string, phone: string, pickup?: string) {
-  await card.getByRole("button", { name: "שריון מקום לנוסעת" }).click();
+  await card.getByRole("button", { name: "הוספת נוסעת" }).click();
   const form = page.locator("form.add-passenger");
   await form.getByLabel("שם מלא").fill(name);
   await form.getByLabel("טלפון").fill(phone);
@@ -133,7 +133,7 @@ test.describe("cancelling a date (spec D2)", () => {
     await expect(card.locator(".status-pill")).toHaveText("בוטלה לתאריך זה");
     await expect(card.getByRole("button", { name: "ביטול הנסיעה לתאריך זה בלבד" })).toHaveCount(0);
     await openCard(card);
-    await expect(card.getByRole("button", { name: "שריון מקום לנוסעת" })).toHaveCount(0);
+    await expect(card.getByRole("button", { name: "הוספת נוסעת" })).toHaveCount(0);
 
     await page.reload();
     await expect(rideCard(page, label).locator(".status-pill")).toHaveText("בוטלה לתאריך זה");
@@ -165,12 +165,12 @@ test.describe("passengers added by hand (spec D4–D6)", () => {
     const card = rideCard(page, label);
     await openCard(card);
     // An empty list points her to the button; the line above it waits for a passenger.
-    await expect(card.locator(".passenger-empty")).toHaveText("עדיין אין נוסעות רשומות. אפשר לשריין מקום למטה.");
+    await expect(card.locator(".passenger-empty")).toHaveText("עדיין אין נוסעות. אפשר להוסיף ידנית למטה.");
     await expect(card.locator(".passenger-add-hint")).toHaveCount(0);
 
     await addGuest(page, card, "שרה אורחת", "052-765-4321");
-    await expect(toast(page, "המקום של שרה אורחת שוריין · נשארו 2 מקומות פנויים")).toBeVisible();
-    await expect(card.locator(".passenger-add-hint")).toHaveText("סיכמת בטלפון? שרייני כאן מקום.");
+    await expect(toast(page, "שרה אורחת נוספה לנסיעה · נשארו 2 מקומות פנויים")).toBeVisible();
+    await expect(card.locator(".passenger-add-hint")).toHaveText("תיאמת בטלפון? הוסיפי כאן.");
     const row = card.locator(".passenger-row").filter({ hasText: "שרה אורחת" });
     await expect(row).toContainText("נוספה על ידך");
     await expect(row.getByRole("link", { name: "חיוג אל שרה אורחת" })).toHaveText("052-765-4321");
@@ -212,7 +212,7 @@ test.describe("passengers added by hand (spec D4–D6)", () => {
     const card = rideCard(page, label);
     await openCard(card);
     await addGuest(page, card, "שרה", "052-765-4321", "Pickup C");
-    await expect(toast(page, "המקום של שרה שוריין")).toBeVisible();
+    await expect(toast(page, "שרה נוספה לנסיעה")).toBeVisible();
     await page.reload();
     await openCard(rideCard(page, label));
     await expect(rideCard(page, label).locator(".daily-stops")).toContainText("Pickup C");
@@ -229,7 +229,7 @@ test.describe("passengers added by hand (spec D4–D6)", () => {
 
     // Written differently, the same digits.
     const form = await addGuest(page, card, "שרה שנייה", "0527654321");
-    const question = form.getByText("הטלפון הזה כבר רשום (שרה ראשונה). להחליף?");
+    const question = form.getByText("כבר יש נוסעת עם הטלפון הזה (שרה ראשונה). להחליף?");
     await expect(question).toBeVisible();
 
     // "ביטול" keeps the form as typed, and saves nothing.
@@ -282,10 +282,10 @@ test.describe("passengers added by hand (spec D4–D6)", () => {
     const card = rideCard(page, label);
     await openCard(card);
     await addGuest(page, card, "שרה", "052-765-4321");
-    await expect(toast(page, "המקום של שרה שוריין · אין מקומות פנויים")).toBeVisible();
+    await expect(toast(page, "שרה נוספה לנסיעה · אין מקומות פנויים")).toBeVisible();
     await expect(card.locator(".passenger-row")).toHaveCount(1);
     await expect(card.locator(".ride-chip.full")).toHaveText("אין מקומות פנויים");
-    await expect(card.getByRole("button", { name: "שריון מקום לנוסעת" })).toHaveCount(0);
+    await expect(card.getByRole("button", { name: "הוספת נוסעת" })).toHaveCount(0);
   });
 
   // Only the driver ever sees a guest (spec D4): other passengers see one seat fewer.

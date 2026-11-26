@@ -46,11 +46,11 @@ const DRIVER_MESSAGES: [string, string][] = [
   ["INVALID_PASSENGER", "יש להזין שם וטלפון."],
   ["INVALID_STOP", "התחנה שנבחרה אינה חלק מהמסלול."],
   ["BOOKING_NOT_FOUND", "ההרשמה לא נמצאה."],
-  ["ROUTE_LOCKED", "כבר נרשמו נוסעות למסלול, ולכן אי אפשר לשנות את פרטיו — אפשר רק לערוך את ההערה ואת התחנות שאף אחת לא נרשמה אליהן."],
+  ["ROUTE_LOCKED", "כבר נרשמו נוסעות — אפשר לערוך רק את ההערה ותחנות שאף אחת לא נרשמה אליהן."],
   ["STOP_IN_USE", "תחנה זו כבר תפוסה. רענני את הדף ונסי שוב."],
-  ["STOP_NOT_FOUND", "אחת התחנות כבר לא קיימת במסלול. טעני את הדף מחדש ונסי שוב."],
+  ["STOP_NOT_FOUND", "אחת התחנות כבר לא קיימת במסלול. רענני את הדף ונסי שוב."],
   ["RIDE_CANCELLED", "הנסיעה בוטלה לתאריך הזה, ואי אפשר להחזיר אותה."],
-  ["RIDE_DEPARTED", "הנסיעה כבר יצאה ולא ניתן לבטל אותה."],
+  ["RIDE_DEPARTED", "הנסיעה כבר יצאה — אי אפשר לבטל."],
   ["RIDE_PAST", "הנסיעה כבר התקיימה ונשמרת בהיסטוריה — אי אפשר להסיר אותה."],
 ];
 
@@ -128,7 +128,7 @@ describe("saveRoute (edit a route nobody has booked)", () => {
   it("shows the lock once a passenger has booked it meanwhile", async () => {
     sb.mock.onRpc("save_route", { error: { message: "P0001: ROUTE_LOCKED" } });
     expect(await runAction(() => saveRoute(values(), ID.route))).toEqual({
-      error: "כבר נרשמו נוסעות למסלול, ולכן אי אפשר לשנות את פרטיו — אפשר רק לערוך את ההערה ואת התחנות שאף אחת לא נרשמה אליהן.",
+      error: "כבר נרשמו נוסעות — אפשר לערוך רק את ההערה ותחנות שאף אחת לא נרשמה אליהן.",
     });
   });
 });
@@ -210,7 +210,7 @@ describe("cancelRideForDate (spec D2)", () => {
 
   it("refuses after departure (spec D3)", async () => {
     sb.mock.onTable("ride_exceptions", { error: { message: "P0001: RIDE_DEPARTED" } });
-    expect(await cancelRideForDate(ID.route, DATE)).toEqual({ error: "הנסיעה כבר יצאה ולא ניתן לבטל אותה." });
+    expect(await cancelRideForDate(ID.route, DATE)).toEqual({ error: "הנסיעה כבר יצאה — אי אפשר לבטל." });
   });
 
   it.each([

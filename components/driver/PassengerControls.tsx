@@ -43,7 +43,7 @@ export function AddPassengerForm({ routeId, date, stops, seatsLeft, hint }: Ride
       setExistingGuest(null);
       if (result.error) return setError(result.error);
       const name = values.name.trim();
-      setToast((t) => ({ id: t.id + 1, message: replace ? `ההרשמה של ${name} עודכנה` : `המקום של ${name} שוריין · ${seatsLeftText(seatsLeft - 1)}` }));
+      setToast((t) => ({ id: t.id + 1, message: replace ? `ההרשמה של ${name} עודכנה` : `${name} נוספה לנסיעה · ${seatsLeftText(seatsLeft - 1)}` }));
       setValues(empty);
       setOpen(false);
     });
@@ -54,9 +54,9 @@ export function AddPassengerForm({ routeId, date, stops, seatsLeft, hint }: Ride
   if (!open) {
     return (
       <div className="passenger-add">
-        {hint && <p className="passenger-add-hint">סיכמת בטלפון? שרייני כאן מקום.</p>}
+        {hint && <p className="passenger-add-hint">תיאמת בטלפון? הוסיפי כאן.</p>}
         <button className="btn btn-secondary" onClick={() => setOpen(true)}>
-          <Plus {...iconProps} size={18} /> שריון מקום לנוסעת
+          <Plus {...iconProps} size={18} /> הוספת נוסעת
         </button>
         <Toast message={toast.message} id={toast.id} />
       </div>
@@ -92,7 +92,7 @@ export function AddPassengerForm({ routeId, date, stops, seatsLeft, hint }: Ride
         {existingGuest !== null ? (
           <div role="alert">
             <ConfirmInline
-              question={`הטלפון הזה כבר רשום${existingGuest ? ` (${existingGuest})` : ""}. להחליף?`}
+              question={`כבר יש נוסעת עם הטלפון הזה${existingGuest ? ` (${existingGuest})` : ""}. להחליף?`}
               confirmLabel="כן, להחליף"
               pendingLabel="מחליף..."
               pending={pending}

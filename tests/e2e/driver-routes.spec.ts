@@ -174,7 +174,7 @@ test.describe("editing a published route (spec B4)", () => {
     await signIn(page, driver);
 
     await openForm(page, `/routes/${route.id}`, "שמירה");
-    await expect(page.getByText("עדיין לא נרשמו נוסעות למסלול")).toBeVisible();
+    await expect(page.getByText("עדיין לא נרשמו נוסעות — אפשר לשנות הכול")).toBeVisible();
     await choose(page, "קבוצת נסיעה", label);
     await page.getByLabel("מקומות פנויים").fill("5");
     await page.getByLabel("מחיר לכל נוסעת").fill("12");

@@ -11,7 +11,7 @@ export default function AppError({ retry }: { error: unknown; retry: () => void 
         <span>
           {process.env.NODE_ENV === "development"
             ? "ייתכן שבסיס הנתונים עדיין לא הוגדר (הריצי את קבצי ה־SQL שב־supabase/migrations)."
-            : <>משהו השתבש אצלנו. נסי שוב בעוד רגע, ואם זה חוזר כתבי לנו ל־<a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.</>}
+            : <>משהו השתבש. נסי שוב, ואם זה חוזר — כתבי לנו ל־<a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.</>}
         </span>
         <button className="btn btn-secondary" onClick={() => retry()}>ניסיון חוזר</button>
       </section>

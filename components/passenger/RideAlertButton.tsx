@@ -50,7 +50,7 @@ export function RideAlertButton({ onCard = false, groups, initial, today }: { on
     event.preventDefault();
     if (!fields.origins.length || !fields.destinations.length) return setError("יש לבחור מאיפה ולאן.");
     if (fields.startDate && fields.endDate && fields.startDate > fields.endDate) {
-      return setError("תאריך ההתחלה צריך להיות לפני תאריך הסיום או באותו יום.");
+      return setError("תאריך ההתחלה לא יכול להיות אחרי תאריך הסיום.");
     }
     startTransition(async () => {
       setError("");
@@ -80,7 +80,7 @@ export function RideAlertButton({ onCard = false, groups, initial, today }: { on
               להתראות שלי <ArrowLeft {...iconProps} size={onCard ? 14 : 16} />
             </Link>
           </span>
-          {!onCard && <small>נשלח לך מייל כשתהיה נסיעה מתאימה עם מקום פנוי.</small>}
+          {!onCard && <small>נשלח לך מייל כשתפורסם נסיעה מתאימה או יתפנה בה מקום.</small>}
         </span>
       </div>
     );
@@ -98,14 +98,14 @@ export function RideAlertButton({ onCard = false, groups, initial, today }: { on
         title={onCard ? cardName : undefined}
         onClick={openForm}
       >
-        <BellRing {...iconProps} size={18} /> {onCard ? "עדכנו אותי" : "עדכנו אותי כשתהיה נסיעה"}
+        <BellRing {...iconProps} size={18} /> {onCard ? "עדכנו אותי" : "עדכנו אותי"}
       </button>
       {/* Portaled to <body>, like the other modal forms. */}
       {open && createPortal(
         <ModalForm
           icon={<BellRing {...iconProps} size={20} />}
           title="התראה על נסיעה"
-          description="נשלח לך מייל כשנהגת תפרסם נסיעה חדשה שמתאימה, או כשיתפנה מקום בנסיעה מלאה שמתאימה. ההתראה בתוקף עד סוף תאריך הסיום, או 7 ימים בלי תאריכים."
+          description="מייל כשתפורסם נסיעה מתאימה או יתפנה בה מקום. תוקף: עד תאריך הסיום, או 7 ימים."
           error={error}
           submitLabel={pending ? "שומר…" : "שמירה"}
           submitDisabled={pending}

@@ -46,7 +46,7 @@ test("the driver gets tomorrow's passenger by email", async ({ browser, page, se
   await passengerPage.goto(`/?group=${groupId}&date=${tomorrow}`);
   await passengerPage.locator(".trip-card").filter({ hasText: origin }).getByRole("link", { name: /לפרטים והרשמה/ }).click();
   await expect(passengerPage).toHaveURL(new RegExp(`date=${tomorrow}$`));
-  await passengerPage.getByRole("button", { name: /^אישור הרשמה/ }).click();
+  await passengerPage.getByRole("button", { name: /^הרשמה/ }).click();
   await expect(passengerPage).toHaveURL(/\/my-rides\?booked=1$/);
   await passengerPage.context().close();
 
@@ -55,7 +55,7 @@ test("the driver gets tomorrow's passenger by email", async ({ browser, page, se
   await page.getByRole("button", { name: "כבוי", exact: true }).click();
   await chooseTime(page, "שעת השליחה", "00:00");
   await dailyEmailSave(page).click();
-  await expect(toast(page, "הגדרות המייל נשמרו")).toBeVisible();
+  await expect(toast(page, "ההגדרות נשמרו")).toBeVisible();
 
   // Her address comes from auth.users; the update refreshes the profile's copy.
   const moved = await seed.service.auth.admin.updateUserById(driver.id, { email: to, email_confirm: true });

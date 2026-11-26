@@ -91,7 +91,7 @@ describe("completeProfile (onboarding, spec A1)", () => {
 
   it("refuses invalid details without saving", async () => {
     expect(await runAction(() => completeProfile(values({ phone: "123" })))).toEqual({
-      error: "חלק מהפרטים אינם תקינים, נא לבדוק ולנסות שוב.",
+      error: "חלק מהפרטים לא תקינים.",
     });
     expect(sb.mock.client.from).not.toHaveBeenCalled();
   });

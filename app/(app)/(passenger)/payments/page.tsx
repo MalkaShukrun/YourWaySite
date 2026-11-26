@@ -52,7 +52,7 @@ async function Payments({ searchParams }: Pick<PageProps<"/payments">, "searchPa
     <>
       <section className="panel">
         <div className="panel-title">
-          <div><h2>סיכום תשלומים אישי</h2><span>נסיעה נכנסת לכאן אחרי שעת היציאה · הסימון אישי ואינו נשלח לנהגת</span></div>
+          <div><h2>סיכום תשלומים אישי</h2><span>נסיעות מופיעות אחרי שעת היציאה. הסימון אישי בלבד.</span></div>
           <MonthFilter months={months} value={month} />
         </div>
         <div className="payment-summary">

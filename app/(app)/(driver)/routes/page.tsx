@@ -20,7 +20,7 @@ export default function DriverRoutesPage({ searchParams }: PageProps<"/routes">)
   return (
     <main className="page-content">
       <div className="welcome">
-        <div><p>הנסיעות הקבועות שלך</p><h1>המסלולים שלי</h1></div>
+        <div><p>הנסיעות שלך</p><h1>המסלולים שלי</h1></div>
         <Link className="btn btn-primary" href="/routes/new"><Plus {...iconProps} size={20} /> הוספת מסלול</Link>
       </div>
       <Suspense fallback={<div className="routes-grid" aria-busy="true" />}>

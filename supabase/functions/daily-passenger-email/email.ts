@@ -78,10 +78,10 @@ function updateIntro(rides: DailyRide[], date: string) {
   const joined = passengers.some((p) => p.is_new);
   const cancelled = passengers.some((p) => p.is_cancelled);
   if (joined && cancelled) {
-    return `היו שינויים בנסיעות שלך ב${date}. זו הרשימה המעודכנת, ומסומנות בה הנוסעות החדשות והנוסעות שביטלו:`;
+    return `היו שינויים ב${date}. הרשימה המעודכנת — חדשות וביטולים מסומנים:`;
   }
-  if (cancelled) return `נוסעות ביטלו את ההרשמה לנסיעות שלך ב${date}. זו הרשימה המעודכנת, והנוסעות שביטלו מסומנות:`;
-  return `נוספו נוסעות לנסיעות שלך ב${date}. זו הרשימה המעודכנת, והנוסעות החדשות מסומנות:`;
+  if (cancelled) return `ביטולים ב${date}. הרשימה המעודכנת — הביטולים מסומנים:`;
+  return `נוספו נוסעות ב${date}. הרשימה המעודכנת — החדשות מסומנות:`;
 }
 
 // siteUrl is the site's public address, for the link to the profile; optional.

@@ -33,7 +33,7 @@ test.describe("sign-in page", () => {
   test("shows the site's totals as whole numbers", async ({ page }) => {
     await page.goto("/login");
     const stats = page.getByRole("region", { name: "בדרך שלך במספרים" });
-    for (const label of ["משתמשות במערכת", "קווי נסיעה פעילים"]) {
+    for (const label of ["משתמשות במערכת", "מסלולים פעילים"]) {
       await expect(stats.getByRole("listitem").filter({ hasText: label }).locator("strong")).toHaveText(/^[\d,]+$/);
     }
   });

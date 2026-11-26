@@ -18,7 +18,7 @@ export function GroupStats({ groups, users }: { groups: AdminGroup[]; users: num
   return (
     <div className="admin-stats">
       <StatCard icon={<UserCheck {...iconProps} size={20} />} value={users} label="משתמשות במערכת" tone="purple" />
-      <StatCard icon={<Car {...carIconProps} size={20} />} value={active.routes} label="קווי נסיעה פעילים" tone="blue" />
+      <StatCard icon={<Car {...carIconProps} size={20} />} value={active.routes} label="מסלולים פעילים" tone="blue" />
       <StatCard icon={<Users {...iconProps} size={20} />} value={active.drivers} label="נהגות עם מסלולים" tone="purple" />
       <StatCard icon={<Route {...iconProps} size={20} />} value={groups.filter((g) => g.is_active).length} label="קבוצות פעילות" tone="green" />
     </div>
@@ -31,7 +31,7 @@ export function GroupsSection({ groups, places }: { groups: AdminGroup[]; places
     <>
       <CollapsiblePanel title="כל הקבוצות" subtitle="רק מנהלת יכולה ליצור, לערוך או למחוק קבוצות" action={<GroupDialog places={places} />}>
         {groups.length === 0 ? (
-          <div className="empty-state"><strong>עדיין אין קבוצות</strong><span>צרי את הקבוצה הראשונה — מוצא ויעד מרשימת המקומות.</span></div>
+          <div className="empty-state"><strong>עדיין אין קבוצות</strong><span>צרי את הקבוצה הראשונה — בחרי מוצא ויעד.</span></div>
         ) : (
           groups.map((group) => {
             const activeRouteCount = group.routes.filter((r) => r.is_active).length;

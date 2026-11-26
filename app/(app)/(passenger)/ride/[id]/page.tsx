@@ -75,7 +75,7 @@ async function RideDetailsView({ params, searchParams }: PageProps<"/ride/[id]">
                 <a href={`mailto:${ride.driver_email}`}>{ride.driver_email}</a>
               </>
             ) : (
-              <small>הטלפון והדוא״ל של הנהגת יוצגו אחרי ההרשמה לנסיעה.</small>
+              <small>פרטי הקשר יוצגו אחרי ההרשמה.</small>
             )}
           </div>
         </section>

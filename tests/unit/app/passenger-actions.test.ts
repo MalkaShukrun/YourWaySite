@@ -23,7 +23,7 @@ const PASSENGER_MESSAGES: [string, string][] = [
   ["INVALID_STOP", "יש לבחור תחנת איסוף ותחנת הורדה מהרשימה."],
   ["OWN_RIDE", "אי אפשר להירשם לנסיעה שאת נוהגת בה."],
   ["BOOKING_NOT_FOUND", "ההרשמה לא נמצאה או שכבר בוטלה."],
-  ["RIDE_DEPARTED", "הנסיעה כבר יצאה ולא ניתן לבטל אותה."],
+  ["RIDE_DEPARTED", "הנסיעה כבר יצאה — אי אפשר לבטל."],
 ];
 
 beforeEach(() => sb.mock.reset());
@@ -121,7 +121,7 @@ describe("cancelBooking (spec E1, E2)", () => {
 
   it("refuses after departure", async () => {
     sb.mock.onRpc("cancel_booking", { error: { message: "P0001: RIDE_DEPARTED" } });
-    expect(await cancelBooking(ID.booking)).toEqual({ error: "הנסיעה כבר יצאה ולא ניתן לבטל אותה." });
+    expect(await cancelBooking(ID.booking)).toEqual({ error: "הנסיעה כבר יצאה — אי אפשר לבטל." });
     expect(refresh).not.toHaveBeenCalled();
   });
 
@@ -185,7 +185,7 @@ describe("createRideAlert (spec C10)", () => {
   it.each([
     ["ALERT_LIMIT", "הגעת למגבלה של 3 התראות פעילות — בטלי התראה קיימת כדי להוסיף חדשה."],
     ["ALERT_DUPLICATE", "כבר יש לך התראה עם אותם מקומות, תאריכים ושעות."],
-    ["INVALID_ALERT", "יש לבחור מאיפה ולאן, ותאריכים מהיום והלאה — תאריך ההתחלה לא אחרי תאריך הסיום."],
+    ["INVALID_ALERT", "יש לבחור מקום יציאה, יעד ותאריכים תקינים."],
   ])("maps %s to its message", async (code, message) => {
     sb.mock.onRpc("create_ride_alert", { error: { message: code } });
     expect(await createRideAlert(alert())).toEqual({ error: message });

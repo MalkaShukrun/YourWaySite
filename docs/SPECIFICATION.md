@@ -97,7 +97,7 @@ Open for booking → Cancelled for this date → Shown as cancelled · never cha
 
 | Screen | Address | Who | What it shows |
 |---|---|---|---|
-| Sign-in | `/login` | Anyone | Google sign-in, or a personal code for approved addresses (A6), consent to the terms of use and the privacy policy, site totals (members, and active routes (“קווי נסיעה פעילים”) counted as on the admin page, migration 0049; refreshed hourly). Opens the onboarding window for new users. After an automatic sign-out it says she was signed out after 10 minutes without activity (A8). |
+| Sign-in | `/login` | Anyone | Google sign-in, or a personal code for approved addresses (A6), consent to the terms of use and the privacy policy, site totals (members, and active routes (“מסלולים פעילים”) counted as on the admin page, migration 0049; refreshed hourly). Opens the onboarding window for new users. After an automatic sign-out it says she was signed out after 10 minutes without activity (A8). |
 | Terms of use | `/terms` | Anyone | The terms text, including the cancellation policy. |
 | Privacy policy | `/privacy` | Anyone | The policy text, including the mailing and messages section. |
 | Ride search | `/` | All | Greeting, the smart search box “חדש! חיפוש חכם ומהיר” with its arrow (C8) and, when it's focused, her recent searches under it (C9), filter bar (“מאיפה” and “לאן” with a swap button, date; departure from/until and ride type behind the filters icon; “ניקוי”; “חיפוש”), result cards for the next 7 days. Each recurring route appears as one card with a chip per date showing free seats. With no results, “עדכנו אותי כשתהיה נסיעה”; on a full card, “עדכנו אותי” (C10). |
@@ -215,7 +215,7 @@ Her session cookies are removed, even if Google already ended the session, and s
 
 - She is signed in. The first time, the onboarding window asks for her name and phone, as in A1.
 - The same code works every time.
-- If she's new or forgot it, “משתמשת חדשה או שכחת את הקוד? שלחי לנו מייל לקבלת קוד” copies the support address and shows it. The contact form needs a signed-in user, so it can't help here.
+- If she's new or forgot it, “משתמשת חדשה או שכחת את הקוד? שלחי לנו מייל” copies the support address and shows it. The contact form needs a signed-in user, so it can't help here.
 
 **Where it shows**
 
@@ -225,7 +225,7 @@ Her session cookies are removed, even if Google already ended the session, and s
 
 #### A7. A member gets emails about her rides
 
-**Trigger:** Something happens to a ride she booked or drives. The setting is under “מיילים על הנסיעות שלי” on “הפרופיל שלי”: a button that shows its state (“פעיל” or “כבוי”) switches it, and “שמירת הגדרות ההתראות” saves it, with “הגדרות ההתראות נשמרו”.
+**Trigger:** Something happens to a ride she booked or drives. The setting is under “מיילים על הנסיעות שלי” on “הפרופיל שלי”: a button that shows its state (“פעיל” or “כבוי”) switches it, and “שמירת הגדרות ההתראות” saves it, with “ההגדרות נשמרו”.
 
 **Driver side**
 
@@ -415,7 +415,7 @@ Nothing.
 **Passenger side**
 
 - She sees the driver's name, vehicle, route, date, time, free seats, note, stops and map.
-- The driver's phone and email are hidden: “הטלפון והדוא״ל של הנהגת יוצגו אחרי ההרשמה לנסיעה.”
+- The driver's phone and email are hidden: “פרטי הקשר יוצגו אחרי ההרשמה.”
 - The first pickup and drop-off are pre-selected; the price total updates with the number of dates.
 
 **Where it shows**
@@ -574,9 +574,9 @@ Nothing when the alert is saved. When she later publishes a new route that match
 
 **Passenger side**
 
-- No results: the button is inside the “לא נמצאו נסיעות מתאימות” card, under “נסי לשנות את הסינון, או הגדירי התראה כשתפורסם נסיעה מתאימה.”. Results that are all full show no banner: each full card has its own button, in place of the booking button. A card with a free date has none.
+- No results: the button is inside the “לא נמצאו נסיעות מתאימות” card, under “נסי לשנות את הסינון, או הגדירי התראה לנסיעה מתאימה.”. Results that are all full show no banner: each full card has its own button, in place of the booking button. A card with a free date has none.
 - It opens “התראה על נסיעה” (“נשלח לך מייל כשנהגת תפרסם נסיעה חדשה שמתאימה, או כשיתפנה מקום בנסיעה מלאה שמתאימה. …”): “מאיפה” and “לאן” (required, one or more cities or places, as in search), “מתאריך” and “עד תאריך”, “יציאה משעה” and “עד שעה”. From no results, filled from the search: its places, its date in both date fields (or empty), its times. From a card, filled from the card: its two places, its first date as “מתאריך” and its last as “עד תאריך”, no times. She can change any of them before “שמירת ההתראה”; “כל שעה” empties both times. A time range may cross midnight (“22:00–02:00”), so it isn't swapped as the search's is.
-- Saved: the button gives way to a light-green confirmation with a check mark and “ההתראה נשמרה, להתראות שלי ←”, where “להתראות שלי” links to her alerts (C11). Under no results, a second line adds “נשלח לך מייל כשתהיה נסיעה מתאימה עם מקום פנוי.”. On a card, it's compact: the check and the link only (“ההתראה נשמרה” is still read out to screen readers).
+- Saved: the button gives way to a light-green confirmation with a check mark and “ההתראה נשמרה, להתראות שלי ←”, where “להתראות שלי” links to her alerts (C11). Under no results, a second line adds “נשלח לך מייל כשתפורסם נסיעה מתאימה או יתפנה בה מקום.”. On a card, it's compact: the check and the link only (“ההתראה נשמרה” is still read out to screen readers).
 - Refused with “הגעת למגבלה של 3 התראות פעילות — בטלי התראה קיימת כדי להוסיף חדשה.” when she has 3; with “כבר יש לך התראה עם אותם מקומות, תאריכים ושעות.” for an exact duplicate.
 - When a newly published route matches, she gets “נמצאה נסיעה מתאימה: [מוצא] ← [יעד]” within about 5 minutes (A7): the matching dates (the first 7, “ועוד N” after), the departure time, the price and the driver's name; “כדאי לבדוק שעדיין יש מקום פנוי — ייתכן שהנסיעה התמלאה בינתיים.”; a link to the ride; each alert that fired, with “הסרת ההתראה” (to C11 with that alert highlighted); and a link to “ההתראות שלי”.
 - When a seat opens on a full ride that matches, she gets “התפנה מקום בנסיעה: [מוצא] ← [יעד]” within about 5 minutes (A7): that date, the departure time, the price and the driver's name; “המקום פנוי למי שנרשמת ראשונה — כדאי למהר.”; a link to the ride on that date; and the same alert links.
@@ -605,7 +605,7 @@ Nothing.
 - A page of its own, “התראות פעילות” with “נשלח לך מייל כשתפורסם נסיעה חדשה שמתאימה, או כשיתפנה מקום בנסיעה מלאה שמתאימה” and “N מתוך 3”. Each row: the places at each end (each city in bold with its neighborhoods in brackets, as in C9), the date range and “יציאה …” times she set (or “כל תאריך וכל שעה”), “בתוקף עד …” (the last day it's valid), and “ביטול”.
 - “ביטול” deletes it at once, with “ההתראה בוטלה”.
 - From the email's “הסרת ההתראה” link, the page opens with that alert highlighted and scrolled into view; nothing is cancelled until she presses its “ביטול”. The link needs her signed in, like every app page (A2).
-- No alerts: “אין לך התראות פעילות”, “לא מצאת נסיעה? אנחנו נעדכן אותך כשתיכנס נסיעה מתאימה”, and “מציאת נסיעה”.
+- No alerts: “אין לך התראות פעילות”, “לא מצאת נסיעה? הגדירי התראה ונשלח לך מייל כשתפורסם אחת מתאימה.”, and “מציאת נסיעה”.
 
 **Where it shows**
 
@@ -636,7 +636,7 @@ Not applicable.
 `/dashboard`. Each ride card:
 
 - A gray header: the departure time in large type, the route, and two chips — the ride type and the seats left, “נשארו N מקומות פנויים” (“נשאר מקום פנוי אחד”; “אין מקומות פנויים” in lime when full). The fold arrow is at the far end; on phones the cancel button goes on the line under the route.
-- “נוסעות רשומות ופרטי קשר”: one row per passenger with her name and, under it, “איסוף: … · הורדה: …” (plus “נוספה על ידך” for a guest, D4). Her phone and email are shown as buttons, each with its icon and the number or address, that call or write to her (a guest has no email); on phones they go on the line under her name. “שריון מקום לנוסעת” is the last row of the list, under the line “סיכמת בטלפון? שרייני כאן מקום.” An empty list says instead “עדיין אין נוסעות רשומות. אפשר לשריין מקום למטה.” (just the first sentence when the button isn't offered).
+- “נוסעות רשומות ופרטי קשר”: one row per passenger with her name and, under it, “איסוף: … · הורדה: …” (plus “נוספה על ידך” for a guest, D4). Her phone and email are shown as buttons, each with its icon and the number or address, that call or write to her (a guest has no email); on phones they go on the line under her name. “הוספת נוסעת” is the last row of the list, under the line “תיאמת בטלפון? הוסיפי כאן.” An empty list says instead “עדיין אין נוסעות. אפשר להוסיף ידנית למטה.” (just the first sentence when the button isn't offered).
 - “התחנות של היום”: one line of the booked stops in route order, pickups then drop-offs, each with who gets on or off there, and the איסוף / הורדה legend. The map beside it has no legend of its own; it shows its own only when no one has booked yet.
 
 **Rules:** removed routes don't appear. Cancelled dates still appear, marked “בוטלה לתאריך זה”.
@@ -670,7 +670,7 @@ Driver: dashboard card, my routes (one-time). Passenger: `/my-rides` upcoming, t
 
 **Driver side**
 
-The cancel button no longer shows on that card. If a page left open still offers it, the attempt is refused with “הנסיעה כבר יצאה ולא ניתן לבטל אותה.”
+The cancel button no longer shows on that card. If a page left open still offers it, the attempt is refused with “הנסיעה כבר יצאה — אי אפשר לבטל.”
 
 **Passenger side**
 
@@ -682,7 +682,7 @@ Dashboard card.
 
 #### D4. A driver adds a passenger by hand
 
-**Trigger:** On a ride card she presses “שריון מקום לנוסעת” and enters a name, phone, pickup and drop-off.
+**Trigger:** On a ride card she presses “הוספת נוסעת” and enters a name, phone, pickup and drop-off.
 
 **Driver side**
 
@@ -773,7 +773,7 @@ Profile; the driver's mailbox.
 
 **Passenger side**
 
-- “ההרשמה בוטלה והמקום התפנה”.
+- “ההרשמה בוטלה”.
 - The ride leaves my rides and is never charged.
 - She no longer sees the driver's phone and email for it.
 - Within about 5 minutes she gets an email, “ההרשמה בוטלה: …”, without the driver's phone (A7).
@@ -794,7 +794,7 @@ Nothing changes.
 
 **Passenger side**
 
-The ride has moved to “היסטוריה”, which has no cancel button. If a page left open still offers it: “הנסיעה כבר יצאה ולא ניתן לבטל אותה.”
+The ride has moved to “היסטוריה”, which has no cancel button. If a page left open still offers it: “הנסיעה כבר יצאה — אי אפשר לבטל.”
 
 **Where it shows**
 
@@ -922,7 +922,7 @@ Nothing; the driver never sees payment marks.
 
 #### H1. An admin adds a group or changes its places
 
-**Trigger:** On group management she picks an origin and a destination from the list of places (H6).
+**Trigger:** On group management she picks an origin and a destination from the list of places (H6). A new group is created in both directions at once, there and back (“נוצרו שתי קבוצות — הלוך וחזור”); if one direction already exists, only the other is added (“נוצרה קבוצה אחת — הכיוון השני כבר היה קיים”). Editing a group changes that one direction only.
 
 **Driver side**
 
@@ -936,7 +936,7 @@ The group appears in the search filter; a changed group shows its new name every
 
 `/admin/groups`, route editor, search filter, every ride card and booking row.
 
-**Rules:** origin and destination must be different places (“היעד חייב להיות שונה מנקודת המוצא”; two neighborhoods of one city are different places); a duplicate is refused with “הקבוצה הזו כבר קיימת.” With fewer than two places on the list, the dialog says “קודם הוסיפי לפחות שני מקומות לרשימת המקומות.” and can't be saved. A place in a city without a map area can still be used, but its map isn't limited.
+**Rules:** origin and destination must be different places (“היעד חייב להיות שונה מנקודת המוצא”; two neighborhoods of one city are different places); a group that already exists in both directions is refused with “הקבוצה הזו כבר קיימת.” With fewer than two places on the list, the dialog says “קודם הוסיפי לפחות שני מקומות לרשימה.” and can't be saved. A place in a city without a map area can still be used, but its map isn't limited.
 
 #### H2. An admin hides a group
 
@@ -993,10 +993,10 @@ An unused group simply disappears from the filter.
 
 **Result**
 
-- Today: passengers traveling (“נוסעות נוסעות היום”) and rides departing (“נסיעות יוצאות היום”).
+- Today: passengers traveling (“נוסעות שיוצאות היום”) and rides departing (“נסיעות יוצאות היום”).
 - To date: rides that departed with passengers (“נסיעות שיצאו עם נוסעות”) and passengers who traveled (“נוסעות שנסעו עד היום”).
 - Users in the system (“משתמשות במערכת”): those who finished sign-up.
-- Active routes (“קווי נסיעה פעילים”), the drivers who have one (“נהגות עם מסלולים”), and visible groups (“קבוצות פעילות”). Each group row shows its own count of active routes.
+- Active routes (“מסלולים פעילים”), the drivers who have one (“נהגות עם מסלולים”), and visible groups (“קבוצות פעילות”). Each group row shows its own count of active routes.
 - Who has each email on (migration 0045): the emails about her own rides (“נוסעות שמקבלות מייל על הרשמה וביטול נסיעה”, A7), the driver's daily email (“נהגות שמקבלות מייל יומי על הנוסעות שנרשמות”, D7), and its update about a passenger who joins or cancels (“נהגות שמקבלות מייל עדכון על שינוי ברשימת הנוסעות”). Only users who finished sign-up count. The ride emails are on until a user turns them off, so they include users who never opened the setting; the update counts only while the daily email is on too, since it's sent only with it.
 
 **Rules:** only admins can read the totals. Each active booking counts as one passenger on one ride, guests included, so a round trip counts twice. Dates the driver cancelled aren't counted. Today's rides include every scheduled ride, booked or not; a ride counts as departed only if it had at least one passenger, since a ride that left empty leaves no record. A route is active as in its driver's “מסלולים פעילים” tab: not removed, and not a one-time ride that took place or was cancelled for its date. The totals leave out routes in hidden groups, which can't be booked; a hidden group's row still shows its own count. Days follow Israel time.
@@ -1098,14 +1098,14 @@ In place of the page.
 | `OWN_RIDE` | Passenger / driver | “אי אפשר להירשם לנסיעה שאת נוהגת בה.” / “אי אפשר להוסיף את עצמך כנוסעת.” | Driver booking her own ride |
 | `INVALID_STOP` | Both | “יש לבחור תחנת איסוף ותחנת הורדה מהרשימה.” | Stop not on the route |
 | `BOOKING_NOT_FOUND` | Both | “ההרשמה לא נמצאה או שכבר בוטלה.” | Cancelling a booking that isn't hers or is already cancelled |
-| `RIDE_DEPARTED` | Both | “הנסיעה כבר יצאה ולא ניתן לבטל אותה.” | Cancelling after departure |
+| `RIDE_DEPARTED` | Both | “הנסיעה כבר יצאה — אי אפשר לבטל.” | Cancelling after departure |
 | `RIDE_CANCELLED` | Driver | “הנסיעה בוטלה לתאריך הזה, ואי אפשר להחזיר אותה.” | Undoing a date cancellation |
 | `RIDE_PAST` | Driver | “הנסיעה כבר התקיימה ונשמרת בהיסטוריה — אי אפשר להסיר אותה.” | Removing a one-time ride that took place |
 | `ROUTE_LOCKED` | Driver | “כבר נרשמו נוסעות למסלול, ולכן אי אפשר לשנות אותו — אפשר רק לערוך את ההערה ולהוסיף תחנות.” | Editing a booked route beyond its note and new stops |
 | `INVALID_PASSENGER` | Driver | “יש להזין שם וטלפון.” | Bad guest name or phone |
 | `ALERT_LIMIT` | Passenger | “הגעת למגבלה של 3 התראות פעילות — בטלי התראה קיימת כדי להוסיף חדשה.” | Saving a 4th ride alert (C10) |
 | `ALERT_DUPLICATE` | Passenger | “כבר יש לך התראה עם אותם מקומות, תאריכים ושעות.” | The same places and ranges as one she has |
-| `INVALID_ALERT` | Passenger | “יש לבחור מאיפה ולאן, ותאריכים מהיום והלאה — תאריך ההתחלה לא אחרי תאריך הסיום.” | No places, a past date, or a start after the end |
+| `INVALID_ALERT` | Passenger | “יש לבחור מקום יציאה, יעד ותאריכים תקינים.” | No places, a past date, or a start after the end |
 | `GUEST_EXISTS` | Driver | Not shown as an error: the form asks “הטלפון הזה כבר רשום (…). להחליף?” | Adding a guest phone that already has a seat on that ride and date (D5) |
 
 ## 8. Not in the system

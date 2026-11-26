@@ -12,9 +12,11 @@ const newCity = (seed: Seed) => `E2E ${seed.tag} ${Math.random().toString(36).sl
 const newName = (seed: Seed) => `${newCity(seed)}, מרכז`;
 const JERUSALEM = "ירושלים, גבעת שאול";
 
-// Removes, after the test, the groups this spec created through the page.
-async function cleanUpGroups(seed: Seed, origins: string[]) {
-  await seed.service.from("ride_groups").delete().in("origin", origins);
+// Removes, after the test, the groups this spec created through the page —
+// both directions, so also those that end at these places.
+async function cleanUpGroups(seed: Seed, places: string[]) {
+  await seed.service.from("ride_groups").delete().in("origin", places);
+  await seed.service.from("ride_groups").delete().in("destination", places);
 }
 
 async function openCreate(page: Page) {
@@ -23,7 +25,7 @@ async function openCreate(page: Page) {
 }
 
 test.describe("creating (spec H1)", () => {
-  test("creates a group from two places, which becomes a choice for drivers and passengers", async ({ page, seed, signIn }) => {
+  test("creates a group from two places, there and back, which becomes a choice for drivers and passengers", async ({ page, seed, signIn }) => {
     const origin = newName(seed);
     await Promise.all([seed.place(origin), seed.place(JERUSALEM)]);
     await signIn(page, await seed.user("Admin", { admin: true }));
@@ -32,14 +34,15 @@ test.describe("creating (spec H1)", () => {
       const dialog = await openCreate(page);
       await choose(page, "נקודת מוצא", origin, dialog);
       await choose(page, "יעד", JERUSALEM, dialog);
-      await dialog.getByRole("button", { name: "יצירת הקבוצה" }).click();
+      await dialog.getByRole("button", { name: "יצירת הקבוצות" }).click();
 
-      await expect(toast(page, "הקבוצה נוצרה")).toBeVisible();
+      await expect(toast(page, "נוצרו שתי קבוצות — הלוך וחזור")).toBeVisible();
       await expect(dialog).toHaveCount(0);
       const row = groupRow(page, `${origin} ← ${JERUSALEM}`);
       await expect(row.locator(".status-pill")).toHaveText("פעילה");
       await expect(row).toContainText("אין מסלולים פעילים");
-      await expect(placeRow(page, origin)).toContainText("קבוצה אחת");
+      await expect(groupRow(page, `${JERUSALEM} ← ${origin}`).locator(".status-pill")).toHaveText("פעילה");
+      await expect(placeRow(page, origin)).toContainText("2 קבוצות");
 
       // Passengers can now pick its places in the search filters.
       await page.goto("/");
@@ -50,22 +53,61 @@ test.describe("creating (spec H1)", () => {
     }
   });
 
-  test("refuses the same place twice, and a duplicate", async ({ page, seed, signIn }) => {
+  test("refuses the same place twice, and a group that exists both ways", async ({ page, seed, signIn }) => {
     const origin = newName(seed);
     await seed.group({ origin, destination: JERUSALEM });
+    await seed.group({ origin: JERUSALEM, destination: origin });
     await signIn(page, await seed.user("Admin", { admin: true }));
     await page.goto("/admin/groups");
     const dialog = await openCreate(page);
 
     await choose(page, "נקודת מוצא", JERUSALEM, dialog);
     await choose(page, "יעד", JERUSALEM, dialog);
-    await dialog.getByRole("button", { name: "יצירת הקבוצה" }).click();
+    await dialog.getByRole("button", { name: "יצירת הקבוצות" }).click();
     await expect(dialog.getByText("היעד חייב להיות שונה מנקודת המוצא")).toBeVisible();
 
     await choose(page, "נקודת מוצא", origin, dialog);
-    await dialog.getByRole("button", { name: "יצירת הקבוצה" }).click();
+    await dialog.getByRole("button", { name: "יצירת הקבוצות" }).click();
     await expect(dialog.getByRole("alert")).toHaveText("הקבוצה הזו כבר קיימת.");
     await expect(groupRow(page, `${origin} ← ${JERUSALEM}`)).toHaveCount(1);
+    await expect(groupRow(page, `${JERUSALEM} ← ${origin}`)).toHaveCount(1);
+  });
+
+  test("when one direction exists, only the way back is added", async ({ page, seed, signIn }) => {
+    const origin = newName(seed);
+    await seed.group({ origin, destination: JERUSALEM });
+    await signIn(page, await seed.user("Admin", { admin: true }));
+    await page.goto("/admin/groups");
+    try {
+      const dialog = await openCreate(page);
+      await choose(page, "נקודת מוצא", origin, dialog);
+      await choose(page, "יעד", JERUSALEM, dialog);
+      await dialog.getByRole("button", { name: "יצירת הקבוצות" }).click();
+
+      await expect(toast(page, "נוצרה קבוצה אחת — הכיוון השני כבר היה קיים")).toBeVisible();
+      await expect(groupRow(page, `${origin} ← ${JERUSALEM}`)).toHaveCount(1);
+      await expect(groupRow(page, `${JERUSALEM} ← ${origin}`)).toHaveCount(1);
+    } finally {
+      await cleanUpGroups(seed, [origin]);
+    }
+  });
+
+  // The place list opens below the short dialog's edge; it must show in full, not be cut off.
+  test("the place list shows in full inside the dialog", async ({ page, seed, signIn }) => {
+    await Promise.all([seed.place(newName(seed)), seed.place(JERUSALEM)]);
+    await signIn(page, await seed.user("Admin", { admin: true }));
+    await page.goto("/admin/groups");
+    const dialog = await openCreate(page);
+    await dialog.getByRole("combobox", { name: "נקודת מוצא", exact: true }).or(dialog.getByRole("button", { name: /^נקודת מוצא:/ })).click();
+    const list = page.getByRole("listbox", { name: "נקודת מוצא" });
+    await expect(list).toBeVisible();
+    // The list's lower part is the topmost element there, not the page behind the dialog.
+    const shown = await list.evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      const at = document.elementFromPoint(box.x + box.width / 2, box.bottom - 8);
+      return el.contains(at);
+    });
+    expect(shown).toBe(true);
   });
 
   test("closing the dialog saves nothing", async ({ page, seed, signIn }) => {
@@ -305,14 +347,14 @@ test("shows the totals and the group list", async ({ page, seed, signIn }) => {
   await signIn(page, await seed.user("Admin", { admin: true }));
   await page.goto("/admin/groups");
   for (const label of [
-    "נוסעות נוסעות היום",
+    "נוסעות שיוצאות היום",
     "נסיעות יוצאות היום",
     "משתמשות במערכת",
     "נסיעות שיצאו עם נוסעות",
     "נוסעות שנסעו עד היום",
     "קבוצות פעילות",
     "נהגות עם מסלולים",
-    "קווי נסיעה פעילים",
+    "מסלולים פעילים",
   ]) {
     await expect(page.locator(".stat-card").filter({ hasText: label })).toBeVisible();
   }
